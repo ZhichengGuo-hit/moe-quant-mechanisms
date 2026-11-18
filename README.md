@@ -74,9 +74,11 @@ MoE 模型在不同任务下激活的专家子集高度不同，这一现象贯�
 | `new-files/llama.cpp/tools/tcmoe-verify/` | 容器逐位一致性校验工具 |
 | `new-files/*/examples/eval-callback/route-dump.cpp` | 路由与专家命中导出 |
 
-## 关于结果文件
+## 关于路径与结果文件
 
-`tcq_exp/results/` 下的原始结果（JSON / JSONL / 日志 / 图表）**未随仓库分发**——总体积远超代码本身。`DATA_TABLE.md` 中每一行都标注了对应结果文件的相对路径，需要时可按该路径在本地复现目录中定位。
+仓库根的 `code/` 对应原工作目录，`CODE_INDEX.md`、`DATA_TABLE.md` 等文档中出现的 `tcq_exp/...`、`tcmoe/...` 等相对路径**均相对于 `code/` 目录**（即实际位置为 `code/tcq_exp/...`）。
+
+`code/tcq_exp/results/` 下的原始结果（JSON / JSONL / 日志 / 图表）**未随仓库分发**——总体积远超代码本身。`DATA_TABLE.md` 中每一行都标注了对应结果文件的相对路径，需要时可按该路径在本地复现目录中定位。
 
 ## 复现
 
