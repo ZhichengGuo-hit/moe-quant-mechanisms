@@ -1,94 +1,125 @@
 # moe-quant-mechanisms
 
-**Mechanism-guided low-bit quantization for MoE models on llama.cpp/GGUF** — Lloyd-Max codebooks, per-expert mixed precision, and single-file multi-patch containers with µs-level domain switching.
+> **Where Low-Bit Quantization Damages MoE Models: A Seven-Family Mechanism Study with an Operability Proof**
+> Manuscript under review at *Neurocomputing*, 2026.
 
-面向 MoE 大模型的任务条件化量化（Task-Conditioned Quantization, **TCQ**）：利用专家路由的领域差异性，为每个专家分配按域定制的精度配额，并在 llama.cpp/GGUF 上以「单文件多补丁容器 + 运行时域切换」的形式落地。
+Low-bit quantization of Mixture-of-Experts models is supplied through two tracks — vendor "official" checkpoints and the community GGUF ecosystem — yet **where** and **when** quantization damages quality remains unmapped. This repository is the code, data ledger, and llama.cpp integration behind a seven-family mechanism study that answers those questions, plus **TCQ**, a pipeline derived mechanically from the resulting mechanism map.
 
 ---
 
-## 核心思路
+## 三大主张
 
-MoE 模型在不同任务下激活的专家子集高度不同，这一现象贯穿全流程：
+论文在七个 2026 年 MoE 家族、五种注意力范式上，用配对协议加实测统计功效，给出三个结论：
 
-1. **路由是域条件化的。** 同一层里，数学、代码、通用三类输入命中 top-k 专家的重叠度显著低于随机基线，且这种分离在层深方向上有稳定结构。
-2. **所以精度预算也应当域条件化。** 与其对全体专家用统一位宽，不如先按路由用量（`usage`）、敏感度（`s`）、加权代理（`q̂`）排出配额，再把高价值专家升级到 INT4、其余压到 INT2/INT3。
-3. **多域要能共存。** 每个域训练一份「补丁」（patch），与共享的低比特底座一起装进同一个 GGUF 容器；运行时按域切换补丁，切换代价做到微秒级，无需重载模型。
+### (i) 归因：任务条件性就是路由暴露
 
-围绕这条主线，仓库覆盖了从机制测量（路由分离度、残差谱、换装代价）到工程实现（低位宽打包、嵌套 scale、码本量化）再到端到端评测（GSM8K / HumanEval / GPQA / AIME / BFCL / KLD）的完整链路。
+把专家敏感度分解为 `s = usage × q`（`q` 为内在可量化性）。跨域方差 **103.6% 来自路由用量、0.3% 来自内在可量化性**（份额超过 100% 是负协方差项）。
+
+- 「哪些专家怕量化」是权重的属性（跨域 Pearson 0.92–0.96）；
+- 「哪些专家重要」是路由的属性。
+- 预算匹配消融把社区前沿拆解成组件阶梯：**只有 type-budget 重分配在任务级可检测**，per-layer / per-tensor 增量停留在似然分辨率，随机列表对照进一步关闭了补丁列表排序的问题。
+
+### (ii) 四层损伤图
+
+| 层 | 损伤载体 | 关键测量 |
+|---|---|---|
+| **Token** | 码本失配承载跨域损伤 | 均匀码本下 math 补丁在 HumanEval 崩到 0.579；**Lloyd-Max 修复 +30~36 pt**（0.579→0.939、0.567→0.902） |
+| **Route** | 逐 token 专家集漂移大、聚合排序稳 | top-8 精确匹配仅 **18.7%**（Jaccard 0.71），但逐层 top-64 重叠 **91.2%** → 逐 token 路由脆弱，usage 矩阵稳定 |
+| **Task** | 饱和带 + 五个边界 | 校准缺失（Xing −12 pt）、多跳链（RULER-mh: base2 0.10）、竞赛难度（AIME 丢终止）、比特率敏感任务（GLM GPQA）、行为分级退化 |
+| **Behavior** | 分级退化 + 校准冲突异常 | Qwen3.6 五档 Q2→Q6 准确率跨度仅 3.0 pt；**Nemotron 上 imatrix 反而有害**（GSM8K 0.305 vs imatrix-off 0.715） |
+
+外加一个**四家族校准谱**：Qwen3.6 有效 / MiniCPM 弱（方向性）/ Gemma-4 无效 / Xing 必需。校准是否有效是一阶问题，用哪套语料是二阶。
+
+### (iii) 可操作性证明：TCQ
+
+一条**每个设计决策都是机制图直读结果**的流水线，在 **10–30 CPU 分钟**内达到与社区前沿构建在任务级无法区分的质量。论文明确声明这是**存在性证明，不是最优性主张**——同体积下其分布保真度落后 near-volume 社区版约 5×，这一点论文直接报告。
+
+## 七个家族与判定
+
+| 模型 | 架构 | 对照基线 | 判定 |
+|---|---|---|---|
+| Qwen3.6-35B-A3B | GDN (Gated-DeltaNet) | iq2xxs, UD-Q2 | **GSM8K-1319 TOST 等价**（+0.23 pt，CI [−0.61, +1.06] ⊂ ±1.5 pt） |
+| Gemma-4-26B-A4B | GQA | QAT, UD-Q4 | 平坦，且体积 −20% |
+| MiniCPM-V 4.7 35B-A3B | GDN | Q4_K_M, mix | 不劣于 |
+| Xing4.0-29B-A4B | MLA | iq4_xs, community | **校准修复**（缺校准 −12 pt，自采 imatrix +14 pt） |
+| GLM-4.7-Flash 30B-A3B | MLA | UD-Q2, UD-Q3 | 任务×组件交互（GPQA +9 pt/档） |
+| Nemotron-Cascade-2 30B-A3B | Mamba2 | i1-Q2_K, i1-Q3_K_M | **校准冲突**：imatrix 有害（−22 pt），imatrix-off 稳定 0.970 |
+| Raon-1-mini-preview 28.8B-A4B | RDA+MLA | iq4_xs | 逐点 ≥ |
+
+统计功效口径：配对 McNemar + 1000 次序列级 bootstrap，GSM8K-200 的 MDE 为 **±5.6 pt**、HE-164 为 **±4.2–6.5 pt**。全文的「无差异」「平坦」都是**分辨率陈述，不是等价性主张**，唯一的 TOST 等价在 GSM8K-1319 上。
+
+## TCQ：设计决策与机制依据
+
+| 设计决策 | 机制依据 | 验证 |
+|---|---|---|
+| 2-bit Lloyd-Max 底座（2.125 bpw） | token 层码本失配 | E21 wMSE / NLL、C2 KLD |
+| 按路由质量 top-64 选补丁专家 | 路由暴露归因 | H1 组件阶梯、C1.2 随机列表、E-F3 |
+| imatrix 默认开（ISQ 码本） | 校准谱 | C1.3 on/off 矩阵 |
+| 单文件多补丁 + 指针切换 | 饱和带的部署价值 | E-H4b bound set |
+| 跨模型可移植 | 饱和带的普适性 | G5–G7 配对 |
+
+系统实现要点：base 与全部域补丁装在**一个文件**里（23.01 GiB 全载 / 14.57 GiB 单补丁 bound set）；请求级 `domain` 字段只改写逐层**索引表指针**（不动权重字节），微秒级，端到端切换秒级；`mul_mat_id` 混合类型节点（base+patch 同节点，100 轮交替 `max|dNLL| = 0`）+ 2-bit AVX2 LUT 内核（`vpermps`），补丁专家按原生 Q4_K 速度跑。冷启动 4.1 s（23 GiB 文件），decode 7.11 t/s（较 iq2xxs **+17%**），prefill 是最弱轴。
 
 ## 仓库结构
 
 | 路径 | 内容 |
 |---|---|
-| `code/tcq_exp/` | 主体实验脚本（111 个），按 `a*` / `b*` / `c*` / `d*` / `e*` 编号组织 |
-| `code/tcmoe/` | 单文件多补丁容器的打包与逐位一致性校验 |
-| `code/reverse/` | 逆向实验：由容器反解类型表、配对评测 |
+| `code/tcq_exp/` | 主体实验脚本（111 个），`a*` 换装与运行时、`b*` 路由分离度、`c*` 统计与配对、`d*` 残差谱与换装代价、`e*` 端到端评测 |
+| `code/tcmoe/` | 单文件多补丁容器打包与逐位一致性校验 |
+| `code/reverse/` | 由容器反解类型表、配对评测 |
 | `code/route_consistency/` | 路由一致性复测 |
-| `code/nemotron_ext/` | Nemotron 系列模型的外延实验（含 `route/` 子目录） |
+| `code/nemotron_ext/` | Nemotron 外延实验（含 `route/`） |
 | `code/gptq_baseline/` | GPTQ 基线量化与评测 |
-| `docs/` | 各实验组的**预注册（PREREG）** 与 **执行记录（PROGRESS）** |
-| `llamacpp/` | 对上游 llama.cpp 的补丁（`git diff`）+ 新增源文件副本 |
+| `docs/` | 五组实验的**预注册 PREREG** 与**执行记录 PROGRESS** |
+| `llamacpp/` | 上游与 TCQ 两套补丁 + `llama-tcmoe.{h,cpp}`、`tcmoe-verify` |
 
 ## 关键文档
 
 | 文档 | 说明 |
 |---|---|
 | [`C5_method_framework.md`](C5_method_framework.md) | §5 方法框架：符号表、数学定义、算法与代码锚点 |
-| [`CODE_INDEX.md`](CODE_INDEX.md) | 147 个源文件的逐文件说明（取每个文件首段 docstring） |
-| [`EXPERIMENT_INVENTORY.md`](EXPERIMENT_INVENTORY.md) | 实验总台账：E1–E21、B / D / A / C 路线、E-F / E-G / E-H 主线、E-R / E-N |
-| [`DATA_TABLE.md`](DATA_TABLE.md) · [`DATA_TABLE.csv`](DATA_TABLE.csv) | 按实验编号排列的数据表，每行附代码位置与结果文件路径 |
+| [`CODE_INDEX.md`](CODE_INDEX.md) | 逐文件说明（取每个文件首段 docstring） |
+| [`EXPERIMENT_INVENTORY.md`](EXPERIMENT_INVENTORY.md) | 实验总台账，含状态与逐项结果 |
+| [`DATA_TABLE.md`](DATA_TABLE.md) · [`DATA_TABLE.csv`](DATA_TABLE.csv) | 按实验编号排列的数据表，附代码位置与结果文件路径 |
 | `docs/<track>/PREREG.md` | 各组实验的先验假设与判定标准（跑之前写） |
 | `docs/<track>/PROGRESS.md` | 执行过程与偏差记录 |
 
-## 实验覆盖
+## 快速上手
 
-已在 6 个 MoE 架构上完成端到端评测，对照官方或社区的低比特基线（`iq2xxs`、`UD-Q2_K_XL`、`UD-Q3_K_XL`、`UD-Q4_K_M`）：
+```bash
+# 容器逐位一致性校验
+cd llamacpp/new-files/llama.cpp/tools/tcmoe-verify && cmake -B build && cmake --build build
 
-| 模型 | 规模 | 主要配置数 | 参考实验 |
-|---|---|---|---|
-| Qwen3-30B-A3B | 30B / A3B | 4 配置 | E-F 系列 |
-| gemma-4-26B-A4B | 26B / A4B | 6 配置 | E-G1 |
-| MiniCPM-V-4.7-35B-A3B | 35B / A3B | 6 配置 | E-G2 |
-| Xing4.0-29B-A4B | 29B / A4B | 7 配置（含 2 个社区基线） | E-G3 |
-| GLM-4.7-Flash 30B-A3B | 30B / A3B | 5 配置 | E-G5 |
-| Nemotron-Cascade-2-30B-A3B | 30B / A3B | 5 配置 | E-G6 |
+# 打补丁到 llama.cpp
+git -C /path/to/llama.cpp apply llamacpp/llama.cpp-tcmoe.patch
+```
 
-评测集包括 GSM8K（含全量 1319 题）、HumanEval（pass@1 与 `tests_passed` 连续指标）、GPQA、AIME30、BFCL，以及 token 级 KLD / JSD / top-1 对齐。所有配对比较均报告置信区间与 McNemar / bootstrap 检验，明细见 `DATA_TABLE.md`。
+复现依赖：Python 3（`numpy` / `torch`，部分脚本需 `llama-cpp-python` 或直接驱动 `llama-server`）、量化后的 GGUF 权重（路径参数传入，不入库）、以及 GSM8K / HumanEval / GPQA / AIME / RULER 评测数据（按各脚本 docstring 的格式准备）。每个脚本首段 docstring 说明了输入输出与运行方式。
 
-几个具代表性的读数（均摘自实验台账，非复述结论）：
+## 边界与已知局限
 
-- E-F2：GSM8K 全量，TCQ 配置 0.9515 vs `iq2xxs` 0.9492（+0.23 pt，CI95 [−1.21, +0.83]，McNemar p=0.766）。
-- E-F9：token 级 KLD(ALL)，`iq2xxs` 0.3103 → `nl_global` 0.1466，top-1 一致率 0.845 → 0.882。
-- E-F4：Qwen3-30B-A3B 的 CPU prefill（pp512 中位）`iq2xxs` 31.24 tok/s，`tcmoe_q4k` 20.14 tok/s。
-- E-F10b：imatrix 加权共享码本把加权 WMSE 从 3.76e−5 降到 1.36e−5（−64%），但 HumanEval 代码侧出现 −2.44 pt 回退，判定为 partial。
+- **Nemotron 的校准冲突**是机制图里最极端的校准单元，其路由漂移是 Qwen 的 8× 却不产生任务代价——递归状态架构上二者为何解耦仍是开放问题。
+- 无校准基线（HQQ/SINQ）与误差补偿量化器（GPTQ/AWQ 类）在 GGUF 生态内没有对应产物，相关比较停留在文献层面；**全部结论限于 RTN + imatrix**。
+- 任务条件化配额分配在所研究的模型、码本、预算与任务下**失败**，向此外的迁移未验证。
+- 轨迹级单元格为 n=20；math 补丁的点估计偏移（−7.5 pt）方向一致但不显著，属探索性观察。
+- 硬件限于两台单机（双路 Xeon；RTX 5000/4070），不做跨硬件主张。
 
-## llama.cpp 集成
+## 路径约定
 
-`llamacpp/` 提供两套补丁，基线版本的 commit 在各文件行内注明：
+仓库根的 `code/` 对应原工作目录。文档中出现的 `tcq_exp/...`、`tcmoe/...` 等相对路径**均相对于 `code/`**（实际位置 `code/tcq_exp/...`）。
 
-| 文件 | 作用 |
-|---|---|
-| `llama-upstream.patch` | 对上游 llama.cpp 的改动（`git diff` 形式） |
-| `llama.cpp-tcmoe.patch` | TCQ 容器、补丁装载与域切换 |
-| `new-files/llama.cpp/src/llama-tcmoe.{h,cpp}` | 多补丁容器的核心实现 |
-| `new-files/llama.cpp/tools/tcmoe-verify/` | 容器逐位一致性校验工具 |
-| `new-files/*/examples/eval-callback/route-dump.cpp` | 路由与专家命中导出 |
+`code/tcq_exp/results/` 下的原始结果（JSON / JSONL / 日志 / 图表）**未随仓库分发**，体积远超代码本身；`DATA_TABLE.md` 每行都标注了对应结果文件路径，可按需在本地复现目录中定位。
 
-## 关于路径与结果文件
+## 引用
 
-仓库根的 `code/` 对应原工作目录，`CODE_INDEX.md`、`DATA_TABLE.md` 等文档中出现的 `tcq_exp/...`、`tcmoe/...` 等相对路径**均相对于 `code/` 目录**（即实际位置为 `code/tcq_exp/...`）。
-
-`code/tcq_exp/results/` 下的原始结果（JSON / JSONL / 日志 / 图表）**未随仓库分发**——总体积远超代码本身。`DATA_TABLE.md` 中每一行都标注了对应结果文件的相对路径，需要时可按该路径在本地复现目录中定位。
-
-## 复现
-
-代码不含硬编码的绝对路径，但依赖以下外部条件：
-
-- Python 3 环境，含 `numpy` / `torch`；部分脚本需要 `llama-cpp-python` 或直接驱动 `llama-server`
-- 量化后的 GGUF 模型权重（脚本以路径参数传入，不入库）
-- 评测数据：GSM8K、HumanEval、GPQA、AIME、BFCL 需自行按各脚本 docstring 中的数据格式准备
-
-每个脚本首段的 docstring 说明了输入、输出与运行方式，`CODE_INDEX.md` 是汇总入口。
+```bibtex
+@article{moe_quant_mechanisms_2026,
+  title  = {Where Low-Bit Quantization Damages MoE Models:
+            A Seven-Family Mechanism Study with an Operability Proof},
+  note   = {Manuscript under review at Neurocomputing},
+  year   = {2026}
+}
+```
 
 ## License
 
