@@ -1,0 +1,119 @@
+{
+ "n_cells_all_domains": 7232,
+ "signal": "s = usage * q, q = mean relative INT4-vs-BF16 expert output error",
+ "variance_decomp": {
+  "mean_var_log_s": 1.2186613575141152,
+  "share_usage": 1.0356522428031958,
+  "share_intrinsic_q": 0.0029537174662269887,
+  "share_cov": -0.03860596026942256,
+  "frac_cells_usage_dominates": 0.9952986725663717,
+  "n_cells": 7232
+ },
+ "jaccard_by_variant": {
+  "s_full": {
+   "math-code": 0.2437408905728898,
+   "math-general": 0.2924347049622388,
+   "code-general": 0.16631964064592383
+  },
+  "usage_only": {
+   "math-code": 0.24313459793562578,
+   "math-general": 0.2947412424784931,
+   "code-general": 0.1594498066791219
+  },
+  "q_only": {
+   "math-code": 0.31195467347149586,
+   "math-general": 0.36426560943268005,
+   "code-general": 0.2555127837365151
+  },
+  "s_from_usage": {
+   "math-code": 0.23928270610877655,
+   "math-general": 0.29104053000235747,
+   "code-general": 0.15619314135693352
+  },
+  "s_from_q": {
+   "math-code": 0.8598275431940209,
+   "math-general": 0.8922066298481394,
+   "code-general": 0.8562375349465716
+  }
+ },
+ "p_high": 0.25,
+ "n_eval_seq": 8,
+ "ref_nll": {
+  "base_int4": {
+   "math": 1.067475091843378,
+   "code": 0.6088088803928391,
+   "general": 1.3984844199595154
+  },
+  "global": {
+   "math": 1.196788848392547,
+   "code": 0.6363781762991839,
+   "general": 1.4058916308384637
+  },
+  "tc_math": {
+   "math": 1.1169838072761658,
+   "code": 0.6726638855721786,
+   "general": 1.3964608496721092
+  },
+  "tc_code": {
+   "math": 1.2470473032149056,
+   "code": 0.6017373274212424,
+   "general": 1.3938367300421575
+  },
+  "tc_general": {
+   "math": 1.285184829954117,
+   "code": 0.7460796031874684,
+   "general": 1.4021950176492237
+  },
+  "random": {
+   "math": 1.3298504541790674,
+   "code": 0.7396293362142586,
+   "general": 1.3828971911804069
+  }
+ },
+ "configs": [
+  {
+   "name": "math_usage_only",
+   "nll": {
+    "math": 1.1091967385912698,
+    "code": 0.6845647526173456
+   },
+   "gain_vs_global": {
+    "math": 0.0875921098012773,
+    "code": -0.0481865763181617
+   }
+  },
+  {
+   "name": "math_q_only",
+   "nll": {
+    "math": 1.2934285723973835,
+    "code": 0.6499588074471786
+   },
+   "gain_vs_global": {
+    "math": -0.09663972400483645,
+    "code": -0.013580631147994682
+   }
+  },
+  {
+   "name": "code_usage_only",
+   "nll": {
+    "math": 1.2374314807710194,
+    "code": 0.6102670522836539
+   },
+   "gain_vs_global": {
+    "math": -0.04064263237847232,
+    "code": 0.026111124015530063
+   }
+  },
+  {
+   "name": "code_q_only",
+   "nll": {
+    "math": 1.3023950485956102,
+    "code": 0.6799427603903087
+   },
+   "gain_vs_global": {
+    "math": -0.1056062002030631,
+    "code": -0.043564584091124736
+   }
+  }
+ ]
+}

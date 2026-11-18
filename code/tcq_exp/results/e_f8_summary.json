@@ -1,0 +1,40 @@
+{
+  "bench": "aime30",
+  "n_predict": 4096,
+  "configs": {
+    "nl_math": {
+      "model": "E:\\CUDA11.8\\train\\tcmoe\\out\\model-tcmoe-q4k-nl.gguf",
+      "domain": "math",
+      "n": 30,
+      "passed": 11,
+      "acc": 0.3667,
+      "avg_predicted_n": 3337.2,
+      "avg_gen_s": 501.8,
+      "capped": 18,
+      "capped_rate": 0.6,
+      "finish_reasons": {
+        "stop_word": 12,
+        "length": 18
+      }
+    },
+    "nl_global": {
+      "model": "E:\\CUDA11.8\\train\\tcmoe\\out\\model-tcmoe-q4k-nl.gguf",
+      "domain": "global",
+      "n": 30,
+      "passed": 9,
+      "acc": 0.3,
+      "avg_predicted_n": 3352.0,
+      "avg_gen_s": 452.7,
+      "capped": 18,
+      "capped_rate": 0.6,
+      "finish_reasons": {
+        "stop_word": 12,
+        "length": 18
+      }
+    }
+  },
+  "mcnemar": {},
+  "data_path": "E:\\CUDA11.8\\train\\tcq_exp\\data\\aime30.jsonl",
+  "data_sha256": "8da548a1191d0eb51d9c9d336e7cb747e133fdb182f0d282036b5792db4da4e0",
+  "n_questions": 30
+}

@@ -1,0 +1,73 @@
+{
+  "experiment": "E-H2",
+  "bound_note": "界值在投稿前写死, 不随数据调整",
+  "bootstrap": {
+    "n": 10000,
+    "seed": 20261104,
+    "unit": "question"
+  },
+  "pairs": [
+    {
+      "task": "gsm8k",
+      "bound_pt": 1.5,
+      "note": "F2 全量 1319 题, 逐题交错生成",
+      "a_tag": "iq2xxs",
+      "b_tag": "tcmoe_nl_global",
+      "n": 1319,
+      "acc_a": 0.9492,
+      "acc_b": 0.9515,
+      "diff_pt": 0.23,
+      "ci90_pt": [
+        -0.61,
+        1.06
+      ],
+      "discordant": {
+        "a_only": 21,
+        "b_only": 24
+      },
+      "mcnemar_p": 0.766,
+      "agreement": {
+        "n_same": 1274,
+        "frac": 0.9659
+      },
+      "verdict": "equivalent"
+    },
+    {
+      "task": "humaneval",
+      "bound_pt": 3.0,
+      "note": "e17 三域对照中的 nl_math 档",
+      "a_tag": null,
+      "b_tag": null,
+      "n": 164,
+      "acc_a": 0.9085,
+      "acc_b": 0.9024,
+      "diff_pt": -0.61,
+      "ci90_pt": [
+        -3.05,
+        1.83
+      ],
+      "discordant": {
+        "a_only": 3,
+        "b_only": 2
+      },
+      "mcnemar_p": 1.0,
+      "agreement": {
+        "n_same": 159,
+        "frac": 0.9695
+      },
+      "verdict": "inconclusive"
+    },
+    {
+      "task": "gpqa",
+      "bound_pt": 6.0,
+      "note": "本机无 Qwen3.6 GPQA 配对产物; 100 题下 90%CI 约 ±9pt, 已超 ±6pt 界值",
+      "a_tag": "iq2xxs",
+      "b_tag": "tcmoe_nl_global",
+      "n": 0,
+      "status": "no_data",
+      "verdict": "inconclusive",
+      "statement": "无配对数据; 100 题量级下 90%CI 约 ±9pt, 远超 ±6pt 界值, 只能写 '未检测到差异', 不能宣称等价"
+    }
+  ],
+  "headline": "GSM8K 全量 1319: diff +0.23pt, 90%CI [-0.61, +1.06] ⊂ ±1.5 -> TOST 通过, '统计等价'可写入论文"
+}

@@ -1,0 +1,36 @@
+{
+ "e_f8_hard_probe.jsonl|iq2xxs": {
+  "n": 30,
+  "acc": 0.36666666666666664,
+  "passed": 11,
+  "natural_stop_rate": 0.36666666666666664,
+  "finish_reason_counts": {
+   "stop_word": 11,
+   "length": 19
+  },
+  "len_mean": 2596,
+  "len_median": 3072.0,
+  "len_max": 3072,
+  "rep_max_ngram_mean": 8.066666666666666,
+  "rep_max_ngram_max": 14,
+  "rep_frac_mean": 0.12874333333333335,
+  "rep_frac_max": 0.2099
+ },
+ "e_f8_hard_probe.jsonl|ud_q2kxl": {
+  "n": 30,
+  "acc": 0.3333333333333333,
+  "passed": 10,
+  "natural_stop_rate": 0.3333333333333333,
+  "finish_reason_counts": {
+   "stop_word": 10,
+   "length": 20
+  },
+  "len_mean": 2614.866666666667,
+  "len_median": 3072.0,
+  "len_max": 3072,
+  "rep_max_ngram_mean": 8.966666666666667,
+  "rep_max_ngram_max": 31,
+  "rep_frac_mean": 0.12362666666666666,
+  "rep_frac_max": 0.2744
+ }
+}

@@ -1,0 +1,82 @@
+{
+ "g1_imon": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 15.2,
+  "size_gib": 11.523,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g1_imon.gguf",
+  "within_tol": true
+ },
+ "g0_imon": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 21.4,
+  "size_gib": 11.469,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g0_imon.gguf",
+  "within_tol": true
+ },
+ "g0_imoff": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 20.0,
+  "size_gib": 11.469,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g0_imoff.gguf",
+  "within_tol": true
+ },
+ "g1_imoff": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 14.8,
+  "size_gib": 11.523,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g1_imoff.gguf",
+  "within_tol": true
+ },
+ "g2_imon": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 19.7,
+  "size_gib": 11.652,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g2_imon.gguf",
+  "within_tol": true
+ },
+ "g2_imoff": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 21.2,
+  "size_gib": 11.652,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g2_imoff.gguf",
+  "within_tol": true
+ },
+ "g3_imon": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 34.0,
+  "size_gib": 11.624,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g3_imon.gguf",
+  "within_tol": true
+ },
+ "g3_imoff": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 32.9,
+  "size_gib": 11.624,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g3_imoff.gguf",
+  "within_tol": true
+ },
+ "g4_imon": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 40.6,
+  "size_gib": 11.71,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g4_imon.gguf",
+  "within_tol": true
+ },
+ "g4_imoff": {
+  "status": "ok",
+  "rc": 0,
+  "dur_min": 43.4,
+  "size_gib": 11.71,
+  "path": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g4_imoff.gguf",
+  "within_tol": true
+ }
+}

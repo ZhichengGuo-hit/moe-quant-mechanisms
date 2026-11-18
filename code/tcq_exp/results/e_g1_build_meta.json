@@ -1,0 +1,49 @@
+{
+  "ts": "2026-11-06T10:35:04",
+  "builds": [
+    {
+      "tag": "c",
+      "file": "E:\\CUDA11.8\\model\\gemma4\\g1\\g1_c.g4q4k.gguf",
+      "gib": 14.359,
+      "est_gib": 14.344,
+      "dev_pct": 0.1,
+      "within_5pct": true
+    },
+    {
+      "tag": "cprime",
+      "file": "E:\\CUDA11.8\\model\\gemma4\\g1\\g1_cp.g4q4k_nx6.gguf",
+      "gib": 14.592,
+      "est_gib": 14.577,
+      "dev_pct": 0.1,
+      "within_5pct": true
+    },
+    {
+      "tag": "d",
+      "file": "E:\\CUDA11.8\\model\\gemma4\\g1\\g1_d.g4q4k_im.gguf",
+      "gib": 14.359,
+      "est_gib": 14.344,
+      "dev_pct": 0.1,
+      "within_5pct": true
+    },
+    {
+      "tag": "r",
+      "file": "E:\\CUDA11.8\\model\\gemma4\\g1\\g1_r.g4q3k_im.gguf",
+      "gib": 11.589,
+      "est_gib": 11.574,
+      "dev_pct": 0.13,
+      "within_5pct": true
+    }
+  ],
+  "imatrix": {
+    "file": "E:\\CUDA11.8\\train\\tcq_exp\\results\\e_g1_imatrix.gguf",
+    "size_gib": 0.106,
+    "corpus": "E:\\CUDA11.8\\train\\tcq_exp\\data\\g1_calib.txt",
+    "corpus_bytes": 23441,
+    "model": "E:\\CUDA11.8\\model\\gemma4\\BF16\\gemma-4-26B-A4B-it-BF16-00001-of-00002.gguf"
+  },
+  "refs": {
+    "a_qat": "官方 QAT (外部下载)",
+    "b_ud": "UD-Q4_K_XL (外部下载)"
+  },
+  "note": "gemma4 专家为融合三维张量, tcmoe 容器不可用; C/D/R 均为角色对齐 llama-quantize (专家整张量均匀档位)"
+}

@@ -1,0 +1,182 @@
+{
+  "baseline": "g1_im",
+  "bootstrap": 2000,
+  "bootstrap_seed": 20261104,
+  "generated_at": "2026-11-09 05:45:30",
+  "per_tag_task": [
+    {
+      "tag": "g0_im",
+      "task": "gsm8k",
+      "n": 200,
+      "passed": 180,
+      "acc": 0.9,
+      "wilson_lo": 0.8505941875672826,
+      "wilson_hi": 0.9343295513309041,
+      "avg_gen_s": 5.5,
+      "avg_predicted_n": 394.8
+    },
+    {
+      "tag": "g1_im",
+      "task": "gsm8k",
+      "n": 200,
+      "passed": 189,
+      "acc": 0.945,
+      "wilson_lo": 0.9042130012276914,
+      "wilson_hi": 0.9690146582965411,
+      "avg_gen_s": 4.8,
+      "avg_predicted_n": 370.6
+    },
+    {
+      "tag": "g3_im",
+      "task": "gsm8k",
+      "n": 200,
+      "passed": 192,
+      "acc": 0.96,
+      "wilson_lo": 0.923067931799067,
+      "wilson_hi": 0.9795943679338476,
+      "avg_gen_s": 4.9,
+      "avg_predicted_n": 372.0
+    },
+    {
+      "tag": "g4_im",
+      "task": "gsm8k",
+      "n": 200,
+      "passed": 191,
+      "acc": 0.955,
+      "wilson_lo": 0.9167032959981803,
+      "wilson_hi": 0.976147456998507,
+      "avg_gen_s": 5.0,
+      "avg_predicted_n": 372.8
+    },
+    {
+      "tag": "g0_im",
+      "task": "humaneval",
+      "n": 164,
+      "passed": 147,
+      "acc": 0.8963414634146342,
+      "wilson_lo": 0.8402719638865523,
+      "wilson_hi": 0.9342684918114623,
+      "avg_gen_s": 3.6,
+      "avg_predicted_n": 247.8
+    },
+    {
+      "tag": "g1_im",
+      "task": "humaneval",
+      "n": 164,
+      "passed": 153,
+      "acc": 0.9329268292682927,
+      "wilson_lo": 0.8838986124358266,
+      "wilson_hi": 0.9621378853266203,
+      "avg_gen_s": 3.4,
+      "avg_predicted_n": 253.1
+    },
+    {
+      "tag": "g3_im",
+      "task": "humaneval",
+      "n": 164,
+      "passed": 147,
+      "acc": 0.8963414634146342,
+      "wilson_lo": 0.8402719638865523,
+      "wilson_hi": 0.9342684918114623,
+      "avg_gen_s": 3.2,
+      "avg_predicted_n": 236.0
+    },
+    {
+      "tag": "g4_im",
+      "task": "humaneval",
+      "n": 164,
+      "passed": 152,
+      "acc": 0.926829268292683,
+      "wilson_lo": 0.8764697885530748,
+      "wilson_hi": 0.9576507021986334,
+      "avg_gen_s": 3.2,
+      "avg_predicted_n": 228.3
+    }
+  ],
+  "vs_baseline": [
+    {
+      "task": "gsm8k",
+      "tag": "g0_im",
+      "baseline": "g1_im",
+      "paired_n": 200,
+      "b_baseline_pass_tag_fail": 11,
+      "c_baseline_fail_tag_pass": 2,
+      "mcnemar_p_exact": 0.0224609375,
+      "acc_tag": 0.9,
+      "acc_baseline": 0.945,
+      "acc_diff": -0.04499999999999993,
+      "boot_ci_lo": -0.07999999999999996,
+      "boot_ci_hi": -0.014999999999999902
+    },
+    {
+      "task": "gsm8k",
+      "tag": "g3_im",
+      "baseline": "g1_im",
+      "paired_n": 200,
+      "b_baseline_pass_tag_fail": 3,
+      "c_baseline_fail_tag_pass": 6,
+      "mcnemar_p_exact": 0.5078125,
+      "acc_tag": 0.96,
+      "acc_baseline": 0.945,
+      "acc_diff": 0.015000000000000013,
+      "boot_ci_lo": -0.014999999999999902,
+      "boot_ci_hi": 0.04499999999999993
+    },
+    {
+      "task": "gsm8k",
+      "tag": "g4_im",
+      "baseline": "g1_im",
+      "paired_n": 200,
+      "b_baseline_pass_tag_fail": 5,
+      "c_baseline_fail_tag_pass": 7,
+      "mcnemar_p_exact": 0.7744140625,
+      "acc_tag": 0.955,
+      "acc_baseline": 0.945,
+      "acc_diff": 0.010000000000000009,
+      "boot_ci_lo": -0.02499999999999991,
+      "boot_ci_hi": 0.04499999999999993
+    },
+    {
+      "task": "humaneval",
+      "tag": "g0_im",
+      "baseline": "g1_im",
+      "paired_n": 164,
+      "b_baseline_pass_tag_fail": 13,
+      "c_baseline_fail_tag_pass": 7,
+      "mcnemar_p_exact": 0.26317596435546875,
+      "acc_tag": 0.8963414634146342,
+      "acc_baseline": 0.9329268292682927,
+      "acc_diff": -0.03658536585365857,
+      "boot_ci_lo": -0.09146341463414631,
+      "boot_ci_hi": 0.018292682926829174
+    },
+    {
+      "task": "humaneval",
+      "tag": "g3_im",
+      "baseline": "g1_im",
+      "paired_n": 164,
+      "b_baseline_pass_tag_fail": 10,
+      "c_baseline_fail_tag_pass": 4,
+      "mcnemar_p_exact": 0.1795654296875,
+      "acc_tag": 0.8963414634146342,
+      "acc_baseline": 0.9329268292682927,
+      "acc_diff": -0.03658536585365857,
+      "boot_ci_lo": -0.0792682926829269,
+      "boot_ci_hi": 0.0060975609756097615
+    },
+    {
+      "task": "humaneval",
+      "tag": "g4_im",
+      "baseline": "g1_im",
+      "paired_n": 164,
+      "b_baseline_pass_tag_fail": 5,
+      "c_baseline_fail_tag_pass": 4,
+      "mcnemar_p_exact": 1.0,
+      "acc_tag": 0.926829268292683,
+      "acc_baseline": 0.9329268292682927,
+      "acc_diff": -0.0060975609756097615,
+      "boot_ci_lo": -0.04268292682926822,
+      "boot_ci_hi": 0.030487804878048697
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+ "sizes": {
+  "packed3": {
+   "bits": 3,
+   "path": "e:\\CUDA11.8\\train\\tcq_exp\\stores\\packed3",
+   "bytes": 12582912000,
+   "gib": 11.72,
+   "nibble_gib": 15.47,
+   "ratio_vs_nibble": 0.758
+  },
+  "packed2": {
+   "bits": 2,
+   "path": "e:\\CUDA11.8\\train\\tcq_exp\\stores\\packed2",
+   "bytes": 8556380160,
+   "gib": 7.97,
+   "nibble_gib": 15.47,
+   "ratio_vs_nibble": 0.515
+  },
+  "packed2_sym4": {
+   "bits": 2,
+   "path": "stores/packed2_sym4",
+   "bytes": 8556380160,
+   "gib": 7.97,
+   "nibble_gib": 15.47,
+   "ratio_vs_nibble": 0.515
+  }
+ },
+ "elapsed_s_build": 2020.4,
+ "n_sample": 256,
+ "groups": {},
+ "consistency": {
+  "int3": {
+   "n_checked": 510,
+   "q_equal": 510,
+   "scale_equal": 510,
+   "packed_file_equal": 510,
+   "weight_max_abs_diff_vs_nibble": 0.0,
+   "weight_mse_vs_bf16": 8.706519592498594e-06,
+   "elapsed_s": 14.0
+  },
+  "int2": {
+   "n_checked": 510,
+   "q_equal": 510,
+   "scale_equal": 510,
+   "packed_file_equal": 510,
+   "weight_max_abs_diff_vs_nibble": 0.0,
+   "weight_mse_vs_bf16": 6.642810773223127e-05,
+   "elapsed_s": 12.4
+  }
+ },
+ "throughput": {
+  "int3": {
+   "pack_MBps": 270.0,
+   "unpack_MBps": 238.7,
+   "packed_MB": 192.0
+  },
+  "int2": {
+   "pack_MBps": 403.8,
+   "unpack_MBps": 406.2,
+   "packed_MB": 128.0
+  }
+ },
+ "patch": {
+  "n_high_experts": 2560,
+  "weights_per_expert": 3145728,
+  "delta_bits": 1,
+  "patch_gib": 0.938,
+  "base3_gib": 11.72,
+  "patch_ratio": 0.08
+ }
+}

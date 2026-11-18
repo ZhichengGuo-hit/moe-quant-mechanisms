@@ -1,0 +1,76 @@
+{
+  "fetched_at": "2026-11-06T23:42:19",
+  "official_first_gguf": "2026-09-16T13:23:49",
+  "lag_days_vs_official": {
+    "official": 0.0,
+    "B1_venastine_q4km": 1.22,
+    "B2_dealign_q4km": 2.66
+  },
+  "repos": {
+    "official": {
+      "repo": "XingChen-AGI/Xing4.0-29B-A4B-GGUF",
+      "author": "XingChen-AGI",
+      "created_at": "2026-09-16T13:23:49",
+      "last_modified": "2026-11-05T08:17:54",
+      "downloads": 11824,
+      "likes": 162,
+      "gguf_files": [
+        "xing4_0-29b-IQ4_NL.gguf",
+        "xing4_0-29b-imatrix.gguf",
+        "xing4_0-29b-iq2_M-slim.gguf",
+        "xing4_0-29b-iq3_m.gguf",
+        "xing4_0-29b-iq3_xxs.gguf",
+        "xing4_0-29b-iq4_nl.gguf",
+        "xing4_0-29b-iq4_xs.gguf",
+        "xing4_0-29b-q5_0.gguf",
+        "xing4_0-29b-q6_k.gguf",
+        "xing4_0-29b-q8_0.gguf"
+      ],
+      "declares_imatrix": true,
+      "readme_head": "---\nlibrary_name: transformers\nlicense: apache-2.0\npipeline_tag: text-generation\n---\n# Running Xing4.0-29B-A4B Locally - [Read our guide](https://github.com/XingChen-AGI/Xing4.0-29B-A4B/blob/main/tutorial/llama.cpp/README_EN.md)\nThis repository provides low-bit quantized weights and a quantization imatrix for Xing4.0-29B-A4B, covering a 2–8-bit quantization range and achieving better accuracy. The quantized GGUF files range from 11–34 GB, allowing you to choose appropriate weights to run on a single consumer-grade GPU.\n\n\n# Xing4.0-29B-A4B\n\n> [!Note]\n> This repository provides the model weights and configuration files for Xing4.0-29B-A4B in Hugging Face Transformers format, compatible with Transformers, vLLM, SGLang, KTransformers, and other mainstream inference frameworks.\n\n**Xing4.0-29B-A4B** is a next-generation large language model in the Xing series (formerly [TeleChat](https://github.com/Tele-AI/TeleChat3)), developed by China Telecom Artificial Intelligence Technology Co., Ltd. With 29B total parameters and only 4B activated per token, it natively supports a 256K context length, extensible to 512K. It is the first model of this scale trained entirely on the Ascend NPU platfor"
+    },
+    "B1_venastine_q4km": {
+      "repo": "Venastine-Research/Xing4.0-29B-A4B-GGUF",
+      "author": "Venastine-Research",
+      "created_at": "2026-09-17T18:37:31",
+      "last_modified": "2026-10-11T13:34:13",
+      "downloads": 46640,
+      "likes": 791,
+      "gguf_files": [
+        "Xing4.0-29B-A4B-IQ2_M.gguf",
+        "Xing4.0-29B-A4B-IQ3_M-MTP.gguf",
+        "Xing4.0-29B-A4B-IQ3_M.gguf",
+        "Xing4.0-29B-A4B-IQ3_XXS-MTP.gguf",
+        "Xing4.0-29B-A4B-IQ3_XXS.gguf",
+        "Xing4.0-29B-A4B-Q4_K_M.gguf",
+        "Xing4.0-29B-A4B-Q5_K_M.gguf",
+        "Xing4.0-29B-A4B-Q6_K.gguf",
+        "Xing4.0-29B-A4B-Q8_0.gguf",
+        "Xing4.0-29B-A4B-f16.gguf",
+        "Xing4.0_imatrix.gguf"
+      ],
+      "declares_imatrix": false,
+      "readme_head": "---\nlibrary_name: transformers\nlicense: apache-2.0\npipeline_tag: text-generation\nbase_model:\n- XingChen-AGI/Xing4.0-29B-A4B\n---\n\n# Xing4.0-29B-A4B\n\n> [!Note]\n> This repository provides the model weights and configuration files for Xing4.0-29B-A4B in Hugging Face Transformers format, compatible with Transformers, vLLM, SGLang, KTransformers, and other mainstream inference frameworks.\n\n**Xing4.0-29B-A4B** is a next-generation large language model in the Xing series (formerly [TeleChat](https://github.com/Tele-AI/TeleChat3)), developed by China Telecom Artificial Intelligence Technology Co., Ltd. With 29B total parameters and only 4B activated per token, it natively supports a 256K context length, extensible to 512K. It is the first model of this scale trained entirely on the Ascend NPU platform with the MindSpore framework, and deeply optimized for complex engineering tasks.\n\nFor more information, please refer to our [GitHub repository](https://github.com/XingChen-AGI/Xing4.0-29B-A4B).\n\n\n## Highlights\n\n- **Agent-Oriented Architecture**: Built on the mHC + MLA + MTP architecture, supporting multi-step planning, tool calling, and complex reasoning chain execution, ensuring task coheren"
+    },
+    "B2_dealign_q4km": {
+      "repo": "dealignai/Xing4.0-29B-A4B-CRACK-GGUF",
+      "author": "dealignai",
+      "created_at": "2026-09-19T05:18:59",
+      "last_modified": "2026-09-21T00:04:54",
+      "downloads": 5995,
+      "likes": 16,
+      "gguf_files": [
+        "Xing4.0-29B-A4B-CRACK-IQ3_M.gguf",
+        "Xing4.0-29B-A4B-CRACK-IQ4_NL.gguf",
+        "Xing4.0-29B-A4B-CRACK-Q3_K_M.gguf",
+        "Xing4.0-29B-A4B-CRACK-Q4_K_M.gguf",
+        "Xing4.0-29B-A4B-CRACK-Q5_K_M.gguf",
+        "Xing4.0-29B-A4B-CRACK-Q6_K.gguf",
+        "Xing4.0-29B-A4B-CRACK-Q8_0.gguf"
+      ],
+      "declares_imatrix": true,
+      "readme_head": "---\nlicense: apache-2.0\nlibrary_name: llama.cpp\npipeline_tag: text-generation\ntags:\n- gguf\n- llama-cpp\n- moe\n- mla\n- hyper-connections\n- 29b-a4b\n- xing4\n- telechat\n- uncensored\n- crack\n- dealignai\n- 中文\n- chinese\nbase_model:\n- XingChen-AGI/Xing4.0-29B-A4B\nbase_model_relation: quantized\nthumbnail: dealign_mascot.png\n---\n\n<div align=\"center\">\n\n<img src=\"dealign_mascot.png\" width=\"128\" />\n\n# Xing4.0-29B-A4B — CRACK · GGUF Collection\n\n**Abliterated · No guardrails · MoE 29B/4B active · MLA + Hyper-Connections + MTP**\n\n**已去除拒绝行为 · 无护栏 · MoE 29B/4B 激活 · MLA + Hyper-Connections + MTP**\n\n[@dealignai](https://x.com/dealignai)\n\n</div>\n\n---\n\n## What is this · 这是什么\n\n[Xing4.0-29B-A4B](https://huggingface.co/XingChen-AGI/Xing4.0-29B-A4B) — China Telecom AI's next-generation MoE reasoning model (TeleChat successor) — with the refusal circuitry surgically removed at the weight level. Seven GGUF quants with imatrix calibration.\n\n[Xing4.0-29B-A4B](https://huggingface.co/XingChen-AGI/Xing4.0-29B-A4B) — 中国电信人工智能的新一代 MoE 推理模型（TeleChat 后继版本）— 拒绝相关电路在权重层面被外科式移除。提供七个 GGUF 量化版本，均带 imatrix 校准。\n\nRuns on the `shuxiaoqiong/llama.cpp @ xing4_0-port` runtime ([upstream PR #29012](https://github.com/ggml-org/llama"
+    }
+  },
+  "note": "lag_days 以官方仓库创建时间为零点; §5.5 表格用 author/created/downloads/imatrix 四列"
+}

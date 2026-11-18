@@ -1,0 +1,47 @@
+{
+  "bench": "gpqa100",
+  "n_predict": 1024,
+  "configs": {
+    "iq2xxs": {
+      "model": "E:\\CUDA11.8\\model\\baselines\\Qwen3.6-35B-A3B-UD-IQ2_XXS.gguf",
+      "domain": null,
+      "n": 100,
+      "passed": 38,
+      "acc": 0.38,
+      "avg_predicted_n": 471.1,
+      "avg_gen_s": 8.4,
+      "capped": 40,
+      "capped_rate": 0.4,
+      "finish_reasons": {
+        "stop": 60,
+        "length": 40
+      }
+    },
+    "ud_q2kxl": {
+      "model": "E:\\CUDA11.8\\model\\ud\\Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf",
+      "domain": null,
+      "n": 100,
+      "passed": 31,
+      "acc": 0.31,
+      "avg_predicted_n": 423.7,
+      "avg_gen_s": 7.7,
+      "capped": 38,
+      "capped_rate": 0.38,
+      "finish_reasons": {
+        "stop": 62,
+        "length": 38
+      }
+    }
+  },
+  "mcnemar": {
+    "ud_q2kxl": {
+      "paired": 100,
+      "b_baseline_pass_other_fail": 18,
+      "c_baseline_fail_other_pass": 11,
+      "p_exact": 0.264931
+    }
+  },
+  "data_path": "E:\\CUDA11.8\\train\\tcq_exp\\data\\gpqa100.jsonl",
+  "data_sha256": "a0f2b8b06fe89ec3930d4c56fd22be40db7855cfbb9c88d2281fffda5db14a85",
+  "n_questions": 100
+}

@@ -1,0 +1,21 @@
+{
+ "n_pairs": 100,
+ "label_a": "C",
+ "label_b": "Dprime",
+ "acc_a": 0.24,
+ "acc_b": 0.38,
+ "diff_pt": 14.000000000000002,
+ "ci90_pt": [
+  5.0,
+  22.0
+ ],
+ "b_a_only": 7,
+ "c_b_only": 21,
+ "n_disagree": 28,
+ "mcnemar_exact_p": 0.01254095137119283,
+ "significant_0.05": true,
+ "files": {
+  "a": "E:\\CUDA11.8\\train\\tcq_exp\\results\\e_g3_xing_C_roleq4_gpqa.jsonl",
+  "b": "E:\\CUDA11.8\\train\\tcq_exp\\results\\e_g3_xing_xing_Dprime_gpqa.jsonl"
+ }
+}

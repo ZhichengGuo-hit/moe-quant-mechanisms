@@ -1,0 +1,149 @@
+{
+  "protocol": {
+    "data": "longmemeval_oracle first 100",
+    "judge": "gemma-4-26B-A4B-it-UD-Q4_K_XL.gguf",
+    "prompts": "official LONGMEMEVAL_PROMPT_DIRECT + anscheck (yes/no)",
+    "notes": "本地 judge, 与官方 GPT-4o 不完全同口径, 仅作臂间比较"
+  },
+  "configs": {
+    "iq2xxs": {
+      "n": 100,
+      "acc": 0.55,
+      "per_type": {
+        "temporal-reasoning": {
+          "n": 60,
+          "acc": 0.7166666666666667
+        },
+        "multi-session": {
+          "n": 40,
+          "acc": 0.3
+        }
+      }
+    },
+    "ud_q2kxl": {
+      "n": 100,
+      "acc": 0.62,
+      "per_type": {
+        "temporal-reasoning": {
+          "n": 60,
+          "acc": 0.8
+        },
+        "multi-session": {
+          "n": 40,
+          "acc": 0.35
+        }
+      },
+      "vs_iq2xxs": {
+        "paired_n": 100,
+        "b": 9,
+        "c": 2,
+        "mcnemar_p": 0.0654296875,
+        "acc_diff": 0.07,
+        "boot_ci95": [
+          0.01,
+          0.13
+        ]
+      }
+    },
+    "ud_q4km": {
+      "n": 100,
+      "acc": 0.59,
+      "per_type": {
+        "temporal-reasoning": {
+          "n": 60,
+          "acc": 0.75
+        },
+        "multi-session": {
+          "n": 40,
+          "acc": 0.35
+        }
+      },
+      "vs_iq2xxs": {
+        "paired_n": 100,
+        "b": 8,
+        "c": 4,
+        "mcnemar_p": 0.3876953125,
+        "acc_diff": 0.04,
+        "boot_ci95": [
+          -0.02,
+          0.11
+        ]
+      }
+    },
+    "tcq_nl_global": {
+      "n": 100,
+      "acc": 0.57,
+      "per_type": {
+        "temporal-reasoning": {
+          "n": 60,
+          "acc": 0.7
+        },
+        "multi-session": {
+          "n": 40,
+          "acc": 0.375
+        }
+      },
+      "vs_iq2xxs": {
+        "paired_n": 100,
+        "b": 7,
+        "c": 5,
+        "mcnemar_p": 0.7744140625,
+        "acc_diff": 0.02,
+        "boot_ci95": [
+          -0.05,
+          0.09
+        ]
+      }
+    },
+    "tcq_nl_math": {
+      "n": 100,
+      "acc": 0.57,
+      "per_type": {
+        "temporal-reasoning": {
+          "n": 60,
+          "acc": 0.75
+        },
+        "multi-session": {
+          "n": 40,
+          "acc": 0.3
+        }
+      },
+      "vs_iq2xxs": {
+        "paired_n": 100,
+        "b": 7,
+        "c": 5,
+        "mcnemar_p": 0.7744140625,
+        "acc_diff": 0.02,
+        "boot_ci95": [
+          -0.04,
+          0.09
+        ]
+      }
+    },
+    "base2": {
+      "n": 100,
+      "acc": 0.56,
+      "per_type": {
+        "temporal-reasoning": {
+          "n": 60,
+          "acc": 0.65
+        },
+        "multi-session": {
+          "n": 40,
+          "acc": 0.425
+        }
+      },
+      "vs_iq2xxs": {
+        "paired_n": 100,
+        "b": 9,
+        "c": 8,
+        "mcnemar_p": 1.0,
+        "acc_diff": 0.01,
+        "boot_ci95": [
+          -0.07,
+          0.09
+        ]
+      }
+    }
+  }
+}

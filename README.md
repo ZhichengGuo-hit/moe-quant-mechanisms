@@ -104,11 +104,20 @@ git -C /path/to/llama.cpp apply llamacpp/llama.cpp-tcmoe.patch
 - 轨迹级单元格为 n=20；math 补丁的点估计偏移（−7.5 pt）方向一致但不显著，属探索性观察。
 - 硬件限于两台单机（双路 Xeon；RTX 5000/4070），不做跨硬件主张。
 
-## 路径约定
+## 路径约定与结果文件
 
 仓库根的 `code/` 对应原工作目录。文档中出现的 `tcq_exp/...`、`tcmoe/...` 等相对路径**均相对于 `code/`**（实际位置 `code/tcq_exp/...`）。
 
-`code/tcq_exp/results/` 下的原始结果（JSON / JSONL / 日志 / 图表）**未随仓库分发**，体积远超代码本身；`DATA_TABLE.md` 每行都标注了对应结果文件路径，可按需在本地复现目录中定位。
+各模块的原始结果（JSON / JSONL / CSV）**已随仓库提供**，共 58 个文件，位于 `code/<module>/results/`：
+
+| 目录 | 文件数 | 内容 |
+|---|---|---|
+| `code/tcq_exp/results/` | 51 | 组件阶梯、KLD、配对检验、码本拟合、换装代价、跨模型汇总 |
+| `code/reverse/results/` | 3 | 容器反解元数据与配对评测 |
+| `code/route_consistency/results/` | 2 | 逐层路由一致性 |
+| `code/nemotron_ext/results/` · `route/results/` | 2 | Nemotron 外延与路由 |
+
+`DATA_TABLE.md` 中每一行都标注了对应的结果文件路径，可直接对照定位。ERC（残差补偿）实验的结果按导出约定不含在内。
 
 ## 引用
 

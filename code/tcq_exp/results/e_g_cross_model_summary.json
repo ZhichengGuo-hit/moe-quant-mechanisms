@@ -1,0 +1,984 @@
+{
+  "generated_at": "2026-11-08T14:06:14",
+  "protocol": {
+    "bin": "llama-upstream/build-cuda/bin",
+    "ctx": 4096,
+    "threads": 16,
+    "n_predict": 1024,
+    "block": 50,
+    "cpus": "0-31",
+    "temperature": 0.0,
+    "top_k": 1,
+    "seed": 1234,
+    "thinking": "disabled (chat_template_kwargs.enable_thinking=false)",
+    "tasks": {
+      "gsm8k": 200,
+      "humaneval": 164,
+      "gpqa": 100
+    },
+    "scoring": "gsm8k 精确答案 / humaneval 抽取后单测隔离执行 / gpqa 单字母抽取",
+    "gpu": "Quadro RTX 5000 16 GB, 混合推理 -ngl 按配置固定 (见各 suite 脚本)"
+  },
+  "task_names": {
+    "gsm8k": "GSM8K (200)",
+    "humaneval": "HumanEval (164)",
+    "gpqa": "GPQA-Diamond (100)"
+  },
+  "models": [
+    {
+      "suite": "G1",
+      "model": "gemma-4-26B-A4B",
+      "params": "26B / A4B",
+      "baseline": "B_ud_q4kxl",
+      "note": "融合三维专家张量, 容器不支持逐专家规则; C/C'/D/R 为角色对齐整张量分档",
+      "summary_file": "e_g1_gemma4_summary.json",
+      "vs_summary_file": null,
+      "rows": [
+        {
+          "tag": "A_qat",
+          "role": "官方 QAT (UD-Q4_K_XL)",
+          "is_baseline": false,
+          "file": "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+          "ngl": 99,
+          "size_gib": 13.27,
+          "size_bytes": 14249047104,
+          "acc": {
+            "gsm8k": 0.975,
+            "humaneval": 0.9451219512195121,
+            "gpqa": 0.43
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 195,
+            "humaneval": 155,
+            "gpqa": 43
+          },
+          "avg_gen_s": {
+            "gsm8k": 7.9,
+            "humaneval": 3.3,
+            "gpqa": 10.5
+          },
+          "avg_predicted_n": {
+            "gsm8k": 292.4,
+            "humaneval": 179.4,
+            "gpqa": 787.7
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.005,
+              "boot_ci_lo": -0.010000000000000009,
+              "boot_ci_hi": 0.02499999999999991,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": -0.0122,
+              "boot_ci_lo": -0.04268292682926822,
+              "boot_ci_hi": 0.018292682926829174,
+              "mcnemar_p": 0.6875
+            },
+            "gpqa": {
+              "acc_diff": -0.06,
+              "boot_ci_lo": -0.14,
+              "boot_ci_hi": 0.020000000000000018,
+              "mcnemar_p": 0.210114
+            }
+          }
+        },
+        {
+          "tag": "B_ud_q4kxl",
+          "role": "社区 UD-Q4_K_XL (基线)",
+          "is_baseline": true,
+          "file": "gemma-4-26B-A4B-it-UD-Q4_K_XL.gguf",
+          "ngl": 99,
+          "size_gib": 15.843,
+          "size_bytes": 17010980576,
+          "acc": {
+            "gsm8k": 0.97,
+            "humaneval": 0.9573170731707317,
+            "gpqa": 0.49
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 194,
+            "humaneval": 157,
+            "gpqa": 49
+          },
+          "avg_gen_s": {
+            "gsm8k": 10.2,
+            "humaneval": 23.2,
+            "gpqa": 37.1
+          },
+          "avg_predicted_n": {
+            "gsm8k": 295.8,
+            "humaneval": 176.3,
+            "gpqa": 794.7
+          },
+          "vs_baseline": {}
+        },
+        {
+          "tag": "C_roleq4",
+          "role": "角色对齐: 专家 Q4_K + 非专家 Q5_K",
+          "is_baseline": false,
+          "file": "g1_c.g4q4k.gguf",
+          "ngl": 99,
+          "size_gib": 14.359,
+          "size_bytes": 15417462240,
+          "acc": {
+            "gsm8k": 0.97,
+            "humaneval": 0.9512195121951219,
+            "gpqa": 0.53
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 194,
+            "humaneval": 156,
+            "gpqa": 53
+          },
+          "avg_gen_s": {
+            "gsm8k": 9.0,
+            "humaneval": 3.7,
+            "gpqa": 10.6
+          },
+          "avg_predicted_n": {
+            "gsm8k": 299.6,
+            "humaneval": 181.1,
+            "gpqa": 783.9
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.0,
+              "boot_ci_lo": 0.0,
+              "boot_ci_hi": 0.0,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": -0.0061,
+              "boot_ci_lo": -0.03658536585365846,
+              "boot_ci_hi": 0.024390243902439046,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": 0.04,
+              "boot_ci_lo": -0.030000000000000027,
+              "boot_ci_hi": 0.12000000000000005,
+              "mcnemar_p": 0.454498
+            }
+          }
+        },
+        {
+          "tag": "Cprime_roleq4_nx6",
+          "role": "角色对齐 + 非专家 Q6_K (比特梯度)",
+          "is_baseline": false,
+          "file": "g1_cp.g4q4k_nx6.gguf",
+          "ngl": 99,
+          "size_gib": 14.592,
+          "size_bytes": 15668058080,
+          "acc": {
+            "gsm8k": 0.965,
+            "humaneval": 0.9512195121951219,
+            "gpqa": 0.5
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 193,
+            "humaneval": 156,
+            "gpqa": 50
+          },
+          "avg_gen_s": {
+            "gsm8k": 22.3,
+            "humaneval": 25.5,
+            "gpqa": 12.9
+          },
+          "avg_predicted_n": {
+            "gsm8k": 292.3,
+            "humaneval": 179.3,
+            "gpqa": 784.1
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": -0.005,
+              "boot_ci_lo": -0.020000000000000018,
+              "boot_ci_hi": 0.0,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": -0.0061,
+              "boot_ci_lo": -0.03658536585365846,
+              "boot_ci_hi": 0.018292682926829285,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": 0.01,
+              "boot_ci_lo": -0.08000000000000007,
+              "boot_ci_hi": 0.10000000000000003,
+              "mcnemar_p": 1.0
+            }
+          }
+        },
+        {
+          "tag": "D_roleq4_im",
+          "role": "C + imatrix",
+          "is_baseline": false,
+          "file": "g1_d.g4q4k_im.gguf",
+          "ngl": 99,
+          "size_gib": 14.359,
+          "size_bytes": 15417462496,
+          "acc": {
+            "gsm8k": 0.97,
+            "humaneval": 0.9512195121951219,
+            "gpqa": 0.51
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 194,
+            "humaneval": 156,
+            "gpqa": 51
+          },
+          "avg_gen_s": {
+            "gsm8k": 9.4,
+            "humaneval": 17.4,
+            "gpqa": 10.6
+          },
+          "avg_predicted_n": {
+            "gsm8k": 299.4,
+            "humaneval": 173.8,
+            "gpqa": 775.5
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.0,
+              "boot_ci_lo": -0.015000000000000013,
+              "boot_ci_hi": 0.015000000000000013,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": -0.0061,
+              "boot_ci_lo": -0.030487804878048808,
+              "boot_ci_hi": 0.018292682926829285,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": 0.02,
+              "boot_ci_lo": -0.07000000000000006,
+              "boot_ci_hi": 0.12,
+              "mcnemar_p": 0.831812
+            }
+          }
+        },
+        {
+          "tag": "R_roleq3_im",
+          "role": "专家 Q3_K + imatrix (低比特档)",
+          "is_baseline": false,
+          "file": "g1_r.g4q3k_im.gguf",
+          "ngl": 99,
+          "size_gib": 11.589,
+          "size_bytes": 12443766496,
+          "acc": {
+            "gsm8k": 0.975,
+            "humaneval": 0.9512195121951219,
+            "gpqa": 0.41
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 195,
+            "humaneval": 156,
+            "gpqa": 41
+          },
+          "avg_gen_s": {
+            "gsm8k": 4.1,
+            "humaneval": 2.9,
+            "gpqa": 11.0
+          },
+          "avg_predicted_n": {
+            "gsm8k": 285.3,
+            "humaneval": 180.5,
+            "gpqa": 783.5
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.005,
+              "boot_ci_lo": 0.0,
+              "boot_ci_hi": 0.015000000000000013,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": -0.0061,
+              "boot_ci_lo": -0.030487804878048808,
+              "boot_ci_hi": 0.024390243902438935,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": -0.08,
+              "boot_ci_lo": -0.18,
+              "boot_ci_hi": 0.010000000000000009,
+              "mcnemar_p": 0.168638
+            }
+          }
+        }
+      ]
+    },
+    {
+      "suite": "G2",
+      "model": "MiniCPM-V-4.7-35B-A3B",
+      "params": "35B / A3B",
+      "baseline": "A_off_q4km",
+      "note": "双基线: 官方 Q4_K_M 与官方 imatrix 混档; 另含逐层路由分档 C_layer",
+      "summary_file": "e_g2_minicpm_summary.json",
+      "vs_summary_file": "e_g2_minicpm_summary_vs_Rofficial_mixq3im.json",
+      "rows": [
+        {
+          "tag": "A_off_q4km",
+          "role": "官方 Q4_K_M (基线)",
+          "is_baseline": true,
+          "file": "MiniCPM-V-4_7-35B-A3B-Q4_K_M.gguf",
+          "ngl": 30,
+          "size_gib": 19.713,
+          "size_bytes": 21166255008,
+          "acc": {
+            "gsm8k": 0.965,
+            "humaneval": 0.8963414634146342,
+            "gpqa": 0.35
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 193,
+            "humaneval": 147,
+            "gpqa": 35
+          },
+          "avg_gen_s": {
+            "gsm8k": 18.7,
+            "humaneval": 12.0,
+            "gpqa": 19.6
+          },
+          "avg_predicted_n": {
+            "gsm8k": 337.4,
+            "humaneval": 204.6,
+            "gpqa": 344.0
+          },
+          "vs_baseline": {}
+        },
+        {
+          "tag": "Rofficial_mixq3im",
+          "role": "官方 mix_q3gud_im (官方 imatrix 混档)",
+          "is_baseline": false,
+          "file": "MiniCPM-V-4_7-35B-A3B-mix_q3gud_im.gguf",
+          "ngl": 99,
+          "size_gib": 14.439,
+          "size_bytes": 15503944896,
+          "acc": {
+            "gsm8k": 0.98,
+            "humaneval": 0.8963414634146342,
+            "gpqa": 0.38
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 196,
+            "humaneval": 147,
+            "gpqa": 38
+          },
+          "avg_gen_s": {
+            "gsm8k": 4.0,
+            "humaneval": 2.8,
+            "gpqa": 3.2
+          },
+          "avg_predicted_n": {
+            "gsm8k": 323.4,
+            "humaneval": 208.0,
+            "gpqa": 248.8
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.015,
+              "boot_ci_lo": -0.0050000000000000044,
+              "boot_ci_hi": 0.040000000000000036,
+              "mcnemar_p": 0.375
+            },
+            "humaneval": {
+              "acc_diff": 0.0,
+              "boot_ci_lo": -0.024390243902439046,
+              "boot_ci_hi": 0.024390243902439046,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": 0.03,
+              "boot_ci_lo": -0.030000000000000027,
+              "boot_ci_hi": 0.09999999999999998,
+              "mcnemar_p": 0.548828
+            }
+          }
+        },
+        {
+          "tag": "C_roleq4",
+          "role": "角色对齐: 专家 Q4_K + 非专家 Q5_K",
+          "is_baseline": false,
+          "file": "e_g2_c.gguf",
+          "ngl": 36,
+          "size_gib": 18.409,
+          "size_bytes": 19766171296,
+          "acc": {
+            "gsm8k": 0.975,
+            "humaneval": 0.9146341463414634,
+            "gpqa": 0.35
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 195,
+            "humaneval": 150,
+            "gpqa": 35
+          },
+          "avg_gen_s": {
+            "gsm8k": 19.4,
+            "humaneval": 13.1,
+            "gpqa": 25.1
+          },
+          "avg_predicted_n": {
+            "gsm8k": 330.9,
+            "humaneval": 200.5,
+            "gpqa": 381.7
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.01,
+              "boot_ci_lo": -0.010000000000000009,
+              "boot_ci_hi": 0.030000000000000027,
+              "mcnemar_p": 0.625
+            },
+            "humaneval": {
+              "acc_diff": 0.0183,
+              "boot_ci_lo": -0.0060975609756097615,
+              "boot_ci_hi": 0.04268292682926833,
+              "mcnemar_p": 0.375
+            },
+            "gpqa": {
+              "acc_diff": 0.0,
+              "boot_ci_lo": -0.06,
+              "boot_ci_hi": 0.06,
+              "mcnemar_p": 1.0
+            }
+          }
+        },
+        {
+          "tag": "Clayer_route",
+          "role": "角色对齐 + 逐层路由分档",
+          "is_baseline": false,
+          "file": "e_g2_clayer.gguf",
+          "ngl": 40,
+          "size_gib": 15.42,
+          "size_bytes": 16557528736,
+          "acc": {
+            "gsm8k": 0.97,
+            "humaneval": 0.9085365853658537,
+            "gpqa": 0.34
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 194,
+            "humaneval": 149,
+            "gpqa": 34
+          },
+          "avg_gen_s": {
+            "gsm8k": 5.8,
+            "humaneval": 3.8,
+            "gpqa": 5.9
+          },
+          "avg_predicted_n": {
+            "gsm8k": 322.4,
+            "humaneval": 214.5,
+            "gpqa": 345.2
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.005,
+              "boot_ci_lo": -0.010000000000000009,
+              "boot_ci_hi": 0.02499999999999991,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": 0.0122,
+              "boot_ci_lo": -0.018292682926829285,
+              "boot_ci_hi": 0.04268292682926833,
+              "mcnemar_p": 0.6875
+            },
+            "gpqa": {
+              "acc_diff": -0.01,
+              "boot_ci_lo": -0.07,
+              "boot_ci_hi": 0.04999999999999999,
+              "mcnemar_p": 1.0
+            }
+          }
+        },
+        {
+          "tag": "D_roleq4_im",
+          "role": "C + imatrix",
+          "is_baseline": false,
+          "file": "e_g2_d.gguf",
+          "ngl": 36,
+          "size_gib": 18.409,
+          "size_bytes": 19766171552,
+          "acc": {
+            "gsm8k": 0.97,
+            "humaneval": 0.9085365853658537,
+            "gpqa": 0.4
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 194,
+            "humaneval": 149,
+            "gpqa": 40
+          },
+          "avg_gen_s": {
+            "gsm8k": 19.2,
+            "humaneval": 14.3,
+            "gpqa": 24.4
+          },
+          "avg_predicted_n": {
+            "gsm8k": 328.3,
+            "humaneval": 204.3,
+            "gpqa": 360.2
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.005,
+              "boot_ci_lo": 0.0,
+              "boot_ci_hi": 0.015000000000000013,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": 0.0122,
+              "boot_ci_lo": -0.012195121951219523,
+              "boot_ci_hi": 0.03658536585365857,
+              "mcnemar_p": 0.625
+            },
+            "gpqa": {
+              "acc_diff": 0.05,
+              "boot_ci_lo": -0.010000000000000009,
+              "boot_ci_hi": 0.11000000000000004,
+              "mcnemar_p": 0.226562
+            }
+          }
+        },
+        {
+          "tag": "R_roleq3_im",
+          "role": "专家 Q3_K + imatrix (低比特档)",
+          "is_baseline": false,
+          "file": "e_g2_r.gguf",
+          "ngl": 99,
+          "size_gib": 14.424,
+          "size_bytes": 15487981472,
+          "acc": {
+            "gsm8k": 0.97,
+            "humaneval": 0.8963414634146342,
+            "gpqa": 0.4
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 194,
+            "humaneval": 147,
+            "gpqa": 40
+          },
+          "avg_gen_s": {
+            "gsm8k": 4.0,
+            "humaneval": 2.7,
+            "gpqa": 3.9
+          },
+          "avg_predicted_n": {
+            "gsm8k": 328.1,
+            "humaneval": 205.6,
+            "gpqa": 301.9
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.005,
+              "boot_ci_lo": -0.010000000000000009,
+              "boot_ci_hi": 0.025000000000000022,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": 0.0,
+              "boot_ci_lo": -0.030487804878048808,
+              "boot_ci_hi": 0.030487804878048808,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": 0.05,
+              "boot_ci_lo": -0.010000000000000009,
+              "boot_ci_hi": 0.12,
+              "mcnemar_p": 0.266846
+            }
+          }
+        }
+      ]
+    },
+    {
+      "suite": "G3",
+      "model": "Xing4.0-29B-A4B",
+      "params": "29B / A4B",
+      "baseline": "A_off_iq4xs",
+      "note": "含两个社区基线 (Venastine / dealignai) 与官方 IQ4_XS",
+      "summary_file": "e_g3_xing_summary.json",
+      "vs_summary_file": "e_g3_xing_summary_vs_B1_venastine_q4km.json",
+      "rows": [
+        {
+          "tag": "A_off_iq4xs",
+          "role": "官方 IQ4_XS (基线)",
+          "is_baseline": true,
+          "file": "xing4_0-29b-iq4_xs.gguf",
+          "ngl": 42,
+          "size_gib": 17.018,
+          "size_bytes": 18272862944,
+          "acc": {
+            "gsm8k": 0.905,
+            "humaneval": 0.7987804878048781,
+            "gpqa": 0.36
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 181,
+            "humaneval": 131,
+            "gpqa": 36
+          },
+          "avg_gen_s": {
+            "gsm8k": 2.6,
+            "humaneval": 2.4,
+            "gpqa": 11.3
+          },
+          "avg_predicted_n": {
+            "gsm8k": 159.7,
+            "humaneval": 139.0,
+            "gpqa": 691.0
+          },
+          "vs_baseline": {}
+        },
+        {
+          "tag": "B1_venastine_q4km",
+          "role": "社区 Venastine Q4_K_M",
+          "is_baseline": false,
+          "file": "Xing4.0-29B-A4B-Q4_K_M.gguf",
+          "ngl": 42,
+          "size_gib": 17.649,
+          "size_bytes": 18950630112,
+          "acc": {
+            "gsm8k": 0.895,
+            "humaneval": 0.7378048780487805,
+            "gpqa": 0.23
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 179,
+            "humaneval": 121,
+            "gpqa": 23
+          },
+          "avg_gen_s": {
+            "gsm8k": 8.1,
+            "humaneval": 6.8,
+            "gpqa": 28.4
+          },
+          "avg_predicted_n": {
+            "gsm8k": 157.8,
+            "humaneval": 108.4,
+            "gpqa": 505.3
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": -0.01,
+              "boot_ci_lo": -0.05500000000000005,
+              "boot_ci_hi": 0.03500000000000003,
+              "mcnemar_p": 0.823803
+            },
+            "humaneval": {
+              "acc_diff": -0.061,
+              "boot_ci_lo": -0.12195121951219512,
+              "boot_ci_hi": -0.0060975609756097615,
+              "mcnemar_p": 0.063915
+            },
+            "gpqa": {
+              "acc_diff": -0.13,
+              "boot_ci_lo": -0.23,
+              "boot_ci_hi": -0.019999999999999962,
+              "mcnemar_p": 0.035082
+            }
+          }
+        },
+        {
+          "tag": "B2_dealign_q4km",
+          "role": "社区 dealignai CRACK Q4_K_M",
+          "is_baseline": false,
+          "file": "Xing4.0-29B-A4B-CRACK-Q4_K_M.gguf",
+          "ngl": 42,
+          "size_gib": 17.649,
+          "size_bytes": 18950630368,
+          "acc": {
+            "gsm8k": 0.905,
+            "humaneval": 0.7804878048780488,
+            "gpqa": 0.23
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 181,
+            "humaneval": 128,
+            "gpqa": 23
+          },
+          "avg_gen_s": {
+            "gsm8k": 8.8,
+            "humaneval": 7.9,
+            "gpqa": 35.9
+          },
+          "avg_predicted_n": {
+            "gsm8k": 159.5,
+            "humaneval": 129.8,
+            "gpqa": 651.7
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.0,
+              "boot_ci_lo": -0.04500000000000004,
+              "boot_ci_hi": 0.04500000000000004,
+              "mcnemar_p": 1.0
+            },
+            "humaneval": {
+              "acc_diff": -0.0183,
+              "boot_ci_lo": -0.07926829268292679,
+              "boot_ci_hi": 0.04268292682926822,
+              "mcnemar_p": 0.690038
+            },
+            "gpqa": {
+              "acc_diff": -0.13,
+              "boot_ci_lo": -0.25,
+              "boot_ci_hi": -0.020000000000000018,
+              "mcnemar_p": 0.04096
+            }
+          }
+        },
+        {
+          "tag": "C_roleq4",
+          "role": "角色对齐: 专家 Q4_K + 非专家 Q5_K",
+          "is_baseline": false,
+          "file": "e_g3_c.gguf",
+          "ngl": 42,
+          "size_gib": 16.636,
+          "size_bytes": 17862634208,
+          "acc": {
+            "gsm8k": 0.895,
+            "humaneval": 0.7926829268292683,
+            "gpqa": 0.24
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 179,
+            "humaneval": 130,
+            "gpqa": 24
+          },
+          "avg_gen_s": {
+            "gsm8k": 7.1,
+            "humaneval": 6.4,
+            "gpqa": 33.5
+          },
+          "avg_predicted_n": {
+            "gsm8k": 151.6,
+            "humaneval": 119.5,
+            "gpqa": 701.8
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": -0.01,
+              "boot_ci_lo": -0.05500000000000005,
+              "boot_ci_hi": 0.030000000000000027,
+              "mcnemar_p": 0.823803
+            },
+            "humaneval": {
+              "acc_diff": -0.0061,
+              "boot_ci_lo": -0.054878048780487854,
+              "boot_ci_hi": 0.04268292682926833,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": -0.12,
+              "boot_ci_lo": -0.22999999999999998,
+              "boot_ci_hi": -0.019999999999999962,
+              "mcnemar_p": 0.042774
+            }
+          }
+        },
+        {
+          "tag": "D_roleq4_im",
+          "role": "C + imatrix",
+          "is_baseline": false,
+          "file": "e_g3_d.gguf",
+          "ngl": 42,
+          "size_gib": 16.636,
+          "size_bytes": 17862634496,
+          "acc": {
+            "gsm8k": 0.935,
+            "humaneval": 0.7987804878048781,
+            "gpqa": 0.31
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 187,
+            "humaneval": 131,
+            "gpqa": 31
+          },
+          "avg_gen_s": {
+            "gsm8k": 6.6,
+            "humaneval": 5.6,
+            "gpqa": 54.7
+          },
+          "avg_predicted_n": {
+            "gsm8k": 149.3,
+            "humaneval": 101.2,
+            "gpqa": 631.3
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.03,
+              "boot_ci_lo": -0.009999999999999898,
+              "boot_ci_hi": 0.06999999999999995,
+              "mcnemar_p": 0.210114
+            },
+            "humaneval": {
+              "acc_diff": 0.0,
+              "boot_ci_lo": -0.05487804878048774,
+              "boot_ci_hi": 0.04878048780487809,
+              "mcnemar_p": 1.0
+            },
+            "gpqa": {
+              "acc_diff": -0.05,
+              "boot_ci_lo": -0.14999999999999997,
+              "boot_ci_hi": 0.04999999999999999,
+              "mcnemar_p": 0.442068
+            }
+          }
+        },
+        {
+          "tag": "R_roleq3_im",
+          "role": "专家 Q3_K + imatrix (低比特档)",
+          "is_baseline": false,
+          "file": "e_g3_r.gguf",
+          "ngl": 99,
+          "size_gib": 13.117,
+          "size_bytes": 14084611072,
+          "acc": {
+            "gsm8k": 0.94,
+            "humaneval": 0.7682926829268293,
+            "gpqa": 0.25
+          },
+          "n": {
+            "gsm8k": 200,
+            "humaneval": 164,
+            "gpqa": 100
+          },
+          "passed": {
+            "gsm8k": 188,
+            "humaneval": 126,
+            "gpqa": 25
+          },
+          "avg_gen_s": {
+            "gsm8k": 2.7,
+            "humaneval": 1.8,
+            "gpqa": 11.4
+          },
+          "avg_predicted_n": {
+            "gsm8k": 155.7,
+            "humaneval": 94.1,
+            "gpqa": 658.4
+          },
+          "vs_baseline": {
+            "gsm8k": {
+              "acc_diff": 0.035,
+              "boot_ci_lo": 0.0,
+              "boot_ci_hi": 0.07499999999999996,
+              "mcnemar_p": 0.118469
+            },
+            "humaneval": {
+              "acc_diff": -0.0305,
+              "boot_ci_lo": -0.07926829268292679,
+              "boot_ci_hi": 0.018292682926829285,
+              "mcnemar_p": 0.359283
+            },
+            "gpqa": {
+              "acc_diff": -0.11,
+              "boot_ci_lo": -0.21999999999999997,
+              "boot_ci_hi": -0.019999999999999962,
+              "mcnemar_p": 0.052239
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "g4_reference": {
+    "status": "degraded_to_c (不做质量对比, 仅生态观察)",
+    "source": "results/e_g4_smoke.json",
+    "reason": "llama.cpp diffusion 白名单不含 clover_moe; AR 模式输出乱码; transformers 路线需 >16 GB 显存",
+    "retry_entry": "SGLang PR #46927 或 >=48 GB 显存硬件, 协议 block=32 / low_confidence=0.95 / thinking 开"
+  },
+  "missing": []
+}

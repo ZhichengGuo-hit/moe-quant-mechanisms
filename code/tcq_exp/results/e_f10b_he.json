@@ -1,0 +1,89 @@
+{
+ "experiment": "E-F10b",
+ "protocol": {
+  "task": "humaneval (164)",
+  "metric": "pass@1 (unit tests, e17_task_eval.py 判分)",
+  "merge": "full jsonl + hc1024 truncation reruns override by task_id",
+  "baseline_line": {
+   "tcmoe_nl_code": 0.8902,
+   "tcmoe_nl_global": 0.9085,
+   "iq2xxs_humaneval": 0.939
+  },
+  "verdict_rule": {
+   "fix_confirmed": "diff >= +2.0pt vs 对应 nl 基线",
+   "partial": "0 <= diff < +2.0pt",
+   "regression": "diff < 0"
+  },
+  "tests": [
+   "McNemar exact binomial (b=base pass/new fail, c=base fail/new pass)",
+   "paired t on per-task 0/1 deltas (e_f7 betai/t_p_value)"
+  ]
+ },
+ "configs": {
+  "code": {
+   "tag": "tcmoe_q2nl_im_code",
+   "baseline": "tcmoe_nl_code",
+   "n_new": 164,
+   "n_base": 164,
+   "n_common": 164,
+   "missing_in_new": [],
+   "extra_in_new": [],
+   "acc": 0.8659,
+   "baseline_acc": 0.8902,
+   "diff_pt": -2.44,
+   "mcnemar": {
+    "b_base_pass_new_fail": 4,
+    "c_base_fail_new_pass": 0,
+    "p_exact": 0.125
+   },
+   "paired_t": {
+    "mean_diff_pt": -2.44,
+    "se_pt": 1.208,
+    "t": -2.019,
+    "df": 163,
+    "p_value": 0.04516,
+    "ci95_pt": [
+     -4.81,
+     -0.07
+    ]
+   },
+   "verdict": "regression"
+  },
+  "global": {
+   "tag": "tcmoe_q2nl_im_global",
+   "baseline": "tcmoe_nl_global",
+   "n_new": 164,
+   "n_base": 164,
+   "n_common": 164,
+   "missing_in_new": [],
+   "extra_in_new": [],
+   "acc": 0.9207,
+   "baseline_acc": 0.9085,
+   "diff_pt": 1.22,
+   "mcnemar": {
+    "b_base_pass_new_fail": 1,
+    "c_base_fail_new_pass": 3,
+    "p_exact": 0.625
+   },
+   "paired_t": {
+    "mean_diff_pt": 1.22,
+    "se_pt": 1.22,
+    "t": 1.0,
+    "df": 163,
+    "p_value": 0.31879,
+    "ci95_pt": [
+     -1.17,
+     3.61
+    ]
+   },
+   "verdict": "partial"
+  }
+ },
+ "verdict": "regression",
+ "verdict_per_config": {
+  "code": "regression",
+  "global": "partial"
+ },
+ "interpretation": "判定未达 fix_confirmed（<+2pt）时，增益不足归因于『码本家族 × 加权交互』：容器只允许每 (layer, proj) 一张 4 级共享表，而 imatrix 加权目标把拟合质量倾斜给高能量输入通道；per-matrix 的最优码本差异无法被共享表吸收，4 级离散化又截断了加权收益，两者交互使代码侧 HumanEval 的修复停留在噪声量级。",
+ "elapsed_s": 0.0
+}

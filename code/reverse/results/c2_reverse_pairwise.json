@@ -1,0 +1,124 @@
+{
+ "target": "E:\\CUDA11.8\\train\\reverse\\results\\c2_reverse_tasks.jsonl",
+ "n_target": 364,
+ "bootstrap": {
+  "n": 1000,
+  "seed": 20261104,
+  "unit": "item"
+ },
+ "test": "McNemar exact (two-sided binomial) + bootstrap CI for acc diff",
+ "vs_g2": {
+  "per_task": {
+   "gsm8k": {
+    "paired_n": 200,
+    "b": 1,
+    "c": 5,
+    "p": 0.21875,
+    "acc_baseline": 0.94,
+    "acc_target": 0.96,
+    "acc_diff": 0.020000000000000018,
+    "ci95": [
+     0.0,
+     0.04012499999999992
+    ],
+    "significant": false
+   },
+   "humaneval": {
+    "paired_n": 164,
+    "b": 5,
+    "c": 6,
+    "p": 1.0,
+    "acc_baseline": 0.9024390243902439,
+    "acc_target": 0.9085365853658537,
+    "acc_diff": 0.0060975609756097615,
+    "ci95": [
+     -0.03064024390243904,
+     0.04878048780487809
+    ],
+    "significant": false
+   }
+  },
+  "combined": {
+   "paired_n": 364,
+   "b": 6,
+   "c": 11,
+   "p": 0.332305908203125
+  }
+ },
+ "vs_grand": {
+  "per_task": {
+   "gsm8k": {
+    "paired_n": 200,
+    "b": 3,
+    "c": 4,
+    "p": 1.0,
+    "acc_baseline": 0.955,
+    "acc_target": 0.96,
+    "acc_diff": 0.0050000000000000044,
+    "ci95": [
+     -0.020000000000000018,
+     0.030000000000000027
+    ],
+    "significant": false
+   },
+   "humaneval": {
+    "paired_n": 164,
+    "b": 7,
+    "c": 12,
+    "p": 0.359283447265625,
+    "acc_baseline": 0.8780487804878049,
+    "acc_target": 0.9085365853658537,
+    "acc_diff": 0.030487804878048808,
+    "ci95": [
+     -0.018292682926829285,
+     0.08536585365853655
+    ],
+    "significant": false
+   }
+  },
+  "combined": {
+   "paired_n": 364,
+   "b": 10,
+   "c": 16,
+   "p": 0.32693958282470703
+  }
+ },
+ "vs_g1": {
+  "per_task": {
+   "gsm8k": {
+    "paired_n": 200,
+    "b": 3,
+    "c": 6,
+    "p": 0.5078125,
+    "acc_baseline": 0.945,
+    "acc_target": 0.96,
+    "acc_diff": 0.015000000000000013,
+    "ci95": [
+     -0.015000000000000013,
+     0.04499999999999993
+    ],
+    "significant": false
+   },
+   "humaneval": {
+    "paired_n": 164,
+    "b": 8,
+    "c": 4,
+    "p": 0.3876953125,
+    "acc_baseline": 0.9329268292682927,
+    "acc_target": 0.9085365853658537,
+    "acc_diff": -0.024390243902439046,
+    "ci95": [
+     -0.06707317073170727,
+     0.018292682926829285
+    ],
+    "significant": false
+   }
+  },
+  "combined": {
+   "paired_n": 364,
+   "b": 11,
+   "c": 10,
+   "p": 1.0
+  }
+ }
+}

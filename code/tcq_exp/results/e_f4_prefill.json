@@ -1,0 +1,161 @@
+{
+ "protocol": {
+  "tool": "llama-bench (build-tcmoe fork, type45 support)",
+  "n_prompt": 512,
+  "n_gen": 1,
+  "reps_per_round": 1,
+  "rounds": 3,
+  "threads": 16,
+  "cpu_affinity": "0xff",
+  "backend": "CPU only (llama-bench --list-devices = none; no CUDA device)",
+  "interleave": "one process per round, 4 models back-to-back in that process"
+ },
+ "llama_cpp": {
+  "commit": "5047748f114564fcf271e6a648f60e2d2eae6264 2026-10-30 20:36:30 +0100",
+  "note": "local tcmoe patches on top (see git status)"
+ },
+ "models": [
+  {
+   "tag": "tcmoe_q4k",
+   "file": "model-tcmoe-q4k.gguf",
+   "size_bytes": 24711989728,
+   "size_gib": 23.015,
+   "hf_lfs_oid": null
+  },
+  {
+   "tag": "ud_q4km",
+   "file": "Qwen3.6-35B-A3B-UD-Q4_K_M.gguf",
+   "size_bytes": 22134528992,
+   "size_gib": 20.614,
+   "hf_lfs_oid": null
+  },
+  {
+   "tag": "iq2xxs",
+   "file": "Qwen3.6-35B-A3B-UD-IQ2_XXS.gguf",
+   "size_bytes": 10756586464,
+   "size_gib": 10.018,
+   "hf_lfs_oid": null
+  },
+  {
+   "tag": "ud_q3kxl",
+   "file": "Qwen3.6-35B-A3B-UD-Q3_K_XL.gguf",
+   "size_bytes": 16845511648,
+   "size_gib": 15.689,
+   "hf_lfs_oid": "a832b9689925f1bd335bbe985cdfb06c36bf2cf268f4f8f6eceafa3ceb515617"
+  }
+ ],
+ "results": [
+  {
+   "tag": "tcmoe_q4k",
+   "file": "model-tcmoe-q4k.gguf",
+   "pp512": {
+    "median_tok_s": 20.14,
+    "min": 13.957,
+    "max": 22.8,
+    "range": 8.843,
+    "n": 3,
+    "raw": [
+     13.957,
+     20.14,
+     22.8
+    ]
+   },
+   "tg1": {
+    "median_tok_s": 7.107,
+    "min": 2.011,
+    "max": 7.2,
+    "range": 5.189,
+    "n": 3,
+    "raw": [
+     2.011,
+     7.107,
+     7.2
+    ]
+   }
+  },
+  {
+   "tag": "ud_q4km",
+   "file": "Qwen3.6-35B-A3B-UD-Q4_K_M.gguf",
+   "pp512": {
+    "median_tok_s": 21.64,
+    "min": 19.159,
+    "max": 28.057,
+    "range": 8.898,
+    "n": 3,
+    "raw": [
+     19.159,
+     21.64,
+     28.057
+    ]
+   },
+   "tg1": {
+    "median_tok_s": 7.322,
+    "min": 2.542,
+    "max": 8.152,
+    "range": 5.61,
+    "n": 3,
+    "raw": [
+     2.542,
+     8.152,
+     7.322
+    ]
+   }
+  },
+  {
+   "tag": "iq2xxs",
+   "file": "Qwen3.6-35B-A3B-UD-IQ2_XXS.gguf",
+   "pp512": {
+    "median_tok_s": 31.238,
+    "min": 18.096,
+    "max": 34.026,
+    "range": 15.93,
+    "n": 3,
+    "raw": [
+     18.096,
+     31.238,
+     34.026
+    ]
+   },
+   "tg1": {
+    "median_tok_s": 6.085,
+    "min": 2.118,
+    "max": 6.119,
+    "range": 4.001,
+    "n": 3,
+    "raw": [
+     2.118,
+     6.085,
+     6.119
+    ]
+   }
+  },
+  {
+   "tag": "ud_q3kxl",
+   "file": "Qwen3.6-35B-A3B-UD-Q3_K_XL.gguf",
+   "pp512": {
+    "median_tok_s": 23.45,
+    "min": 13.946,
+    "max": 27.793,
+    "range": 13.847,
+    "n": 3,
+    "raw": [
+     13.946,
+     23.45,
+     27.793
+    ]
+   },
+   "tg1": {
+    "median_tok_s": 6.079,
+    "min": 1.414,
+    "max": 6.836,
+    "range": 5.422,
+    "n": 3,
+    "raw": [
+     1.414,
+     6.836,
+     6.079
+    ]
+   }
+  }
+ ]
+}

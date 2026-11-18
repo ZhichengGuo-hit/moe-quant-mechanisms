@@ -1,0 +1,38 @@
+{
+ "target": "g2_im",
+ "baseline": "g1_im",
+ "test": "McNemar exact (two-sided binomial), same-task pairing",
+ "baseline_source": "e_h1_g1_im",
+ "target_source": "results/c1_g2_tasks.jsonl",
+ "vs_baseline": {
+  "per_task": {
+   "gsm8k": {
+    "paired_n": 200,
+    "b": 4,
+    "c": 3,
+    "p": 1.0,
+    "acc_baseline": 0.945,
+    "acc_target": 0.94,
+    "acc_diff": -0.0050000000000000044
+   },
+   "humaneval": {
+    "paired_n": 164,
+    "b": 8,
+    "c": 3,
+    "p": 0.2265625,
+    "acc_baseline": 0.9329268292682927,
+    "acc_target": 0.9024390243902439,
+    "acc_diff": -0.030487804878048808
+   }
+  },
+  "combined": {
+   "paired_n": 364,
+   "b": 12,
+   "c": 6,
+   "p": 0.237884521484375,
+   "acc_baseline": 0.9395604395604396,
+   "acc_target": 0.9230769230769231,
+   "acc_diff": -0.016483516483516425
+  }
+ }
+}

@@ -1,0 +1,532 @@
+{
+ "source": "results/e_h1_nll.json + h1_nll/{arm}_im{mode}_{domain}.json (per-chunk av_nll)",
+ "matrix": {
+  "math": {
+   "g0": {
+    "on": {
+     "mean_nll": 1.409,
+     "mean_ppl": 4.0919,
+     "n_chunks": 8
+    },
+    "off": {
+     "mean_nll": 1.6455,
+     "mean_ppl": 5.1834,
+     "n_chunks": 8
+    }
+   },
+   "g1": {
+    "on": {
+     "mean_nll": 1.1919,
+     "mean_ppl": 3.2934,
+     "n_chunks": 8
+    },
+    "off": {
+     "mean_nll": 1.2739,
+     "mean_ppl": 3.5748,
+     "n_chunks": 8
+    }
+   },
+   "g2": {
+    "on": {
+     "mean_nll": 1.3238,
+     "mean_ppl": 3.7576,
+     "n_chunks": 8
+    },
+    "off": {
+     "mean_nll": 1.4019,
+     "mean_ppl": 4.0631,
+     "n_chunks": 8
+    }
+   },
+   "g3": {
+    "on": {
+     "mean_nll": 1.2977,
+     "mean_ppl": 3.6608,
+     "n_chunks": 8
+    },
+    "off": {
+     "mean_nll": 1.3527,
+     "mean_ppl": 3.868,
+     "n_chunks": 8
+    }
+   },
+   "g4": {
+    "on": {
+     "mean_nll": 1.2248,
+     "mean_ppl": 3.4035,
+     "n_chunks": 8
+    },
+    "off": {
+     "mean_nll": 1.3101,
+     "mean_ppl": 3.7066,
+     "n_chunks": 8
+    }
+   }
+  },
+  "code": {
+   "g0": {
+    "on": {
+     "mean_nll": 0.793,
+     "mean_ppl": 2.21,
+     "n_chunks": 7
+    },
+    "off": {
+     "mean_nll": 0.9505,
+     "mean_ppl": 2.5871,
+     "n_chunks": 7
+    }
+   },
+   "g1": {
+    "on": {
+     "mean_nll": 0.665,
+     "mean_ppl": 1.9446,
+     "n_chunks": 7
+    },
+    "off": {
+     "mean_nll": 0.6806,
+     "mean_ppl": 1.975,
+     "n_chunks": 7
+    }
+   },
+   "g2": {
+    "on": {
+     "mean_nll": 0.8319,
+     "mean_ppl": 2.2976,
+     "n_chunks": 7
+    },
+    "off": {
+     "mean_nll": 0.8451,
+     "mean_ppl": 2.3281,
+     "n_chunks": 7
+    }
+   },
+   "g3": {
+    "on": {
+     "mean_nll": 0.7204,
+     "mean_ppl": 2.0552,
+     "n_chunks": 7
+    },
+    "off": {
+     "mean_nll": 0.735,
+     "mean_ppl": 2.0855,
+     "n_chunks": 7
+    }
+   },
+   "g4": {
+    "on": {
+     "mean_nll": 0.6341,
+     "mean_ppl": 1.8854,
+     "n_chunks": 7
+    },
+    "off": {
+     "mean_nll": 0.6872,
+     "mean_ppl": 1.9882,
+     "n_chunks": 7
+    }
+   }
+  },
+  "general": {
+   "g0": {
+    "on": {
+     "mean_nll": 1.8773,
+     "mean_ppl": 6.536,
+     "n_chunks": 6
+    },
+    "off": {
+     "mean_nll": 1.9893,
+     "mean_ppl": 7.3101,
+     "n_chunks": 6
+    }
+   },
+   "g1": {
+    "on": {
+     "mean_nll": 1.8242,
+     "mean_ppl": 6.1978,
+     "n_chunks": 6
+    },
+    "off": {
+     "mean_nll": 1.8218,
+     "mean_ppl": 6.183,
+     "n_chunks": 6
+    }
+   },
+   "g2": {
+    "on": {
+     "mean_nll": 1.7888,
+     "mean_ppl": 5.9821,
+     "n_chunks": 6
+    },
+    "off": {
+     "mean_nll": 1.8047,
+     "mean_ppl": 6.0784,
+     "n_chunks": 6
+    }
+   },
+   "g3": {
+    "on": {
+     "mean_nll": 1.8093,
+     "mean_ppl": 6.1059,
+     "n_chunks": 6
+    },
+    "off": {
+     "mean_nll": 1.8312,
+     "mean_ppl": 6.2412,
+     "n_chunks": 6
+    }
+   },
+   "g4": {
+    "on": {
+     "mean_nll": 1.7919,
+     "mean_ppl": 6.0007,
+     "n_chunks": 6
+    },
+    "off": {
+     "mean_nll": 1.7944,
+     "mean_ppl": 6.0156,
+     "n_chunks": 6
+    }
+   }
+  }
+ },
+ "deltas": {
+  "imatrix_on_minus_off": {
+   "math": {
+    "g0": {
+     "diff_nll": -0.2365,
+     "ci95": [
+      -0.2508,
+      -0.2212
+     ],
+     "undetectable": false
+    },
+    "g1": {
+     "diff_nll": -0.082,
+     "ci95": [
+      -0.0948,
+      -0.0718
+     ],
+     "undetectable": false
+    },
+    "g2": {
+     "diff_nll": -0.0782,
+     "ci95": [
+      -0.0857,
+      -0.0691
+     ],
+     "undetectable": false
+    },
+    "g3": {
+     "diff_nll": -0.0551,
+     "ci95": [
+      -0.0674,
+      -0.0441
+     ],
+     "undetectable": false
+    },
+    "g4": {
+     "diff_nll": -0.0853,
+     "ci95": [
+      -0.0973,
+      -0.0726
+     ],
+     "undetectable": false
+    }
+   },
+   "code": {
+    "g0": {
+     "diff_nll": -0.1575,
+     "ci95": [
+      -0.1696,
+      -0.1471
+     ],
+     "undetectable": false
+    },
+    "g1": {
+     "diff_nll": -0.0155,
+     "ci95": [
+      -0.0179,
+      -0.0124
+     ],
+     "undetectable": false
+    },
+    "g2": {
+     "diff_nll": -0.0132,
+     "ci95": [
+      -0.0222,
+      -0.0046
+     ],
+     "undetectable": false
+    },
+    "g3": {
+     "diff_nll": -0.0146,
+     "ci95": [
+      -0.0316,
+      0.0056
+     ],
+     "undetectable": false
+    },
+    "g4": {
+     "diff_nll": -0.0531,
+     "ci95": [
+      -0.0721,
+      -0.0359
+     ],
+     "undetectable": false
+    }
+   },
+   "general": {
+    "g0": {
+     "diff_nll": -0.1119,
+     "ci95": [
+      -0.1296,
+      -0.0956
+     ],
+     "undetectable": false
+    },
+    "g1": {
+     "diff_nll": 0.0024,
+     "ci95": [
+      -0.0069,
+      0.0107
+     ],
+     "undetectable": true
+    },
+    "g2": {
+     "diff_nll": -0.016,
+     "ci95": [
+      -0.0216,
+      -0.0096
+     ],
+     "undetectable": false
+    },
+    "g3": {
+     "diff_nll": -0.0219,
+     "ci95": [
+      -0.03,
+      -0.0127
+     ],
+     "undetectable": false
+    },
+    "g4": {
+     "diff_nll": -0.0025,
+     "ci95": [
+      -0.005,
+      -0.0009
+     ],
+     "undetectable": true
+    }
+   }
+  },
+  "arm_vs_g1": {
+   "on": {
+    "math": {
+     "g0": {
+      "diff_nll": 0.2171,
+      "ci95": [
+       0.2098,
+       0.2253
+      ],
+      "undetectable": false
+     },
+     "g2": {
+      "diff_nll": 0.1319,
+      "ci95": [
+       0.1159,
+       0.1461
+      ],
+      "undetectable": false
+     },
+     "g3": {
+      "diff_nll": 0.1058,
+      "ci95": [
+       0.0869,
+       0.1255
+      ],
+      "undetectable": false
+     },
+     "g4": {
+      "diff_nll": 0.0329,
+      "ci95": [
+       0.0091,
+       0.054
+      ],
+      "undetectable": false
+     }
+    },
+    "code": {
+     "g0": {
+      "diff_nll": 0.128,
+      "ci95": [
+       0.1066,
+       0.1523
+      ],
+      "undetectable": false
+     },
+     "g2": {
+      "diff_nll": 0.1668,
+      "ci95": [
+       0.1586,
+       0.1733
+      ],
+      "undetectable": false
+     },
+     "g3": {
+      "diff_nll": 0.0553,
+      "ci95": [
+       0.0407,
+       0.0677
+      ],
+      "undetectable": false
+     },
+     "g4": {
+      "diff_nll": -0.0309,
+      "ci95": [
+       -0.0709,
+       0.0062
+      ],
+      "undetectable": false
+     }
+    },
+    "general": {
+     "g0": {
+      "diff_nll": 0.0531,
+      "ci95": [
+       0.0407,
+       0.0669
+      ],
+      "undetectable": false
+     },
+     "g2": {
+      "diff_nll": -0.0354,
+      "ci95": [
+       -0.0519,
+       -0.0196
+      ],
+      "undetectable": false
+     },
+     "g3": {
+      "diff_nll": -0.0149,
+      "ci95": [
+       -0.0287,
+       -0.0009
+      ],
+      "undetectable": false
+     },
+     "g4": {
+      "diff_nll": -0.0323,
+      "ci95": [
+       -0.0515,
+       -0.0151
+      ],
+      "undetectable": false
+     }
+    }
+   },
+   "off": {
+    "math": {
+     "g0": {
+      "diff_nll": 0.3716,
+      "ci95": [
+       0.3479,
+       0.3887
+      ],
+      "undetectable": false
+     },
+     "g2": {
+      "diff_nll": 0.128,
+      "ci95": [
+       0.1142,
+       0.1435
+      ],
+      "undetectable": false
+     },
+     "g3": {
+      "diff_nll": 0.0788,
+      "ci95": [
+       0.0584,
+       0.1007
+      ],
+      "undetectable": false
+     },
+     "g4": {
+      "diff_nll": 0.0362,
+      "ci95": [
+       0.0024,
+       0.0677
+      ],
+      "undetectable": false
+     }
+    },
+    "code": {
+     "g0": {
+      "diff_nll": 0.27,
+      "ci95": [
+       0.2384,
+       0.3034
+      ],
+      "undetectable": false
+     },
+     "g2": {
+      "diff_nll": 0.1645,
+      "ci95": [
+       0.1529,
+       0.1782
+      ],
+      "undetectable": false
+     },
+     "g3": {
+      "diff_nll": 0.0545,
+      "ci95": [
+       0.03,
+       0.08
+      ],
+      "undetectable": false
+     },
+     "g4": {
+      "diff_nll": 0.0067,
+      "ci95": [
+       -0.014,
+       0.0272
+      ],
+      "undetectable": false
+     }
+    },
+    "general": {
+     "g0": {
+      "diff_nll": 0.1674,
+      "ci95": [
+       0.1546,
+       0.1811
+      ],
+      "undetectable": false
+     },
+     "g2": {
+      "diff_nll": -0.0171,
+      "ci95": [
+       -0.0196,
+       -0.0135
+      ],
+      "undetectable": false
+     },
+     "g3": {
+      "diff_nll": 0.0094,
+      "ci95": [
+       0.006,
+       0.012
+      ],
+      "undetectable": false
+     },
+     "g4": {
+      "diff_nll": -0.0274,
+      "ci95": [
+       -0.04,
+       -0.0167
+      ],
+      "undetectable": false
+     }
+    }
+   }
+  }
+ },
+ "note": "五臂 G0-G4 = e_h1_typefiles.py 的同预算(11.45 GiB)组件消融: G0 按张量名哈希混合 IQ2_S/IQ3_XXS; G1 角色(expert IQ2_S, 非 expert Q5_K); G2 +per-layer(blk.0-9 升档); G3 +per-tensor(ffn_down 升档); G4 逐张量复刻 UD-Q2_K_XL. imatrix on/off 为同类型文件的 imatrix 开关. 差值口径: imatrix_on_minus_off = NLL(imon)-NLL(imoff), 负值=imatrix 更好; arm_vs_g1 = NLL(arm)-NLL(G1), 同 mode 内比较, 负值=比 G1 更好. CI: 1000 次配对 chunk 级 bootstrap (seed=20261104), 与 e_h1_nll.py 一致地按 tokens_per_chunk 加权; 每域 chunk 数 math=8/code=7/general=6, 逐样本(chunk)原始 av_nll 来自 h1_nll/*.json, 故非正态近似. mean_ppl = exp(加权 mean_nll). 数值保留 4 位小数."
+}

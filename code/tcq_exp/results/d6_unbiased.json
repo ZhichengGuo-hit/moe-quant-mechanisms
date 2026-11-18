@@ -1,0 +1,18 @@
+{
+ "note": "D6 follow-up: floor nested base is catastrophic (group DC bias); unbiased nearest-even nested base restores NLL but still worse than independent INT3",
+ "n_eval_seq": 12,
+ "domain": "math",
+ "nll_same_12seq": {"packed3_uniform_int3": 1.5148, "packed3ne_near_even_nested": 1.5537, "packed3n_floor_nested": 16.9004},
+ "weight_error_vs_bf16": {
+  "n_experts": 60,
+  "int4": 0.1194,
+  "int3_indep": 0.2786,
+  "int3_nested_floor": 0.3176,
+  "int3_near_even": 0.3169,
+  "top_clip_frac": 0.0125
+ },
+ "group_bias_sigma": {"int3_indep": 0.0193, "int3_nested_floor": 0.2049},
+ "kernel_parity": {"packed3_rel_max_diff": 3.0e-07, "packed3n_rel_max_diff": 3.0e-07},
+ "container": {"base3n_gib": 11.72, "patch_1bit_gib_per_domain": 0.938, "single_domain_gib": 12.66, "eff_bits_single": 3.375},
+ "floor_variant_full_eval64": "results/d6_nested_scale.json (base3n 16.83/16.63/16.51; nest_math 16.83/16.62/16.50)"
+}

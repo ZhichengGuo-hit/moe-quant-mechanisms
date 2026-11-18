@@ -1,0 +1,63 @@
+{
+ "protocol": {
+  "task": "gsm8k",
+  "items": 1319,
+  "n_predict": 1024,
+  "greedy": true,
+  "decode": "two llama-servers (-t 8 each, affinity 0-7 / 8-15), per-question interleaved, order alternates by question parity",
+  "bootstrap": {
+   "n": 1000,
+   "unit": "question (sequence-level)",
+   "seed": 20261104
+  }
+ },
+ "tags": [
+  "iq2xxs",
+  "tcmoe_nl_global"
+ ],
+ "accuracy": {
+  "iq2xxs": 0.9492,
+  "tcmoe_nl_global": 0.9515,
+  "diff_pt": -0.23
+ },
+ "bootstrap_ci95": {
+  "iq2xxs": [
+   0.9371,
+   0.9613
+  ],
+  "tcmoe_nl_global": [
+   0.9401,
+   0.9621
+  ],
+  "diff_pt": [
+   -1.21,
+   0.83
+  ]
+ },
+ "mcnemar": {
+  "iq_only_pass": 21,
+  "nl_only_pass": 24,
+  "p_value": 0.765992,
+  "discordant_rate": 0.0341
+ },
+ "power": {
+  "mde_pt_approx": 1.42,
+  "formula": "delta ~ (z_.975 + z_.80) * sqrt(psi/n), psi = discordant rate"
+ },
+ "capped_record": {
+  "iq2xxs": {
+   "n": 1319,
+   "predicted_n_mean": 357.8,
+   "predicted_n_median": 327,
+   "capped_at": 1024,
+   "capped_frac": 0.022
+  },
+  "tcmoe_nl_global": {
+   "n": 1319,
+   "predicted_n_mean": 343.7,
+   "predicted_n_median": 313,
+   "capped_at": 1024,
+   "capped_frac": 0.0144
+  }
+ }
+}

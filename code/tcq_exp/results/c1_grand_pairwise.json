@@ -1,0 +1,70 @@
+{
+ "target": "grand",
+ "baseline": "g1_im",
+ "test": "McNemar exact (two-sided binomial), same-task pairing",
+ "baseline_source": "e_h1_g1_im",
+ "target_source": "results/c1_grand_tasks.jsonl",
+ "vs_baseline": {
+  "per_task": {
+   "gsm8k": {
+    "paired_n": 200,
+    "b": 3,
+    "c": 5,
+    "p": 0.7265625,
+    "acc_baseline": 0.945,
+    "acc_target": 0.955,
+    "acc_diff": 0.010000000000000009
+   },
+   "humaneval": {
+    "paired_n": 164,
+    "b": 11,
+    "c": 2,
+    "p": 0.0224609375,
+    "acc_baseline": 0.9329268292682927,
+    "acc_target": 0.8780487804878049,
+    "acc_diff": -0.054878048780487854
+   }
+  },
+  "combined": {
+   "paired_n": 364,
+   "b": 14,
+   "c": 7,
+   "p": 0.18924713134765625,
+   "acc_baseline": 0.9395604395604396,
+   "acc_target": 0.9203296703296703,
+   "acc_diff": -0.019230769230769273
+  }
+ },
+ "supplementary_vs_g2_im": {
+  "per_task": {
+   "gsm8k": {
+    "paired_n": 200,
+    "b": 2,
+    "c": 5,
+    "p": 0.453125,
+    "acc_baseline": 0.94,
+    "acc_target": 0.955,
+    "acc_diff": 0.015000000000000013
+   },
+   "humaneval": {
+    "paired_n": 164,
+    "b": 10,
+    "c": 6,
+    "p": 0.454498291015625,
+    "acc_baseline": 0.9024390243902439,
+    "acc_target": 0.8780487804878049,
+    "acc_diff": -0.024390243902439046
+   }
+  },
+  "combined": {
+   "paired_n": 364,
+   "b": 12,
+   "c": 11,
+   "p": 1.0,
+   "acc_baseline": 0.9230769230769231,
+   "acc_target": 0.9203296703296703,
+   "acc_diff": -0.0027472527472528485
+  },
+  "label": "g2_im"
+ }
+}

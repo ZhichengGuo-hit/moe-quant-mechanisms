@@ -1,0 +1,21 @@
+{
+ "n_pairs": 100,
+ "label_a": "C",
+ "label_b": "D",
+ "acc_a": 0.24,
+ "acc_b": 0.31,
+ "diff_pt": 7.000000000000001,
+ "ci90_pt": [
+  -1.0,
+  15.0
+ ],
+ "b_a_only": 9,
+ "c_b_only": 16,
+ "n_disagree": 25,
+ "mcnemar_exact_p": 0.2295229434967043,
+ "significant_0.05": false,
+ "files": {
+  "a": "e:\\CUDA11.8\\train\\tcq_exp\\results\\e_g3_xing_C_roleq4_gpqa.jsonl",
+  "b": "e:\\CUDA11.8\\train\\tcq_exp\\results\\e_g3_xing_D_roleq4_im_gpqa.jsonl"
+ }
+}

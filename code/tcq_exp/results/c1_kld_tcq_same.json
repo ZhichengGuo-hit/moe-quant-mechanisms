@@ -1,0 +1,269 @@
+{
+ "protocol": {
+  "experiment": "E-F9 token-level output-distribution KLD (quantized vs full-precision)",
+  "claim": "KLD 是否携带任务级信号: KLD-NLL-acc 三层对应",
+  "corpus": "data/{domain}_eval64.jsonl, 每域前 16 条, 每条前 64 个位置",
+  "alignment": "逐位置提交 prompt=ids[:i] + n_predict=1, 取该位置下一个 token 的 top-k",
+  "metrics": [
+   "KLD(P_ref||Q_model)",
+   "JSD(nats)",
+   "top1_agree",
+   "NLL_ref",
+   "NLL_model(teacher-forcing, top-k 覆盖或 tail 分摊)"
+  ],
+  "kld_method": "两侧 top-k 并到同一支撑; 对侧未出现的 token 用该侧剩余质量均匀分摊, 剩余进 __tail__ 桶; p=0 项跳过, q<=0 时 clamp 1e-12",
+  "mass_sanity": "top-k 概率应为全词表 softmax 的绝对值 (mass<1, 随 k 增大上升); 若 mean_topk_mass 恒等于 1.000, 说明被候选内归一, 本次结果作废",
+  "k": 20,
+  "domains": [
+   "math",
+   "code",
+   "general"
+  ],
+  "seqs": 16,
+  "ctx_tokens": 64,
+  "threads": 16,
+  "cache_prompt": true,
+  "n_ctx": 128,
+  "port": 18095,
+  "backend": "CPU only (build-tcmoe, type45 tcmoe patches); 无 CUDA 设备",
+  "server_bin": "E:\\CUDA11.8\\train\\llama.cpp\\build-tcmoe\\bin\\Release\\llama-server.exe",
+  "ngl": null,
+  "llama_cpp_commit": "5047748f114564fcf271e6a648f60e2d2eae6264 2026-10-30 20:36:30 +0100",
+  "elapsed_s": 2618.0
+ },
+ "server_capability": {
+  "verified_by": "static source inspection on the local build-tcmoe fork",
+  "sources": [
+   "llama.cpp/tools/server/server-schema.cpp",
+   "llama.cpp/tools/server/server-common.cpp",
+   "llama.cpp/tools/server/server-context.cpp",
+   "llama.cpp/tools/server/server-task.cpp",
+   "llama.cpp/tools/server/README.md"
+  ],
+  "logits_all": false,
+  "logits_all_note": "grep 'logits-all|logits_all|--logits' 在 tools/server 下无命中; 该 fork 没有返回全词表 logits 的选项, 只有 n_probs 的 top-k",
+  "max_top_k": "无显式上限 (schema 只要求 >0); 实际上限是候选向量长度/词表大小, 默认 0 表示不返回",
+  "request_field": "n_probs (别名 logprobs); OAI chat 侧要求 logprobs=true 且用 top_logprobs",
+  "response_shape": {
+   "path": "completion_probabilities[i]  (i = 第 i 个生成 token, 长度 n_predict)",
+   "entry": {
+    "id": "token id",
+    "token": "str",
+    "bytes": "list[int]",
+    "logprob": "ln p (post_sampling_probs=false)",
+    "top_logprobs": "[{id, token, bytes, logprob}]"
+   },
+   "note": "post_sampling_probs=true 时字段改为 prob/top_probs (经过采样链, 不是原始分布)"
+  },
+  "probability_semantics": "get_token_probabilities() 对整条候选向量做 softmax (server-common.cpp:1664-1711, cum_sum 覆盖全部 cur), 返回的 top-k 概率是绝对概率; tail 桶 = 1 - sum(top-k) 可直接用于 KLD",
+  "pre_sampling_logits": "n_probs>0 且 post_sampling_probs=false 时 need_pre_sample_logits 置位并关闭 backend sampling (server-context.cpp:2127), 概率来自原始 logits, 与 temperature/top_k 无关",
+  "n_predict_1": "支持; 每个请求只产出 1 个位置的分布, 配合 token 前缀实现逐点 teacher forcing",
+  "prompt_token_ids": "server-common.cpp tokenize_mixed(): \"prompt\": [12,34,...] 直接按 id 使用, 数字数组不加 BOS",
+  "cache_prompt": "支持 true/false; 默认 true, 前缀复用与 false 数学等价",
+  "tokenize_endpoint": "/tokenize (content/add_special=false/parse_special=true), 用于严格对齐 token",
+  "context": "tcmoe 补丁: /completion 的 \"domain\" 字段选择专家补丁, 缺省 = 首个声明的域; 非 tcmoe 模型忽略该字段 (server-context.cpp resolve_tcmoe_domain)",
+  "runtime_probe": "未做 (机器上有 12h UD 评测队列在跑, 再起 server 会污染其耗时)"
+ },
+ "ref": {
+  "file": "E:\\CUDA11.8\\model\\e20\\qwen36_f16.gguf",
+  "precision": "F16",
+  "size_gib": 66.19,
+  "is_bf16": false,
+  "note": "参考非 BF16 原地权重 (用全精度转换件 F16 或最高精度 Q4_K_M); 绝对 KLD 会略偏小/偏大, 结论按相对 KLD 解读",
+  "n_vocab": 248320,
+  "n_pos": 2718,
+  "server_meta": {
+   "n_vocab": 248320,
+   "n_ctx_train": 262144,
+   "ftype": "F16"
+  }
+ },
+ "models": {
+  "nl_global": {
+   "file": "E:\\CUDA11.8\\train\\tcmoe\\out\\model-tcmoe-q4k-nl.gguf",
+   "domain": "global",
+   "acc_tag": "tcmoe_nl_global"
+  }
+ },
+ "results": {
+  "nl_global": {
+   "file": "E:\\CUDA11.8\\train\\tcmoe\\out\\model-tcmoe-q4k-nl.gguf",
+   "domain_field": "global",
+   "port": 18095,
+   "server_log": "e_f9_nl_global.server.log",
+   "domains": {
+    "math": {
+     "n_pos": 1008,
+     "per_seq_mean_kld": [
+      0.26564117182752234,
+      0.08537765222921867,
+      0.05149944227018372,
+      0.37878972159220237,
+      0.29870022968231214,
+      0.10154491851718492,
+      0.07908673690811001,
+      0.05697641779240315,
+      0.07897980216409374,
+      0.2939352276099953,
+      0.10935269643244323,
+      0.4108344512498558,
+      0.11687605907276843,
+      0.09360636954590501,
+      0.31913816170185855,
+      0.2697408089024096
+     ],
+     "mean_kld": 0.1881299917186542,
+     "mean_jsd": 0.03222672760415117,
+     "mean_top1_agree": 0.8640873015873016,
+     "mean_nll_ref": 1.622073642413434,
+     "mean_nll_model": 1.8193759093787572,
+     "mean_cov_ref": 0.9513888888888888,
+     "mean_cov_model": 0.9494047619047619,
+     "mean_mass_ref": 0.9588107325781812,
+     "mean_mass_model": 0.9536987082879725,
+     "median_kld": 0.042795631465040854,
+     "std_kld": 0.5278585526420311,
+     "mean_top_k_returned": 20.0
+    },
+    "code": {
+     "n_pos": 995,
+     "per_seq_mean_kld": [
+      0.06295770738790568,
+      0.24462350710932332,
+      0.13762558317464593,
+      0.05511884652124424,
+      0.08328900531330682,
+      0.17970959702152894,
+      0.11058716854236685,
+      0.07517483027908071,
+      0.13886817102181775,
+      0.09007959472471848,
+      0.2564779615951222,
+      0.13420495197644708,
+      0.039179186028121885,
+      0.06101571554364091,
+      0.2662100984043222,
+      0.0452317336638355
+     ],
+     "mean_kld": 0.12363771368791714,
+     "mean_jsd": 0.023079840295082553,
+     "mean_top1_agree": 0.9035175879396985,
+     "mean_nll_ref": 0.8433275411738138,
+     "mean_nll_model": 0.9030706413752974,
+     "mean_cov_ref": 0.9628140703517588,
+     "mean_cov_model": 0.9628140703517588,
+     "mean_mass_ref": 0.9643069957722094,
+     "mean_mass_model": 0.9628438360287063,
+     "median_kld": 0.0068750155453419105,
+     "std_kld": 0.35280864252671595,
+     "mean_top_k_returned": 20.0
+    },
+    "general": {
+     "n_pos": 715,
+     "per_seq_mean_kld": [
+      0.06865669597198663,
+      0.10490455576611736,
+      0.09348747775469075,
+      0.21962939680640856,
+      0.09795999934706409,
+      0.13995977059434778,
+      0.08726942402635554,
+      0.2734767992003787,
+      0.1789340624528726,
+      0.033713827599629216,
+      0.06087939978246794,
+      0.10488688567065163,
+      0.07649834200150665,
+      0.2241285415849066,
+      0.057261687243957304,
+      0.2297187624788379
+     ],
+     "mean_kld": 0.12798968747897543,
+     "mean_jsd": 0.018025990337021392,
+     "mean_top1_agree": 0.8783216783216783,
+     "mean_nll_ref": 2.129620294802724,
+     "mean_nll_model": 2.2298263823028868,
+     "mean_cov_ref": 0.9398601398601398,
+     "mean_cov_model": 0.9342657342657342,
+     "mean_mass_ref": 0.9252717415368192,
+     "mean_mass_model": 0.9212512813272011,
+     "median_kld": 0.05841328062534708,
+     "std_kld": 0.21366628006804933,
+     "mean_top_k_returned": 20.0
+    }
+   },
+   "vocab_check": {
+    "first_text_token_ids_equal_ref": true,
+    "n_vocab_equal_ref": true,
+    "ref_n_vocab": 248320,
+    "self_n_vocab": 248320
+   },
+   "n_vocab": 248320,
+   "n_vocab_reported": true,
+   "server_meta": {
+    "n_vocab": 248320,
+    "n_ctx_train": 262144,
+    "ftype": "Q4_K - Medium"
+   },
+   "mean_kld_over_domains": 0.1465857976285156
+  }
+ },
+ "three_layer": [
+  {
+   "model": "nl_global",
+   "domain": "math",
+   "kld": 0.1881299917186542,
+   "jsd": 0.03222672760415117,
+   "top1_agree": 0.8640873015873016,
+   "nll_ref": 1.622073642413434,
+   "nll_model_teacher_forcing": 1.8193759093787572,
+   "nll_existing": null,
+   "nll_existing_source": null,
+   "acc_gsm8k": 0.9,
+   "acc_humaneval": 0.8841463414634146,
+   "acc_source": "e17_summary.json"
+  },
+  {
+   "model": "nl_global",
+   "domain": "code",
+   "kld": 0.12363771368791714,
+   "jsd": 0.023079840295082553,
+   "top1_agree": 0.9035175879396985,
+   "nll_ref": 0.8433275411738138,
+   "nll_model_teacher_forcing": 0.9030706413752974,
+   "nll_existing": null,
+   "nll_existing_source": null,
+   "acc_gsm8k": 0.9,
+   "acc_humaneval": 0.8841463414634146,
+   "acc_source": "e17_summary.json"
+  },
+  {
+   "model": "nl_global",
+   "domain": "general",
+   "kld": 0.12798968747897543,
+   "jsd": 0.018025990337021392,
+   "top1_agree": 0.8783216783216783,
+   "nll_ref": 2.129620294802724,
+   "nll_model_teacher_forcing": 2.2298263823028868,
+   "nll_existing": null,
+   "nll_existing_source": null,
+   "acc_gsm8k": 0.9,
+   "acc_humaneval": 0.8841463414634146,
+   "acc_source": "e17_summary.json"
+  },
+  {
+   "model": "nl_global",
+   "domain": "ALL",
+   "kld": 0.1465857976285156,
+   "jsd": 0.024444186078751706,
+   "top1_agree": 0.8819755226162261,
+   "nll_ref": 1.5316738261299907,
+   "nll_model_teacher_forcing": 1.6507576443523135,
+   "nll_existing": null,
+   "nll_existing_source": null,
+   "acc_gsm8k": 0.9,
+   "acc_humaneval": 0.8841463414634146,
+   "acc_source": "e17_summary.json"
+  }
+ ]
+}

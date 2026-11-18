@@ -1,0 +1,118 @@
+{
+ "protocol": {
+  "ctx": 8192,
+  "prompt_tok_target": 4096,
+  "ws_metric": "psutil rss = Windows WorkingSetSize",
+  "sample_interval_s": 0.4,
+  "arms": [
+   "iq2xxs",
+   "ud_q2kxl",
+   "ud_q4km",
+   "tcmoe_q4k_nl"
+  ]
+ },
+ "arms": [
+  {
+   "tag": "iq2xxs",
+   "ngl": 99,
+   "file_bytes": 10756586464,
+   "n_tensor": 733,
+   "weight_bytes": 10745596416,
+   "load_s": 51.7,
+   "peak_ws_load": 10906783744,
+   "ws_after_load": 10906402816,
+   "req4k_s": 2.7,
+   "req4k_prompt_tokens": 3609,
+   "peak_ws_req4k": 11130585088,
+   "ws_after_req4k": 11129843712,
+   "per_request_ws": 224182272
+  },
+  {
+   "tag": "ud_q2kxl",
+   "ngl": 99,
+   "file_bytes": 12290628576,
+   "n_tensor": 733,
+   "weight_bytes": 12279638528,
+   "load_s": 57.7,
+   "peak_ws_load": 12387639296,
+   "ws_after_load": 12386357248,
+   "req4k_s": 3.0,
+   "req4k_prompt_tokens": 3609,
+   "peak_ws_req4k": 12619116544,
+   "ws_after_req4k": 12619001856,
+   "per_request_ws": 232759296
+  },
+  {
+   "tag": "ud_q4km",
+   "ngl": 20,
+   "file_bytes": 22134528992,
+   "n_tensor": 733,
+   "weight_bytes": 22123538944,
+   "load_s": 84.7,
+   "peak_ws_load": 13040025600,
+   "ws_after_load": 13039919104,
+   "req4k_s": 82.8,
+   "req4k_prompt_tokens": 3609,
+   "peak_ws_req4k": 22154596352,
+   "ws_after_req4k": 22152179712,
+   "per_request_ws": 9114677248
+  },
+  {
+   "tag": "tcmoe_q4k_nl",
+   "ngl": 0,
+   "file_bytes": 24711991680,
+   "n_tensor": 1213,
+   "weight_bytes": 24700969472,
+   "load_s": 69.6,
+   "peak_ws_load": 3286749184,
+   "ws_after_load": 3286286336,
+   "req4k_s": 191.3,
+   "req4k_prompt_tokens": 3609,
+   "peak_ws_req4k": 13532565504,
+   "ws_after_req4k": 13537992704,
+   "per_request_ws": 10246279168,
+   "switches": [
+    {
+     "domain": "global",
+     "seq": 0,
+     "wall_s": 74.23,
+     "prompt_tokens": 3609,
+     "peak_ws": 13538144256,
+     "rss_after": 13538144256
+    },
+    {
+     "domain": "math",
+     "seq": 1,
+     "wall_s": 117.03,
+     "prompt_tokens": 3609,
+     "peak_ws": 18838581248,
+     "rss_after": 18840506368
+    },
+    {
+     "domain": "base",
+     "seq": 2,
+     "wall_s": 104.4,
+     "prompt_tokens": 3609,
+     "peak_ws": 20319617024,
+     "rss_after": 20322295808
+    },
+    {
+     "domain": "global",
+     "seq": 3,
+     "wall_s": 73.31,
+     "prompt_tokens": 3609,
+     "peak_ws": 20594663424,
+     "rss_after": 20594663424
+    },
+    {
+     "domain": "math",
+     "seq": 4,
+     "wall_s": 75.49,
+     "prompt_tokens": 3609,
+     "peak_ws": 20594761728,
+     "rss_after": 20594761728
+    }
+   ]
+  }
+ ]
+}
