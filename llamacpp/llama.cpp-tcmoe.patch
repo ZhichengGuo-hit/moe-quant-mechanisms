@@ -1,0 +1,4095 @@
+# llama.cpp 相对上游 5047748 的本地改动（git diff HEAD，含已跟踪改动与新增文件，可一次 git apply）
+diff --git a/examples/eval-callback/CMakeLists.txt b/examples/eval-callback/CMakeLists.txt
+index 96e1e1b..a1f05bd 100644
+--- a/examples/eval-callback/CMakeLists.txt
++++ b/examples/eval-callback/CMakeLists.txt
+@@ -4,6 +4,13 @@ install(TARGETS ${TARGET} RUNTIME)
+ target_link_libraries(${TARGET} PRIVATE llama-common llama ${CMAKE_THREAD_LIBS_INIT})
+ target_compile_features(${TARGET} PRIVATE cxx_std_17)
+ 
++# E-R2: 路由概率 + teacher-forcing NLL 导出
++set(TARGET_ROUTE llama-route-dump)
++add_executable(${TARGET_ROUTE} route-dump.cpp)
++install(TARGETS ${TARGET_ROUTE} RUNTIME)
++target_link_libraries(${TARGET_ROUTE} PRIVATE llama-common llama ${CMAKE_THREAD_LIBS_INIT})
++target_compile_features(${TARGET_ROUTE} PRIVATE cxx_std_17)
++
+ if(LLAMA_BUILD_TESTS)
+     if(NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "s390x")
+         set(MODEL_NAME "tinyllamas/stories15M-q4_0.gguf")
+diff --git a/examples/eval-callback/route-dump.cpp b/examples/eval-callback/route-dump.cpp
+new file mode 100644
+index 0000000..da95f3e
+--- /dev/null
++++ b/examples/eval-callback/route-dump.cpp
+@@ -0,0 +1,252 @@
++// route-dump: 逐 token 导出 MoE 路由概率 (ffn_moe_probs) 与 teacher-forcing NLL。
++//
++// 目的：E-R2 路由一致性诊断。对同一份文本、同一 tokenizer，在不同量化配置下
++// 记录每层 top-k 专家集合与完整路由分布，用于 Jaccard / 精确匹配 / JS 散度，
++// 以及"路由翻转 token 的 NLL 增量"归因。
++//
++// 用法:
++//   llama-route-dump -m model.gguf -c 4096 -b 512 -ngl 99 \
++//       --texts texts.txt --out out.bin --tag iq2xxs
++//   texts.txt 用一行 "%%__TEXT_BOUNDARY__%%" 分隔多段文本。
++//
++// 输出 (小端):
++//   per text:
++//     int32 magic       = 0x52544431 ('RTD1')
++//     int32 text_idx
++//     int32 n_tokens
++//     int32 n_vocab
++//     int32 n_layers
++//     int32 tokens[n_tokens]
++//     float nll[n_tokens]        // nll[i] = -log p(tokens[i+1] | tokens[0..i]); 末位 0
++//     for each layer (按层号升序):
++//       int32 layer
++//       int32 ne0 (n_expert)
++//       int32 ne1 (n_tokens)
++//       float probs[ne0*ne1]     // ggml 行主序, ne0 连续
++#include "arg.h"
++#include "common.h"
++#include "log.h"
++#include "llama.h"
++
++#include <cmath>
++#include <cstdint>
++#include <cstdio>
++#include <cstring>
++#include <fstream>
++#include <string>
++#include <vector>
++
++static const char * SEP = "%%__TEXT_BOUNDARY__%%";
++
++struct dump_state {
++    FILE * f = nullptr;
++    int text_idx = 0;
++    int n_layers = 0;
++    int n_expert = 0;
++    int n_tokens = 0;
++    int n_vocab = 0;
++    std::vector<int32_t> layer_ids;
++    std::vector<std::vector<float>> layer_probs;
++};
++
++static bool route_cb(struct ggml_tensor * t, bool ask, void * user_data) {
++    auto * st = static_cast<dump_state *>(user_data);
++    static const char * PFX = "ffn_moe_probs-";
++    const size_t plen = strlen(PFX);
++    if (ask) {
++        return strncmp(t->name, PFX, plen) == 0;
++    }
++    if (strncmp(t->name, PFX, plen) != 0) {
++        return true;
++    }
++    const int il = atoi(t->name + plen);
++    const int64_t ne0 = t->ne[0];
++    const int64_t ne1 = t->ne[1];
++    const int64_t n = ne0 * ne1;
++    std::vector<float> buf((size_t) n);
++    if (t->type == GGML_TYPE_F32) {
++        ggml_backend_tensor_get(t, buf.data(), 0, (size_t) n * sizeof(float));
++    } else if (t->type == GGML_TYPE_F16) {
++        std::vector<ggml_fp16_t> tmp((size_t) n);
++        ggml_backend_tensor_get(t, tmp.data(), 0, (size_t) n * sizeof(ggml_fp16_t));
++        for (int64_t i = 0; i < n; i++) {
++            buf[(size_t) i] = ggml_fp16_to_fp32(tmp[(size_t) i]);
++        }
++    } else {
++        LOG_ERR("%s: unsupported probs type %s\n", __func__, ggml_type_name(t->type));
++        return true;
++    }
++    st->layer_ids.push_back(il);
++    st->layer_probs.push_back(std::move(buf));
++    st->n_expert = (int) ne0;
++    st->n_tokens = (int) ne1;
++    return true;
++}
++
++static void wr(FILE * f, const void * p, size_t n) {
++    if (fwrite(p, 1, n, f) != n) {
++        LOG_ERR("fwrite failed\n");
++        exit(2);
++    }
++}
++
++static void wr_i32(FILE * f, int32_t v) { wr(f, &v, sizeof(v)); }
++
++static std::vector<std::string> load_texts(const std::string & path) {
++    std::ifstream in(path, std::ios::binary);
++    if (!in) {
++        LOG_ERR("cannot open texts: %s\n", path.c_str());
++        exit(2);
++    }
++    std::string all((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
++    std::vector<std::string> out;
++    size_t pos = 0;
++    while (pos <= all.size()) {
++        size_t hit = all.find(SEP, pos);
++        if (hit == std::string::npos) {
++            if (pos < all.size()) {
++                out.push_back(all.substr(pos));
++            }
++            break;
++        }
++        out.push_back(all.substr(pos, hit - pos));
++        pos = hit + strlen(SEP);
++    }
++    return out;
++}
++
++int main(int argc, char ** argv) {
++    std::string texts_path;
++    std::string out_path;
++    std::string tag;
++
++    // 先摘出自定义参数，其余交给 common_params_parse
++    std::vector<char *> args;
++    args.push_back(argv[0]);
++    for (int i = 1; i < argc; i++) {
++        std::string a = argv[i];
++        auto take = [&](std::string & dst) {
++            if (i + 1 >= argc) {
++                LOG_ERR("%s needs a value\n", a.c_str());
++                exit(2);
++            }
++            dst = argv[++i];
++        };
++        if (a == "--texts")      { take(texts_path); }
++        else if (a == "--out")   { take(out_path); }
++        else if (a == "--tag")   { take(tag); }
++        else                     { args.push_back(argv[i]); }
++    }
++    if (texts_path.empty() || out_path.empty()) {
++        LOG_ERR("usage: llama-route-dump -m model.gguf --texts FILE --out FILE [--tag NAME]\n");
++        return 2;
++    }
++
++    common_params params;
++    common_init();
++    if (!common_params_parse((int) args.size(), args.data(), params, LLAMA_EXAMPLE_COMMON)) {
++        return 1;
++    }
++    params.warmup = false;
++    params.load_mtp = false;   // 只走主模型图
++    // 路由概率由 llama_context 内部通过 LLAMA_MOE_DUMP 导出（避免 cb_eval 的逐节点同步开销）；
++    // 本工具只负责 teacher-forcing NLL 与 token 序列。
++    params.cb_eval = nullptr;
++    params.cb_eval_user_data = nullptr;
++
++    dump_state st;
++    params.cb_eval_user_data = &st;
++
++    llama_backend_init();
++    llama_numa_init(params.numa);
++    auto llama_init = common_init_from_params(params);
++    auto * model = llama_init->model();
++    auto * ctx   = llama_init->context();
++    if (model == nullptr || ctx == nullptr) {
++        LOG_ERR("failed to init model/context\n");
++        return 1;
++    }
++    const llama_vocab * vocab = llama_model_get_vocab(model);
++    st.n_layers = (int) llama_model_n_layer(model);
++    st.n_vocab  = (int) llama_vocab_n_tokens(vocab);
++    const bool add_bos = llama_vocab_get_add_bos(vocab);
++    llama_memory_t mem = llama_get_memory(ctx);
++
++    auto texts = load_texts(texts_path);
++    LOG_INF("%s: %zu texts, n_layers=%d, n_vocab=%d\n", __func__, texts.size(), st.n_layers, st.n_vocab);
++    st.f = fopen(out_path.c_str(), "wb");
++    if (!st.f) {
++        LOG_ERR("cannot open out: %s\n", out_path.c_str());
++        return 2;
++    }
++
++    const int n_max = (int) params.n_batch;
++    for (size_t ti = 0; ti < texts.size(); ti++) {
++        std::vector<llama_token> tokens = common_tokenize(ctx, texts[ti], add_bos, true);
++        if (tokens.empty()) {
++            LOG_WRN("text %zu empty, skip\n", ti);
++            continue;
++        }
++        if ((int) tokens.size() > n_max) {
++            LOG_WRN("text %zu len %zu > n_batch %d, truncate\n", ti, tokens.size(), n_max);
++            tokens.resize(n_max);
++        }
++        const int n = (int) tokens.size();
++
++        st.text_idx = (int) ti;
++        st.layer_ids.clear();
++        st.layer_probs.clear();
++        st.n_expert = 0;
++        llama_memory_clear(mem, true);
++
++        common_batch batch(ctx);
++        for (int p = 0; p < n; p++) {
++            batch.add(tokens[p], p, 0, true);
++        }
++        if (llama_process(ctx, LLAMA_PROCESS_TYPE_DECODE, batch.get()) != 0) {
++            LOG_ERR("decode failed at text %zu\n", ti);
++            return 1;
++        }
++
++        // teacher-forcing NLL
++        std::vector<float> nll((size_t) n, 0.0f);
++        for (int p = 0; p + 1 < n; p++) {
++            const float * lg = llama_get_logits_ith(ctx, p);
++            if (!lg) { continue; }
++            float mx = -INFINITY;
++            for (int v = 0; v < st.n_vocab; v++) { mx = std::max(mx, lg[v]); }
++            double se = 0.0;
++            for (int v = 0; v < st.n_vocab; v++) { se += std::exp((double) lg[v] - mx); }
++            const double lse = mx + std::log(se);
++            nll[(size_t) p] = (float) (lse - (double) lg[tokens[p + 1]]);
++        }
++
++        // 写记录
++        int32_t magic = 0x52544431;
++        wr_i32(st.f, magic);
++        wr_i32(st.f, (int32_t) ti);
++        wr_i32(st.f, (int32_t) n);
++        wr_i32(st.f, (int32_t) st.n_vocab);
++        wr_i32(st.f, (int32_t) st.n_layers);
++        wr(st.f, tokens.data(), tokens.size() * sizeof(llama_token));
++        wr(st.f, nll.data(), nll.size() * sizeof(float));
++        for (size_t li = 0; li < st.layer_ids.size(); li++) {
++            const int ne0 = st.n_expert;
++            const int ne1 = (int) (st.layer_probs[li].size() / (size_t) ne0);
++            wr_i32(st.f, st.layer_ids[li]);
++            wr_i32(st.f, ne0);
++            wr_i32(st.f, ne1);
++            wr(st.f, st.layer_probs[li].data(), st.layer_probs[li].size() * sizeof(float));
++        }
++        fflush(st.f);
++        if ((ti + 1) % 8 == 0 || ti + 1 == texts.size()) {
++            LOG_INF("[%s] %zu/%zu texts, last n_tokens=%d, layers=%zu\n",
++                    tag.c_str(), ti + 1, texts.size(), n, st.layer_ids.size());
++        }
++    }
++    fclose(st.f);
++    LOG_INF("[%s] wrote %s\n", tag.c_str(), out_path.c_str());
++    llama_perf_context_print(ctx);
++    llama_backend_free();
++    return 0;
++}
+diff --git a/ggml/include/ggml.h b/ggml/include/ggml.h
+index b188c0b..38f2d39 100644
+--- a/ggml/include/ggml.h
++++ b/ggml/include/ggml.h
+@@ -433,7 +433,9 @@ extern "C" {
+         GGML_TYPE_Q1_0    = 41,
+         GGML_TYPE_Q2_0    = 42,
+         GGML_TYPE_F8_E4M3 = 43,
+-        GGML_TYPE_COUNT   = 44,
++        GGML_TYPE_TCMOE_Q2 = 44, // TCQ 2-bit base, block 128, 4-level symmetric grid (quantize_row_tcmoe_q2_ref)
++        GGML_TYPE_TCMOE_Q2NL = 45, // TCQ 2-bit base, block 128, per-tensor 4-entry non-uniform codebook
++        GGML_TYPE_COUNT   = 46,
+     };
+ 
+     // [TAG_GGML_PREC]
+@@ -527,6 +529,7 @@ extern "C" {
+ 
+         GGML_OP_MUL_MAT,
+         GGML_OP_MUL_MAT_ID,
++        GGML_OP_MUL_MAT_ID_MIXED,
+         GGML_OP_OUT_PROD,
+ 
+         GGML_OP_SCALE,
+@@ -1525,6 +1528,18 @@ extern "C" {
+             struct ggml_tensor  * b,
+             struct ggml_tensor  * ids);
+ 
++    // same as ggml_mul_mat_id, but the experts are split over two tensors of different
++    // types: the slot e,t takes as_base[ids_base[e,t]] @ b[:,e,t] when ids_base[e,t] >= 0,
++    // as_patch[ids_patch[e,t]] @ b[:,e,t] when ids_patch[e,t] >= 0, and zero otherwise.
++    // on the CPU this is one node with one barrier, instead of two nodes plus an add
++    GGML_API struct ggml_tensor * ggml_mul_mat_id_mixed(
++            struct ggml_context * ctx,
++            struct ggml_tensor  * as_base,
++            struct ggml_tensor  * as_patch,
++            struct ggml_tensor  * b,
++            struct ggml_tensor  * ids_base,
++            struct ggml_tensor  * ids_patch);
++
+     // A: m columns, n rows,
+     // B: p columns, n rows,
+     // result is m columns, p rows
+diff --git a/ggml/src/ggml-common.h b/ggml/src/ggml-common.h
+index 1dbbe32..722479f 100644
+--- a/ggml/src/ggml-common.h
++++ b/ggml/src/ggml-common.h
+@@ -191,6 +191,18 @@ typedef struct {
+ } block_q2_0;
+ static_assert(sizeof(block_q2_0) == sizeof(ggml_half) + QK2_0 / 4, "wrong q2_0 block size/padding");
+ 
++#define QK_TCMOE_Q2 128
++typedef struct {
++    ggml_half d;                    // scale = amax / 1.5
++    uint8_t qs[QK_TCMOE_Q2 / 4];    // 2 bits per element
++} block_tcmoe_q2;
++static_assert(sizeof(block_tcmoe_q2) == sizeof(ggml_half) + QK_TCMOE_Q2 / 4, "wrong tcmoe_q2 block size/padding");
++
++// same packing as tcmoe_q2, but code k decodes to cb[k] * d with a per-tensor 4-entry
++// codebook kept in the metadata (E21 non-uniform levels). The block layout is unchanged.
++typedef block_tcmoe_q2 block_tcmoe_q2nl;
++static_assert(sizeof(block_tcmoe_q2nl) == sizeof(ggml_half) + QK_TCMOE_Q2 / 4, "wrong tcmoe_q2nl block size/padding");
++
+ #define QK4_0 32
+ typedef struct {
+     ggml_half d;           // delta
+diff --git a/ggml/src/ggml-cpu/arch/x86/quants.c b/ggml/src/ggml-cpu/arch/x86/quants.c
+index 21cd631..3d307bb 100644
+--- a/ggml/src/ggml-cpu/arch/x86/quants.c
++++ b/ggml/src/ggml-cpu/arch/x86/quants.c
+@@ -762,6 +762,192 @@ void ggml_vec_dot_q2_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
+ #endif
+ }
+ 
++#if defined(__AVX2__)
++// tcmoe_q2 packs 128 weights into one block; every 8-byte group is one 32-value Q8_0 sub-block,
++// and each byte holds four consecutive 2-bit fields (field k sits at bit 2k of its byte)
++static inline __m256i tcmoe_q2_unpack_32_avx2(const uint8_t * qs) {
++    __m256i v = _mm256_cvtepu8_epi32(_mm_loadl_epi64((const __m128i *) qs));
++    v = _mm256_or_si256(v, _mm256_slli_epi32(v, 12));
++    v = _mm256_or_si256(v, _mm256_slli_epi32(v,  6));
++    return _mm256_and_si256(v, _mm256_set1_epi32(0x03030303));
++}
++
++// 32 weights against one Q8_0 block: sum((2q - 3) * y), exact in int32; the caller folds in 0.5 * d_x * d_y
++static inline __m256 tcmoe_q2_dot_32_avx2(const uint8_t * qs, const int8_t * qy) {
++    const __m256i v = tcmoe_q2_unpack_32_avx2(qs);
++    // q in [0,3] -> 2q-3 in [-3,3]; (q - 1.5) = (2q - 3) / 2
++    const __m256i s = _mm256_sub_epi8(_mm256_slli_epi16(v, 1), _mm256_set1_epi8(3));
++    const __m256i y = _mm256_loadu_si256((const __m256i *) qy);
++    return sum_i16_pairs_float(mul_add_epi8(s, y));
++}
++
++static inline __m256 tcmoe_q2_acc_block_avx2(const block_tcmoe_q2 * x, const block_q8_0 * y, __m256 acc) {
++    const float dx = 0.5f * GGML_CPU_FP16_TO_FP32(x->d);
++    for (int k = 0; k < 4; ++k) {
++        const __m256 d = _mm256_set1_ps(dx * GGML_CPU_FP16_TO_FP32(y[k].d));
++        const __m256 p = tcmoe_q2_dot_32_avx2(x->qs + 8 * k, y[k].qs);
++#if defined(__FMA__)
++        acc = _mm256_fmadd_ps(d, p, acc);
++#else
++        acc = _mm256_add_ps(acc, _mm256_mul_ps(d, p));
++#endif
++    }
++    return acc;
++}
++#endif
++
++void ggml_vec_dot_tcmoe_q2_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
++    const int qk = QK_TCMOE_Q2;
++    const int nb = n / qk;
++
++    assert(n % qk == 0);
++    assert(nrc == 1);
++    UNUSED(nrc);
++    UNUSED(bx);
++    UNUSED(by);
++    UNUSED(bs);
++
++#if defined(__AVX2__)
++    const block_tcmoe_q2 * GGML_RESTRICT x = vx;
++    const block_q8_0     * GGML_RESTRICT y = vy;
++
++    // two blocks per step, each into its own FMA chain
++    __m256 acc0 = _mm256_setzero_ps();
++    __m256 acc1 = _mm256_setzero_ps();
++
++    int i = 0;
++    for (; i + 1 < nb; i += 2) {
++        acc0 = tcmoe_q2_acc_block_avx2(x + i + 0, y + 4*(i + 0), acc0);
++        acc1 = tcmoe_q2_acc_block_avx2(x + i + 1, y + 4*(i + 1), acc1);
++    }
++    if (i < nb) {
++        acc0 = tcmoe_q2_acc_block_avx2(x + i, y + 4*i, acc0);
++    }
++
++    *s = hsum_float_8(_mm256_add_ps(acc0, acc1));
++#else
++    ggml_vec_dot_tcmoe_q2_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
++#endif
++}
++
++#if defined(__AVX2__)
++// tcmoe_q2nl: code k decodes to cb[k] * d. The 4-entry codebook is int8-normalized so one
++// vpshufb maps all 32 codes of a sub-block at once, which keeps the op count of tcmoe_q2.
++static inline __m256 tcmoe_q2nl_dot_32_avx2(const uint8_t * qs, const int8_t * qy, __m256i lut) {
++    const __m256i v = tcmoe_q2_unpack_32_avx2(qs);
++    const __m256i w = _mm256_shuffle_epi8(lut, v);
++    const __m256i y = _mm256_loadu_si256((const __m256i *) qy);
++    return sum_i16_pairs_float(mul_add_epi8(w, y));
++}
++
++static inline __m256 tcmoe_q2nl_acc_block_avx2(const block_tcmoe_q2nl * x, const block_q8_0 * y,
++        __m256 acc, __m256i lut, float cb_scale) {
++    const float dx = GGML_CPU_FP16_TO_FP32(x->d) * cb_scale;
++    for (int k = 0; k < 4; ++k) {
++        const __m256 d = _mm256_set1_ps(dx * GGML_CPU_FP16_TO_FP32(y[k].d));
++        const __m256 p = tcmoe_q2nl_dot_32_avx2(x->qs + 8 * k, y[k].qs, lut);
++#if defined(__FMA__)
++        acc = _mm256_fmadd_ps(d, p, acc);
++#else
++        acc = _mm256_add_ps(acc, _mm256_mul_ps(d, p));
++#endif
++    }
++    return acc;
++}
++
++// alternative: look the codebook up as floats with vpermps. Kept for the A/B timing only
++// (GGML_TCMOE_Q2NL_FP32=1); it needs twice the instructions of the int8 table.
++static inline __m256 tcmoe_q2nl_acc_block_fp32_avx2(const block_tcmoe_q2nl * x, const block_q8_0 * y,
++        __m256 acc, __m256 cbv) {
++    const float dx = GGML_CPU_FP16_TO_FP32(x->d);
++    for (int k = 0; k < 4; ++k) {
++        const uint8_t * qs = x->qs + 8 * k;
++        const int8_t  * qy = y[k].qs;
++        const float dy = dx * GGML_CPU_FP16_TO_FP32(y[k].d);
++
++        __m256i v = tcmoe_q2_unpack_32_avx2(qs);
++
++        const __m128i lo = _mm256_castsi256_si128(v);
++        const __m128i hi = _mm256_extracti128_si256(v, 1);
++
++        __m256 partial = _mm256_setzero_ps();
++        for (int h = 0; h < 4; ++h) {
++            const __m128i ib = (h < 2) ? lo : hi;
++            const __m128i idx128 = (h % 2 == 0) ? ib : _mm_srli_si128(ib, 8);
++            const __m128i yb = _mm_loadl_epi64((const __m128i *) (qy + 8 * h));
++            const __m256i idx = _mm256_cvtepu8_epi32(idx128);
++            const __m256 w = _mm256_permutevar8x32_ps(cbv, idx);
++            const __m256 yf = _mm256_cvtepi32_ps(_mm256_cvtepi8_epi32(yb));
++            partial = _mm256_add_ps(partial, _mm256_mul_ps(w, yf));
++        }
++        acc = _mm256_add_ps(acc, _mm256_mul_ps(_mm256_set1_ps(dy), partial));
++    }
++    return acc;
++}
++
++static int tcmoe_q2nl_use_fp32(void) {
++    static int flag = -1;
++    if (flag < 0) {
++        const char * e = getenv("GGML_TCMOE_Q2NL_FP32");
++        flag = (e != NULL && e[0] == '1') ? 1 : 0;
++    }
++    return flag;
++}
++#endif
++
++void ggml_vec_dot_tcmoe_q2nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
++    const int qk = QK_TCMOE_Q2;
++    const int nb = n / qk;
++
++    assert(n % qk == 0);
++    assert(nrc == 1);
++    UNUSED(nrc);
++    UNUSED(bx);
++    UNUSED(by);
++    UNUSED(bs);
++
++#if defined(__AVX2__)
++    const block_tcmoe_q2nl * GGML_RESTRICT x = vx;
++    const block_q8_0       * GGML_RESTRICT y = vy;
++
++    const struct ggml_tcmoe_q2nl_cb * cb = ggml_cpu_tcmoe_q2nl_active_cb();
++
++    __m256 acc0 = _mm256_setzero_ps();
++    __m256 acc1 = _mm256_setzero_ps();
++
++    if (tcmoe_q2nl_use_fp32()) {
++        const __m256 cbv = _mm256_setr_ps(cb->f[0], cb->f[1], cb->f[2], cb->f[3],
++                                          cb->f[0], cb->f[1], cb->f[2], cb->f[3]);
++        int i = 0;
++        for (; i + 1 < nb; i += 2) {
++            acc0 = tcmoe_q2nl_acc_block_fp32_avx2(x + i + 0, y + 4*(i + 0), acc0, cbv);
++            acc1 = tcmoe_q2nl_acc_block_fp32_avx2(x + i + 1, y + 4*(i + 1), acc1, cbv);
++        }
++        if (i < nb) {
++            acc0 = tcmoe_q2nl_acc_block_fp32_avx2(x + i, y + 4*i, acc0, cbv);
++        }
++    } else {
++        const __m128i lut128 = _mm_setr_epi8(
++                cb->q8[0], cb->q8[1], cb->q8[2], cb->q8[3],
++                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
++        const __m256i lut = _mm256_broadcastsi128_si256(lut128);
++
++        int i = 0;
++        for (; i + 1 < nb; i += 2) {
++            acc0 = tcmoe_q2nl_acc_block_avx2(x + i + 0, y + 4*(i + 0), acc0, lut, cb->scale);
++            acc1 = tcmoe_q2nl_acc_block_avx2(x + i + 1, y + 4*(i + 1), acc1, lut, cb->scale);
++        }
++        if (i < nb) {
++            acc0 = tcmoe_q2nl_acc_block_avx2(x + i, y + 4*i, acc0, lut, cb->scale);
++        }
++    }
++
++    *s = hsum_float_8(_mm256_add_ps(acc0, acc1));
++#else
++    ggml_vec_dot_tcmoe_q2nl_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
++#endif
++}
++
+ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+     const int qk = QK8_0;
+     const int nb = n / qk;
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
+index f4eaea5..784e548 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.c
++++ b/ggml/src/ggml-cpu/ggml-cpu.c
+@@ -215,6 +215,51 @@ typedef pthread_t ggml_thread_t;
+ #include <TargetConditionals.h>
+ #endif
+ 
++// tcmoe_q2nl carries a per-tensor codebook that the vec_dot signature cannot pass, so each
++// mul_mat thread refreshes this state from the weight tensor before it runs the dot loops.
++#if defined(_MSC_VER)
++#define GGML_TCMOE_TLS __declspec(thread)
++#else
++#define GGML_TCMOE_TLS __thread
++#endif
++
++static const float GGML_TCMOE_Q2NL_UNIFORM[4] = { -1.5f, -0.5f, 0.5f, 1.5f };
++
++static GGML_TCMOE_TLS const float * GGML_TCMOE_Q2NL_SRC = NULL;
++static GGML_TCMOE_TLS struct ggml_tcmoe_q2nl_cb GGML_TCMOE_Q2NL_CB;
++
++void ggml_cpu_tcmoe_q2nl_set_active(const float * cb4) {
++    if (cb4 == NULL) {
++        cb4 = GGML_TCMOE_Q2NL_UNIFORM;
++    }
++    if (cb4 == GGML_TCMOE_Q2NL_SRC) {
++        return;
++    }
++    GGML_TCMOE_Q2NL_SRC = cb4;
++
++    float amax = 0.0f;
++    for (int i = 0; i < 4; ++i) {
++        GGML_TCMOE_Q2NL_CB.f[i] = cb4[i];
++        const float a = fabsf(cb4[i]);
++        if (a > amax) {
++            amax = a;
++        }
++    }
++    const float scale = amax > 0.0f ? amax / 127.0f : 1.0f;
++    for (int i = 0; i < 4; ++i) {
++        GGML_TCMOE_Q2NL_CB.q8[i] = (int8_t) (GGML_TCMOE_Q2NL_CB.f[i] / scale + (GGML_TCMOE_Q2NL_CB.f[i] >= 0.0f ? 0.5f : -0.5f));
++    }
++    GGML_TCMOE_Q2NL_CB.scale = scale;
++}
++
++const struct ggml_tcmoe_q2nl_cb * ggml_cpu_tcmoe_q2nl_active_cb(void) {
++    // callers that bypass mul_mat (e.g. the type tests) get the uniform levels
++    if (GGML_TCMOE_Q2NL_SRC == NULL) {
++        ggml_cpu_tcmoe_q2nl_set_active(NULL);
++    }
++    return &GGML_TCMOE_Q2NL_CB;
++}
++
+ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
+     [GGML_TYPE_F32] = {
+         .from_float               = (ggml_from_float_t) ggml_cpu_fp32_to_fp32,
+@@ -305,6 +350,18 @@ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
+         .vec_dot_type             = GGML_TYPE_F32,
+         .nrows                    = 1,
+     },
++    [GGML_TYPE_TCMOE_Q2] = {
++        .from_float               = quantize_row_tcmoe_q2_ref,
++        .vec_dot                  = ggml_vec_dot_tcmoe_q2_q8_0,
++        .vec_dot_type             = GGML_TYPE_Q8_0,
++        .nrows                    = 1,
++    },
++    [GGML_TYPE_TCMOE_Q2NL] = {
++        .from_float               = quantize_row_tcmoe_q2nl_ref,
++        .vec_dot                  = ggml_vec_dot_tcmoe_q2nl_q8_0,
++        .vec_dot_type             = GGML_TYPE_Q8_0,
++        .nrows                    = 1,
++    },
+     [GGML_TYPE_Q2_K] = {
+         .from_float               = quantize_row_q2_K,
+         .vec_dot                  = ggml_vec_dot_q2_K_q8_K,
+@@ -1188,6 +1245,10 @@ static void ggml_compute_forward_mul_mat_one_chunk(
+ 
+     const bool src1_cont = ggml_is_contiguous(src1);
+ 
++    if (type == GGML_TYPE_TCMOE_Q2NL) {
++        ggml_cpu_tcmoe_q2nl_set_active((const float *) src0->extra);
++    }
++
+     ggml_vec_dot_t const vec_dot      = type_traits_cpu[type].vec_dot;
+     enum ggml_type const vec_dot_type = type_traits_cpu[type].vec_dot_type;
+ 
+@@ -1509,6 +1570,10 @@ static void ggml_compute_forward_mul_mat_id_one_chunk(
+ 
+     const enum ggml_type type = src0->type;
+ 
++    if (type == GGML_TYPE_TCMOE_Q2NL) {
++        ggml_cpu_tcmoe_q2nl_set_active((const float *) src0->extra);
++    }
++
+     ggml_vec_dot_t    const vec_dot      = type_traits_cpu[type].vec_dot;
+     enum ggml_type    const vec_dot_type = type_traits_cpu[type].vec_dot_type;
+ 
+@@ -1751,6 +1816,253 @@ static void ggml_compute_forward_mul_mat_id(
+ 
+ /////////////////////////////////
+ 
++// ggml_compute_forward_mul_mat_id_mixed
++//
++// Same result as mul_mat_id(base) + mul_mat_id(patch) + add, in a single node: both id
++// tables are grouped before a single barrier and the two expert loops write the result
++// directly. That removes one threadpool dispatch, one extra pass over the result and the
++// add, without touching the dot kernels of either type
++
++// quantizes src1 into wdata for one vec_dot type, the layout matches ggml_compute_forward_mul_mat_id
++static void ggml_mmid_quantize_src1(const struct ggml_tensor * src1, enum ggml_type vec_dot_type,
++        char * wdata, int ith, int nth) {
++    ggml_from_float_t const from_float = type_traits_cpu[vec_dot_type].from_float;
++
++    const size_t nbw0 = ggml_type_size(vec_dot_type);
++    const size_t nbw1 = ggml_row_size(vec_dot_type, src1->ne[0]);
++    const size_t nbw2 = nbw1*src1->ne[1];
++    const size_t nbw3 = nbw2*src1->ne[2];
++
++    const size_t bs = ggml_blck_size(vec_dot_type);
++
++    for (int64_t i13 = 0; i13 < src1->ne[3]; ++i13) {
++        for (int64_t i12 = 0; i12 < src1->ne[2]; ++i12) {
++            for (int64_t i11 = 0; i11 < src1->ne[1]; ++i11) {
++                const int64_t b0 = (ith * src1->ne[0]/bs) / nth;
++                const int64_t b1 = ((ith + 1) * src1->ne[0]/bs) / nth;
++                from_float((float *) ((char *) src1->data + i13*src1->nb[3] + i12*src1->nb[2] +
++                            i11*src1->nb[1] + b0*bs*src1->nb[0]),
++                           (void *) (wdata + i13*nbw3 + i12*nbw2 + i11*nbw1 + b0*nbw0),
++                           (b1 - b0) * bs);
++            }
++        }
++    }
++}
++
++// the expert loop of one weight tensor; the tiled kernel reads dst->src[0] as its weights,
++// so it is only offered to the base pair
++static void ggml_compute_forward_mul_mat_id_pair(
++        const struct ggml_compute_params * params,
++              struct ggml_tensor * dst,
++        const struct ggml_tensor * src0,
++        const struct ggml_tensor * ids,
++        const int64_t * matrix_row_counts,
++        const struct mmid_row_mapping * matrix_rows,
++        char * atomic_current_chunk,
++        const void * wdata,
++        char * tiled_scratch,
++        const bool allow_tiled) {
++
++    const struct ggml_tensor * src1 = dst->src[1];
++
++    GGML_TENSOR_BINARY_OP_LOCALS
++
++    const int ith = params->ith;
++    const int nth = params->nth;
++
++    const enum ggml_type type         = src0->type;
++    const enum ggml_type vec_dot_type = type_traits_cpu[type].vec_dot_type;
++
++    const bool src1_cont = ggml_is_contiguous(src1);
++
++    const int64_t n_as = ne02;
++
++    for (int cur_a = 0; cur_a < n_as; ++cur_a) {
++        const int64_t cne1 = matrix_row_counts[cur_a];
++
++        if (cne1 == 0) {
++            continue;
++        }
++
++        if (allow_tiled &&
++            ggml_compute_forward_mul_mat_id_tiled(params, dst, cur_a, cne1,
++                (const int32_t *) &matrix_rows[cur_a*ids->ne[0]*ids->ne[1]], tiled_scratch)) {
++            continue;
++        }
++
++        const char * src0_cur = (const char *) src0->data + cur_a * nb02;
++        const size_t row_size = ggml_row_size(vec_dot_type, ne10);
++
++        const int64_t nr0 = ne01;
++        const int64_t nr1 = cne1;
++
++        int chunk_size = 16;
++        if (nr0 == 1 || nr1 == 1) {
++            chunk_size = 64;
++        }
++
++        // disable for NUMA
++        const bool disable_chunking = ggml_is_numa();
++
++        int64_t nchunk0 = (nr0 + chunk_size - 1) / chunk_size;
++        int64_t nchunk1 = (nr1 + chunk_size - 1) / chunk_size;
++
++        if (nchunk0 * nchunk1 < nth * 4 || disable_chunking) {
++            nchunk0 = nr0 > nr1 ? nth : 1;
++            nchunk1 = nr0 > nr1 ? 1 : nth;
++        }
++
++        const int64_t dr0 = (nr0 + nchunk0 - 1) / nchunk0;
++        const int64_t dr1 = (nr1 + nchunk1 - 1) / nchunk1;
++
++        int current_chunk = ith;
++
++        atomic_int * current_chunk_ctr = (atomic_int *) (atomic_current_chunk + (size_t) cur_a*CACHE_LINE_SIZE);
++
++        while (current_chunk < nchunk0 * nchunk1) {
++            const int64_t ith0 = current_chunk % nchunk0;
++            const int64_t ith1 = current_chunk / nchunk0;
++
++            const int64_t ir0_start = dr0 * ith0;
++            const int64_t ir0_end = MIN(ir0_start + dr0, nr0);
++
++            const int64_t ir1_start = dr1 * ith1;
++            const int64_t ir1_end = MIN(ir1_start + dr1, nr1);
++
++            ggml_compute_forward_mul_mat_id_one_chunk(
++                dst, src0, src1, ids, cur_a,
++                ir0_start, ir0_end, ir1_start, ir1_end,
++                src0_cur, matrix_rows, row_size, src1_cont, wdata
++            );
++
++            if (nth >= nchunk0 * nchunk1) {
++                break;
++            }
++
++            current_chunk = atomic_fetch_add_explicit(current_chunk_ctr, 1, memory_order_relaxed);
++        }
++    }
++}
++
++static void ggml_compute_forward_mul_mat_id_mixed(
++        const struct ggml_compute_params * params,
++              struct ggml_tensor * dst) {
++
++    const struct ggml_tensor * src0  = dst->src[0]; // base experts
++    const struct ggml_tensor * src1  = dst->src[1];
++    const struct ggml_tensor * ids   = dst->src[2];
++    const struct ggml_tensor * src0b = dst->src[3]; // patch experts
++    const struct ggml_tensor * idsb  = dst->src[4];
++
++    GGML_TENSOR_BINARY_OP_LOCALS
++
++    const int ith = params->ith;
++    const int nth = params->nth;
++
++    GGML_ASSERT(nb00 == ggml_type_size(src0->type));
++    GGML_ASSERT(nb10 == ggml_type_size(src1->type));
++
++    // dst cannot be transposed or permuted
++    GGML_ASSERT(nb0 == sizeof(float));
++    GGML_ASSERT(nb0 <= nb1);
++    GGML_ASSERT(nb1 <= nb2);
++    GGML_ASSERT(nb2 <= nb3);
++
++    const int n_ids = ids->ne[0]; // n_expert_used
++    const int n_as  = ne02;       // n_expert of the base tensor
++    const int n_asb = src0b->ne[2];
++
++    const enum ggml_type vdt_a = type_traits_cpu[src0 ->type].vec_dot_type;
++    const enum ggml_type vdt_b = type_traits_cpu[src0b->type].vec_dot_type;
++
++    const bool quant_a = src1->type != vdt_a;
++    const bool quant_b = src1->type != vdt_b;
++
++    void * wdata_cur = params->wdata;
++
++    char * wdata_a = NULL;
++    char * wdata_b = NULL;
++    if (quant_a) {
++        wdata_a = incr_ptr_aligned(&wdata_cur, ggml_row_size(vdt_a, ggml_nelements(src1)), sizeof(int64_t));
++    }
++    if (quant_b) {
++        wdata_b = incr_ptr_aligned(&wdata_cur, ggml_row_size(vdt_b, ggml_nelements(src1)), sizeof(int64_t));
++    }
++
++    int64_t * matrix_row_counts_a = incr_ptr_aligned(&wdata_cur, n_as*sizeof(int64_t), sizeof(int64_t));
++    struct mmid_row_mapping * matrix_rows_a = incr_ptr_aligned(&wdata_cur,
++            n_as*ids->ne[0]*ids->ne[1]*sizeof(struct mmid_row_mapping), sizeof(int64_t));
++    char * atomic_current_chunk_a = incr_ptr_aligned(&wdata_cur, CACHE_LINE_SIZE*n_as, CACHE_LINE_SIZE);
++
++    int64_t * matrix_row_counts_b = incr_ptr_aligned(&wdata_cur, n_asb*sizeof(int64_t), sizeof(int64_t));
++    struct mmid_row_mapping * matrix_rows_b = incr_ptr_aligned(&wdata_cur,
++            n_asb*ids->ne[0]*ids->ne[1]*sizeof(struct mmid_row_mapping), sizeof(int64_t));
++    char * atomic_current_chunk_b = incr_ptr_aligned(&wdata_cur, CACHE_LINE_SIZE*n_asb, CACHE_LINE_SIZE);
++
++    char * tiled_scratch = incr_ptr_aligned(&wdata_cur, ggml_tiled_wdata_size(nth, dst), 64);
++
++    GGML_ASSERT(params->wsize >= (size_t)((char *) wdata_cur - (char *) params->wdata));
++
++    if (quant_a) {
++        ggml_mmid_quantize_src1(src1, vdt_a, wdata_a, ith, nth);
++    }
++    if (quant_b) {
++        ggml_mmid_quantize_src1(src1, vdt_b, wdata_b, ith, nth);
++    }
++
++    if (ith == 0) {
++        memset(matrix_row_counts_a, 0, n_as *sizeof(int64_t));
++        memset(matrix_row_counts_b, 0, n_asb*sizeof(int64_t));
++
++        for (int64_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
++            for (int id = 0; id < n_ids; ++id) {
++                const int32_t i02a = *(const int32_t *) ((const char *) ids ->data + iid1*ids ->nb[1] + id*ids ->nb[0]);
++                const int32_t i02b = *(const int32_t *) ((const char *) idsb->data + iid1*idsb->nb[1] + id*idsb->nb[0]);
++
++                GGML_ASSERT(i02a == -1 || (i02a >= 0 && i02a < n_as));
++                GGML_ASSERT(i02b == -1 || (i02b >= 0 && i02b < n_asb));
++                // a slot is owned by exactly one of the two tables
++                GGML_ASSERT(i02a < 0 || i02b < 0);
++
++                if (i02a < 0 && i02b < 0) {
++                    memset((char *) dst->data + id*nb1 + iid1*nb2, 0, ne0*sizeof(float));
++                    continue;
++                }
++
++                if (i02a >= 0) {
++                    matrix_rows_a[i02a*ids->ne[0]*ids->ne[1] + matrix_row_counts_a[i02a]] =
++                        (struct mmid_row_mapping) { id, (int32_t) iid1 };
++                    matrix_row_counts_a[i02a] += 1;
++                } else {
++                    matrix_rows_b[i02b*ids->ne[0]*ids->ne[1] + matrix_row_counts_b[i02b]] =
++                        (struct mmid_row_mapping) { id, (int32_t) iid1 };
++                    matrix_row_counts_b[i02b] += 1;
++                }
++            }
++        }
++    }
++
++    // reset current_chunk
++    for (int cur_a = ith; cur_a < n_as; cur_a += nth) {
++        *(atomic_int *) (atomic_current_chunk_a + (size_t) cur_a*CACHE_LINE_SIZE) = nth;
++    }
++    for (int cur_a = ith; cur_a < n_asb; cur_a += nth) {
++        *(atomic_int *) (atomic_current_chunk_b + (size_t) cur_a*CACHE_LINE_SIZE) = nth;
++    }
++
++    ggml_barrier(params->threadpool);
++
++    // the base experts first; a thread that runs out of base chunks continues into the patch
++    // experts right away, so the two loops share one tail instead of adding a second one
++    ggml_compute_forward_mul_mat_id_pair(params, dst, src0, ids, matrix_row_counts_a, matrix_rows_a,
++            atomic_current_chunk_a, quant_a ? wdata_a : src1->data, tiled_scratch, true);
++
++    ggml_compute_forward_mul_mat_id_pair(params, dst, src0b, idsb, matrix_row_counts_b, matrix_rows_b,
++            atomic_current_chunk_b, quant_b ? wdata_b : src1->data, tiled_scratch, false);
++}
++
++/////////////////////////////////
++
+ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * tensor) {
+     GGML_ASSERT(params);
+ 
+@@ -1884,6 +2196,10 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
+             {
+                 ggml_compute_forward_mul_mat_id(params, tensor);
+             } break;
++        case GGML_OP_MUL_MAT_ID_MIXED:
++            {
++                ggml_compute_forward_mul_mat_id_mixed(params, tensor);
++            } break;
+         case GGML_OP_OUT_PROD:
+             {
+                 ggml_compute_forward_out_prod(params, tensor);
+@@ -2378,6 +2694,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
+         case GGML_OP_CONCAT:
+         case GGML_OP_MUL_MAT:
+         case GGML_OP_MUL_MAT_ID:
++        case GGML_OP_MUL_MAT_ID_MIXED:
+         case GGML_OP_OUT_PROD:
+         case GGML_OP_SET_ROWS:
+             {
+@@ -2931,6 +3248,30 @@ struct ggml_cplan ggml_graph_plan(
+                         cur = GGML_PAD(cur, 64);
+                         cur += ggml_tiled_wdata_size(n_tasks, node);
+                     } break;
++                case GGML_OP_MUL_MAT_ID_MIXED:
++                    {
++                        cur = 0;
++                        const struct ggml_tensor * src1 = node->src[1];
++                        const struct ggml_tensor * ids  = node->src[2];
++                        for (int p = 0; p < 2; ++p) {
++                            const struct ggml_tensor * src0 = p ? node->src[3] : node->src[0];
++                            const enum ggml_type vec_dot_type = type_traits_cpu[src0->type].vec_dot_type;
++                            const int n_as = src0->ne[2];
++                            // src1
++                            if (src1->type != vec_dot_type) {
++                                cur += ggml_row_size(vec_dot_type, ggml_nelements(src1)) + sizeof(int64_t);
++                            }
++                            // matrix_row_counts
++                            cur += n_as * sizeof(int64_t) + sizeof(int64_t);
++                            // matrix_rows
++                            cur += n_as*ids->ne[0]*ids->ne[1]*sizeof(struct mmid_row_mapping) + sizeof(int64_t);
++                            // atomic_current_chunk
++                            cur += CACHE_LINE_SIZE*n_as + CACHE_LINE_SIZE;
++                        }
++                        // Workspace for tiled (see tiled.h)
++                        cur = GGML_PAD(cur, 64);
++                        cur += ggml_tiled_wdata_size(n_tasks, node);
++                    } break;
+                 case GGML_OP_OUT_PROD:
+                     {
+                         if (ggml_is_quantized(node->src[0]->type) || node->src[0]->type == GGML_TYPE_F8_E4M3 ||
+diff --git a/ggml/src/ggml-cpu/quants.c b/ggml/src/ggml-cpu/quants.c
+index 44ea9fa..d9bb739 100644
+--- a/ggml/src/ggml-cpu/quants.c
++++ b/ggml/src/ggml-cpu/quants.c
+@@ -227,6 +227,100 @@ void ggml_vec_dot_q2_0_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, c
+     *s = sumf;
+ }
+ 
++void ggml_vec_dot_tcmoe_q2_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
++    const int qk = QK_TCMOE_Q2;
++    const int nb = n / qk;
++
++    assert(n % qk == 0);
++    assert(nrc == 1);
++    UNUSED(nrc);
++    UNUSED(bx);
++    UNUSED(by);
++    UNUSED(bs);
++
++    const block_tcmoe_q2 * GGML_RESTRICT x = vx;
++    const block_q8_0     * GGML_RESTRICT y = vy;
++
++    float sumf = 0.0f;
++
++    // one tcmoe_q2 block (128 weights) spans four Q8_0 blocks (4 * 32)
++    for (int i = 0; i < nb; i++) {
++        const float d0 = GGML_CPU_FP16_TO_FP32(x[i].d);
++
++        float sumi = 0.0f;
++
++        for (int j = 0; j < 4; j++) {
++            const block_q8_0 * GGML_RESTRICT yb = &y[4*i + j];
++            const float d1 = GGML_CPU_FP16_TO_FP32(yb->d);
++
++            const uint8_t * GGML_RESTRICT qs = &x[i].qs[j * 8];
++            const int8_t  * GGML_RESTRICT qy = yb->qs;
++
++            int sumi_2q = 0;
++
++            for (int k = 0; k < 32; ++k) {
++                const int q = (qs[k >> 2] >> ((k & 3) * 2)) & 0x03;
++                sumi_2q += (2 * q - 3) * qy[k];
++            }
++
++            // (q - 1.5) = (2q - 3) / 2
++            sumi += 0.5f * d1 * (float) sumi_2q;
++        }
++
++        sumf += d0 * sumi;
++    }
++
++    *s = sumf;
++}
++
++void ggml_vec_dot_tcmoe_q2nl_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
++    const int qk = QK_TCMOE_Q2;
++    const int nb = n / qk;
++
++    assert(n % qk == 0);
++    assert(nrc == 1);
++    UNUSED(nrc);
++    UNUSED(bx);
++    UNUSED(by);
++    UNUSED(bs);
++
++    const block_tcmoe_q2nl * GGML_RESTRICT x = vx;
++    const block_q8_0       * GGML_RESTRICT y = vy;
++
++    const struct ggml_tcmoe_q2nl_cb * cb = ggml_cpu_tcmoe_q2nl_active_cb();
++    GGML_ASSERT(cb != NULL);
++
++    float sumf = 0.0f;
++
++    // one tcmoe_q2nl block (128 weights) spans four Q8_0 blocks (4 * 32)
++    for (int i = 0; i < nb; i++) {
++        const float d0 = GGML_CPU_FP16_TO_FP32(x[i].d);
++
++        float sumi = 0.0f;
++
++        for (int j = 0; j < 4; j++) {
++            const block_q8_0 * GGML_RESTRICT yb = &y[4*i + j];
++            const float d1 = GGML_CPU_FP16_TO_FP32(yb->d);
++
++            const uint8_t * GGML_RESTRICT qs = &x[i].qs[j * 8];
++            const int8_t  * GGML_RESTRICT qy = yb->qs;
++
++            float sumi_cb = 0.0f;
++
++            for (int k = 0; k < 32; ++k) {
++                const int q = (qs[k >> 2] >> ((k & 3) * 2)) & 0x03;
++                sumi_cb += cb->f[q] * (float) qy[k];
++            }
++
++            sumi += d1 * sumi_cb;
++        }
++
++        sumf += d0 * sumi;
++    }
++
++    *s = sumf;
++}
++
+ void ggml_vec_dot_q4_0_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+     const int qk = QK8_0;
+     const int nb = n / qk;
+diff --git a/ggml/src/ggml-cpu/quants.h b/ggml/src/ggml-cpu/quants.h
+index f04be52..06029f9 100644
+--- a/ggml/src/ggml-cpu/quants.h
++++ b/ggml/src/ggml-cpu/quants.h
+@@ -38,7 +38,25 @@ void quantize_row_tq2_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, i
+ void quantize_row_iq4_nl (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+ void quantize_row_iq4_xs (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+ 
++// tcmoe_q2 has no CPU-specific quantize kernel yet: the reference implementations from ggml-quants.c are used directly
++GGML_API void quantize_row_tcmoe_q2_ref(const float * GGML_RESTRICT x, block_tcmoe_q2 * GGML_RESTRICT y, int64_t k);
++GGML_API void quantize_row_tcmoe_q2nl_ref(const float * GGML_RESTRICT x, block_tcmoe_q2nl * GGML_RESTRICT y, int64_t k);
++
++// tcmoe_q2nl keeps one 4-entry codebook per tensor; the vec_dot kernel picks it up from the
++// per-thread state that the mul_mat_id paths refresh from the weight tensor (see ggml-cpu.c).
++struct ggml_tcmoe_q2nl_cb {
++    float  f[4];  // codebook levels in units of the block scale
++    int8_t q8[4]; // the same levels scaled to the int8 range
++    float  scale; // multiplier that maps q8 back to f
++};
++
++const struct ggml_tcmoe_q2nl_cb * ggml_cpu_tcmoe_q2nl_active_cb(void);
++void ggml_cpu_tcmoe_q2nl_set_active(const float * cb4);
++
+ // Dot product
++GGML_API void ggml_vec_dot_tcmoe_q2_f32(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
++void ggml_vec_dot_tcmoe_q2_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
++void ggml_vec_dot_tcmoe_q2nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ void ggml_vec_dot_q2_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ void ggml_vec_dot_f8_e4m3_f32(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+@@ -76,6 +94,8 @@ void quantize_row_q8_1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRI
+ void quantize_row_q8_K_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+ void ggml_vec_dot_q1_0_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ void ggml_vec_dot_q2_0_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
++void ggml_vec_dot_tcmoe_q2_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
++void ggml_vec_dot_tcmoe_q2nl_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ void ggml_vec_dot_q4_0_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ void ggml_vec_dot_q4_1_q8_1_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ void ggml_vec_dot_q5_0_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+diff --git a/ggml/src/ggml-quants.c b/ggml/src/ggml-quants.c
+index 3586f67..c926537 100644
+--- a/ggml/src/ggml-quants.c
++++ b/ggml/src/ggml-quants.c
+@@ -459,6 +459,155 @@ void dequantize_row_q2_0(const block_q2_0 * GGML_RESTRICT x, float * GGML_RESTRI
+     }
+ }
+ 
++void dequantize_row_tcmoe_q2(const block_tcmoe_q2 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
++    static const int qk = QK_TCMOE_Q2;
++
++    assert(k % qk == 0);
++
++    const int nb = k / qk;
++
++    for (int i = 0; i < nb; i++) {
++        const float d = GGML_FP16_TO_FP32(x[i].d);
++
++        for (int j = 0; j < qk; ++j) {
++            const int byte_index = j / 4;
++            const int bit_offset = (j % 4) * 2;
++            const uint8_t q = (x[i].qs[byte_index] >> bit_offset) & 0x03;
++            // 00=-1.5, 01=-0.5, 10=+0.5, 11=+1.5 (multiples of d)
++            y[i*qk + j] = ((float) q - 1.5f) * d;
++        }
++    }
++}
++
++void quantize_row_tcmoe_q2_ref(const float * GGML_RESTRICT x, block_tcmoe_q2 * GGML_RESTRICT y, int64_t k) {
++    static const int qk = QK_TCMOE_Q2;
++
++    assert(k % qk == 0);
++
++    const int nb = k / qk;
++
++    for (int i = 0; i < nb; i++) {
++        float amax = 0.0f;
++        for (int j = 0; j < qk; j++) {
++            const float a = fabsf(x[i*qk + j]);
++            if (a > amax) amax = a;
++        }
++        const float d = amax / 1.5f;
++        const float id = d > 0.0f ? 1.0f / d : 0.0f;
++
++        y[i].d = GGML_FP32_TO_FP16(d);
++
++        for (int j = 0; j < qk / 4; ++j) {
++            y[i].qs[j] = 0;
++        }
++
++        for (int j = 0; j < qk; ++j) {
++            int q = (int) roundf(x[i*qk + j] * id + 1.5f);
++            if (q < 0) q = 0;
++            if (q > 3) q = 3;
++            const int byte_index = j / 4;
++            const int bit_offset = (j % 4) * 2;
++            y[i].qs[byte_index] |= (uint8_t) q << bit_offset;
++        }
++    }
++}
++
++void ggml_vec_dot_tcmoe_q2_f32(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
++    assert(n % QK_TCMOE_Q2 == 0);
++    assert(nrc == 1);
++    GGML_UNUSED(bs);
++    GGML_UNUSED(bx);
++    GGML_UNUSED(by);
++
++    const block_tcmoe_q2 * GGML_RESTRICT x = vx;
++    const float * GGML_RESTRICT y = vy;
++
++    const int nb = n / QK_TCMOE_Q2;
++
++    float sumf = 0.0f;
++
++    for (int i = 0; i < nb; i++) {
++        const float d = GGML_FP16_TO_FP32(x[i].d);
++        for (int j = 0; j < QK_TCMOE_Q2; ++j) {
++            const int byte_index = j / 4;
++            const int bit_offset = (j % 4) * 2;
++            const uint8_t q = (x[i].qs[byte_index] >> bit_offset) & 0x03;
++            sumf += ((float) q - 1.5f) * d * y[i*QK_TCMOE_Q2 + j];
++        }
++    }
++
++    *s = sumf;
++}
++
++// tcmoe_q2nl: same 2-bit packing as tcmoe_q2, but code k decodes to cb[k] * d. The codebook
++// is one table of four floats per tensor, so the dequantizer needs it passed in.
++static const float TCMOE_Q2NL_UNIFORM[4] = { -1.5f, -0.5f, 0.5f, 1.5f };
++
++void dequantize_row_tcmoe_q2nl_cb(const block_tcmoe_q2nl * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k,
++        const float * GGML_RESTRICT cb) {
++    static const int qk = QK_TCMOE_Q2;
++
++    assert(k % qk == 0);
++
++    const int nb = k / qk;
++
++    for (int i = 0; i < nb; i++) {
++        const float d = GGML_FP16_TO_FP32(x[i].d);
++
++        for (int j = 0; j < qk; ++j) {
++            const int byte_index = j / 4;
++            const int bit_offset = (j % 4) * 2;
++            const uint8_t q = (x[i].qs[byte_index] >> bit_offset) & 0x03;
++            y[i*qk + j] = cb[q] * d;
++        }
++    }
++}
++
++void dequantize_row_tcmoe_q2nl(const block_tcmoe_q2nl * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
++    dequantize_row_tcmoe_q2nl_cb(x, y, k, TCMOE_Q2NL_UNIFORM);
++}
++
++// reference encoder with the uniform levels; the fitted codebook is applied by pack_tcmoe.py
++void quantize_row_tcmoe_q2nl_ref(const float * GGML_RESTRICT x, block_tcmoe_q2nl * GGML_RESTRICT y, int64_t k) {
++    static const int qk = QK_TCMOE_Q2;
++
++    assert(k % qk == 0);
++
++    const int nb = k / qk;
++
++    for (int i = 0; i < nb; i++) {
++        float amax = 0.0f;
++        for (int j = 0; j < qk; j++) {
++            const float a = fabsf(x[i*qk + j]);
++            if (a > amax) amax = a;
++        }
++        const float d = amax / 1.5f;
++        const float id = d > 0.0f ? 1.0f / d : 0.0f;
++
++        y[i].d = GGML_FP32_TO_FP16(d);
++
++        for (int j = 0; j < qk / 4; ++j) {
++            y[i].qs[j] = 0;
++        }
++
++        // nearest level in the z = x/d space
++        for (int j = 0; j < qk; ++j) {
++            const float z = x[i*qk + j] * id;
++            int q = 0;
++            if (z > 1.0f) {
++                q = 3;
++            } else if (z > 0.0f) {
++                q = 2;
++            } else if (z > -1.0f) {
++                q = 1;
++            }
++            const int byte_index = j / 4;
++            const int bit_offset = (j % 4) * 2;
++            y[i].qs[byte_index] |= (uint8_t) q << bit_offset;
++        }
++    }
++}
++
+ void dequantize_row_q4_0(const block_q4_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
+     static const int qk = QK4_0;
+ 
+diff --git a/ggml/src/ggml-quants.h b/ggml/src/ggml-quants.h
+index ca36d13..7a18178 100644
+--- a/ggml/src/ggml-quants.h
++++ b/ggml/src/ggml-quants.h
+@@ -26,6 +26,9 @@ GGML_API void quantize_row_q8_1_ref(const float * GGML_RESTRICT x, block_q8_1 *
+ GGML_API void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RESTRICT y, int64_t k);
+ GGML_API void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RESTRICT y, int64_t k);
+ GGML_API void quantize_row_f8_e4m3_ref(const float * GGML_RESTRICT x, ggml_fp8_e4m3_t * GGML_RESTRICT y, int64_t k);
++GGML_API void quantize_row_tcmoe_q2_ref(const float * GGML_RESTRICT x, block_tcmoe_q2 * GGML_RESTRICT y, int64_t k);
++GGML_API void quantize_row_tcmoe_q2nl_ref(const float * GGML_RESTRICT x, block_tcmoe_q2nl * GGML_RESTRICT y, int64_t k);
++GGML_API void dequantize_row_tcmoe_q2nl_cb(const block_tcmoe_q2nl * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k, const float * GGML_RESTRICT cb);
+ 
+ GGML_API void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int64_t k);
+ GGML_API void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_RESTRICT y, int64_t k);
+@@ -56,6 +59,9 @@ GGML_API void dequantize_row_q8_0(const block_q8_0 * GGML_RESTRICT x, float * GG
+ GGML_API void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
+ GGML_API void dequantize_row_nvfp4(const block_nvfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
+ GGML_API void dequantize_row_f8_e4m3(const ggml_fp8_e4m3_t * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
++GGML_API void dequantize_row_tcmoe_q2(const block_tcmoe_q2 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
++GGML_API void dequantize_row_tcmoe_q2nl(const block_tcmoe_q2nl * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
++GGML_API void ggml_vec_dot_tcmoe_q2_f32(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+ 
+ GGML_API void dequantize_row_q2_K(const block_q2_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
+ GGML_API void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
+diff --git a/ggml/src/ggml.c b/ggml/src/ggml.c
+index e00f8e2..9fe79dd 100644
+--- a/ggml/src/ggml.c
++++ b/ggml/src/ggml.c
+@@ -781,6 +781,22 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
+         .to_float                 = (ggml_to_float_t) dequantize_row_f8_e4m3,
+         .from_float_ref           = (ggml_from_float_t) quantize_row_f8_e4m3_ref,
+     },
++    [GGML_TYPE_TCMOE_Q2] = {
++        .type_name                = "tcmoe_q2",
++        .blck_size                = QK_TCMOE_Q2,
++        .type_size                = sizeof(block_tcmoe_q2),
++        .is_quantized             = true,
++        .to_float                 = (ggml_to_float_t) dequantize_row_tcmoe_q2,
++        .from_float_ref           = (ggml_from_float_t) quantize_row_tcmoe_q2_ref,
++    },
++    [GGML_TYPE_TCMOE_Q2NL] = {
++        .type_name                = "tcmoe_q2nl",
++        .blck_size                = QK_TCMOE_Q2,
++        .type_size                = sizeof(block_tcmoe_q2nl),
++        .is_quantized             = true,
++        .to_float                 = (ggml_to_float_t) dequantize_row_tcmoe_q2nl,
++        .from_float_ref           = (ggml_from_float_t) quantize_row_tcmoe_q2nl_ref,
++    },
+     [GGML_TYPE_Q2_K] = {
+         .type_name                = "q2_K",
+         .blck_size                = QK_K,
+@@ -1038,6 +1054,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+ 
+     "MUL_MAT",
+     "MUL_MAT_ID",
++    "MUL_MAT_ID_MIXED",
+     "OUT_PROD",
+ 
+     "SCALE",
+@@ -1118,7 +1135,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+     "GLU",
+ };
+ 
+-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
++static_assert(GGML_OP_COUNT == 103, "GGML_OP_COUNT != 103");
+ 
+ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+     "none",
+@@ -1154,6 +1171,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+ 
+     "X*Y",
+     "X[i]*Y",
++    "X[i]*Y+X[j]*Y",
+     "X*Y",
+ 
+     "x*v",
+@@ -1234,7 +1252,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+     "glu(x)",
+ };
+ 
+-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
++static_assert(GGML_OP_COUNT == 103, "GGML_OP_COUNT != 103");
+ 
+ static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
+ 
+@@ -3476,6 +3494,55 @@ struct ggml_tensor * ggml_mul_mat_id(
+     return result;
+ }
+ 
++// ggml_mul_mat_id_mixed
++
++/*
++    c = ggml_mul_mat_id_mixed(ctx, as_base, as_patch, b, ids_base, ids_patch);
++
++    as_base, as_patch -> [cols, rows, n_expert]
++    b                 -> [cols, n_expert_used, n_tokens]
++    ids_base, ids_patch -> [n_expert_used, n_tokens] (i32)
++
++    every slot (e,t) is owned by exactly one of the two tables: the non-negative id selects
++    the matrix of that table, -1 in both tables zeroes the row. the two tables may have
++    different types, which is what a single mul_mat_id cannot express
++*/
++struct ggml_tensor * ggml_mul_mat_id_mixed(
++        struct ggml_context * ctx,
++        struct ggml_tensor  * as_base,
++        struct ggml_tensor  * as_patch,
++        struct ggml_tensor  * b,
++        struct ggml_tensor  * ids_base,
++        struct ggml_tensor  * ids_patch) {
++    GGML_ASSERT(!ggml_is_transposed(as_base));
++    GGML_ASSERT(!ggml_is_transposed(as_patch));
++    GGML_ASSERT(ids_base->type  == GGML_TYPE_I32);
++    GGML_ASSERT(ids_patch->type == GGML_TYPE_I32);
++
++    GGML_ASSERT(as_base->ne[3] == 1); // one matrix per expert
++    GGML_ASSERT(as_patch->ne[3] == 1);
++    GGML_ASSERT(as_base->ne[0] == as_patch->ne[0]);
++    GGML_ASSERT(as_base->ne[1] == as_patch->ne[1]);
++    GGML_ASSERT(b->ne[3] == 1); // b is 3d
++    GGML_ASSERT(ids_base->ne[2] == 1 && ids_base->ne[3] == 1); // ids is 2d
++    GGML_ASSERT(ids_patch->ne[0] == ids_base->ne[0] && ids_patch->ne[1] == ids_base->ne[1]);
++    GGML_ASSERT(ids_base->ne[1] == b->ne[2]); // must have an expert list per b row
++    GGML_ASSERT(as_base->ne[0] == b->ne[0]); // can_mul_mat
++    GGML_ASSERT(ids_base->ne[0] % b->ne[1] == 0); // can broadcast
++
++    const int64_t ne[4] = { as_base->ne[1], ids_base->ne[0], b->ne[2], 1 };
++    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
++
++    result->op     = GGML_OP_MUL_MAT_ID_MIXED;
++    result->src[0] = as_base;
++    result->src[1] = b;
++    result->src[2] = ids_base;
++    result->src[3] = as_patch;
++    result->src[4] = ids_patch;
++
++    return result;
++}
++
+ // ggml_out_prod
+ 
+ static inline bool ggml_can_out_prod(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+@@ -8210,6 +8277,22 @@ size_t ggml_quantize_chunk(
+         case GGML_TYPE_IQ1_M:   result = quantize_iq1_m  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
+         case GGML_TYPE_IQ4_NL:  result = quantize_iq4_nl (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
+         case GGML_TYPE_IQ4_XS:  result = quantize_iq4_xs (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
++        case GGML_TYPE_TCMOE_Q2:
++            {
++                for (int64_t row = 0; row < nrows; ++row) {
++                    quantize_row_tcmoe_q2_ref(src + start + row * n_per_row,
++                            (block_tcmoe_q2 *) ((char *) dst + start_row * row_size + row * row_size), n_per_row);
++                }
++                result = nrows * row_size;
++            } break;
++        case GGML_TYPE_TCMOE_Q2NL:
++            {
++                for (int64_t row = 0; row < nrows; ++row) {
++                    quantize_row_tcmoe_q2nl_ref(src + start + row * n_per_row,
++                            (block_tcmoe_q2nl *) ((char *) dst + start_row * row_size + row * row_size), n_per_row);
++                }
++                result = nrows * row_size;
++            } break;
+         case GGML_TYPE_F16:
+             {
+                 size_t elemsize = sizeof(ggml_fp16_t);
+diff --git a/gguf-py/gguf/constants.py b/gguf-py/gguf/constants.py
+index 1d67dc8..f2b5b81 100644
+--- a/gguf-py/gguf/constants.py
++++ b/gguf-py/gguf/constants.py
+@@ -6527,6 +6527,8 @@ class GGMLQuantizationType(IntEnum):
+     Q1_0    = 41
+     Q2_0    = 42
+     F8_E4M3 = 43
++    TCMOE_Q2 = 44
++    TCMOE_Q2NL = 45
+ 
+ 
+ class ExpertGatingFuncType(IntEnum):
+@@ -6756,6 +6758,8 @@ GGML_QUANT_SIZES: dict[GGMLQuantizationType, tuple[int, int]] = {
+     GGMLQuantizationType.Q1_0:    (128, 2 + 16),
+     GGMLQuantizationType.Q2_0:    (64, 2 + 16),
+     GGMLQuantizationType.F8_E4M3: (1, 1),
++    GGMLQuantizationType.TCMOE_Q2: (128, 34),
++    GGMLQuantizationType.TCMOE_Q2NL: (128, 34),
+ }
+ 
+ 
+diff --git a/include/llama.h b/include/llama.h
+index 3877b69..7e5a02b 100644
+--- a/include/llama.h
++++ b/include/llama.h
+@@ -677,6 +677,13 @@ extern "C" {
+     // Returns true if the model is diffusion-based (like LLaDA, Dream, etc.)
+     LLAMA_API bool llama_model_is_diffusion(const struct llama_model * model);
+ 
++    // Returns the number of task-conditioned quantization (tcmoe) domains declared by the model
++    // 0 when the model has no expert patches
++    LLAMA_API int32_t llama_model_tcmoe_n_domain(const struct llama_model * model);
++
++    // Returns the name of a tcmoe domain, nullptr when the index is out of range
++    LLAMA_API const char * llama_model_tcmoe_domain_name(const struct llama_model * model, int32_t domain);
++
+     // Returns 0 on success
+     LLAMA_API uint32_t llama_model_quantize(
+             const char * fname_inp,
+@@ -1117,6 +1124,14 @@ extern "C" {
+     // Returns whether the context is currently using causal attention
+     LLAMA_API bool llama_get_causal_attn(const struct llama_context * ctx);
+ 
++    // Set the task-conditioned quantization (tcmoe) domain used by the next graph build
++    // -1 disables the expert patches and uses the base experts only
++    // the domain does not change the graph shape, a switch only rebuilds the graph
++    LLAMA_API void llama_context_tcmoe_set_domain(struct llama_context * ctx, int32_t domain);
++
++    // Returns the tcmoe domain currently selected by the context, -1 when the patches are disabled
++    LLAMA_API int32_t llama_context_tcmoe_domain(const struct llama_context * ctx);
++
+     // Set whether the model is in warmup mode or not
+     // If true, all model tensors are activated during llama_decode() to load and cache their weights.
+     //
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 97250c2..4515afd 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -39,6 +39,7 @@ set(LLAMA_CORE_SOURCES
+     llama-model.cpp
+     llama-quant.cpp
+     llama-sampler.cpp
++    llama-tcmoe.cpp
+     llama-vocab.cpp
+     unicode-data.cpp
+     unicode.cpp
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 4141e3c..44aa0b2 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -187,6 +187,12 @@ llama_context::llama_context(
+     t_start_us = model.t_start_us;
+     t_load_us  = model.t_load_us;
+ 
++    // E-R2: 路由概率导出开关
++    if (const char * p = getenv("LLAMA_MOE_DUMP")) {
++        moe_dump_enabled = (p[0] != '\0');
++        moe_dump_path = p;
++    }
++
+     const auto & hparams = model.hparams;
+ 
+     cparams.n_seq_max = std::max(1u, params.n_seq_max);
+@@ -1406,6 +1412,23 @@ void llama_context::set_warmup(bool value) {
+     //sched_need_reserve = true;
+ }
+ 
++void llama_context::set_tcmoe_domain(int32_t domain) {
++    LLAMA_LOG_DEBUG("%s: domain = %d\n", __func__, domain);
++
++    if (cparams.tcmoe_domain == domain) {
++        return;
++    }
++
++    cparams.tcmoe_domain = domain;
++
++    // no scheduler reserve needed because the domain only swaps the expert tensors, the graph shape stays the same
++    //sched_need_reserve = true;
++}
++
++int32_t llama_context::tcmoe_domain() const {
++    return cparams.tcmoe_domain;
++}
++
+ bool llama_context::set_sampler(llama_seq_id seq_id, llama_sampler * sampler) {
+     if (!sampler && sampling.samplers.count(seq_id) == 0) {
+         return true;
+@@ -1554,6 +1577,10 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
+         ggml_backend_sched_reset(sched.get());
+         ggml_backend_sched_set_eval_callback(sched.get(), cparams.cb_eval, cparams.cb_eval_user_data);
+ 
++        if (moe_dump_enabled) {
++            moe_probs.clear();
++        }
++
+         //const auto t_start_us = ggml_time_us();
+ 
+         gf = model.build_graph(gparams);
+@@ -1592,11 +1619,64 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
+         return nullptr;
+     }
+ 
++    if (moe_dump_enabled) {
++        moe_dump_flush(ubatch);
++    }
++
+     ret = GGML_STATUS_SUCCESS;
+ 
+     return res;
+ }
+ 
++void llama_context::moe_dump_flush(const llama_ubatch & ubatch) {
++    if (!moe_dump_enabled || moe_probs.empty()) {
++        return;
++    }
++    if (moe_dump_f == nullptr) {
++        moe_dump_f = std::fopen(moe_dump_path.c_str(), "wb");
++        if (moe_dump_f == nullptr) {
++            LLAMA_LOG_ERROR("%s: cannot open %s\n", __func__, moe_dump_path.c_str());
++            moe_dump_enabled = false;
++            return;
++        }
++    }
++    ggml_backend_sched_synchronize(sched.get());
++
++    int32_t magic = 0x52544431; // 'RTD1'
++    int32_t n_tok = (int32_t) ubatch.n_tokens;
++    int32_t n_ent = (int32_t) moe_probs.size();
++    std::fwrite(&magic, sizeof(magic), 1, moe_dump_f);
++    std::fwrite(&n_tok, sizeof(n_tok), 1, moe_dump_f);
++    std::fwrite(ubatch.token, sizeof(llama_token), (size_t) n_tok, moe_dump_f);
++    std::fwrite(&n_ent, sizeof(n_ent), 1, moe_dump_f);
++
++    std::vector<float> buf;
++    for (const auto & e : moe_probs) {
++        int32_t il  = e.first;
++        int32_t ne0 = (int32_t) e.second->ne[0];
++        int32_t ne1 = (int32_t) e.second->ne[1];
++        const size_t n = (size_t) ne0 * (size_t) ne1;
++        std::fwrite(&il, sizeof(il), 1, moe_dump_f);
++        std::fwrite(&ne0, sizeof(ne0), 1, moe_dump_f);
++        std::fwrite(&ne1, sizeof(ne1), 1, moe_dump_f);
++        buf.resize(n);
++        if (e.second->type == GGML_TYPE_F32) {
++            ggml_backend_tensor_get(e.second, buf.data(), 0, n * sizeof(float));
++        } else if (e.second->type == GGML_TYPE_F16) {
++            std::vector<ggml_fp16_t> tmp(n);
++            ggml_backend_tensor_get(e.second, tmp.data(), 0, n * sizeof(ggml_fp16_t));
++            for (size_t i = 0; i < n; i++) {
++                buf[i] = ggml_fp16_to_fp32(tmp[i]);
++            }
++        } else {
++            LLAMA_LOG_ERROR("%s: unsupported type %s\n", __func__, ggml_type_name(e.second->type));
++            std::fill(buf.begin(), buf.end(), 0.0f);
++        }
++        std::fwrite(buf.data(), sizeof(float), n, moe_dump_f);
++    }
++    std::fflush(moe_dump_f);
++}
++
+ int llama_context::encode(const llama_batch_ext & batch_inp) {
+     if (batch_inp.tokens.empty()) {
+         LLAMA_LOG_ERROR("%s: n_tokens == 0\n", __func__);
+@@ -2874,6 +2954,13 @@ llm_graph_cb llama_context::graph_get_cb() const {
+             ggml_set_name(cur, name);
+         }
+ 
++        // E-R2: 记住每层 MoE 路由概率张量，图算完后统一读回（不启用 cb_eval）
++        if (moe_dump_enabled && il >= 0 && strcmp(name, "ffn_moe_probs") == 0) {
++            // 标记为输出，防止调度器在 top-k 之后复用该张量的缓冲区
++            ggml_set_output(cur);
++            moe_probs.emplace_back(il, cur);
++        }
++
+         // - norm may be automatically assigned to the backend of the previous layer, increasing data transfer between backends
+         // - force the last op of the layer on the specified backend to avoid running it on the backend of the next layer due to scheduling
+         // FIXME: fix in ggml_backend_sched
+@@ -4279,6 +4366,14 @@ void llama_set_warmup(llama_context * ctx, bool warmup) {
+     ctx->set_warmup(warmup);
+ }
+ 
++void llama_context_tcmoe_set_domain(llama_context * ctx, int32_t domain) {
++    ctx->set_tcmoe_domain(domain);
++}
++
++int32_t llama_context_tcmoe_domain(const llama_context * ctx) {
++    return ctx->tcmoe_domain();
++}
++
+ void llama_synchronize(llama_context * ctx) {
+     ctx->synchronize();
+ }
+diff --git a/src/llama-context.h b/src/llama-context.h
+index 6938fb1..a1632ed 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -13,7 +13,10 @@
+ #include "ggml-opt.h"
+ 
+ #include <array>
++#include <cstdio>
+ #include <map>
++#include <string>
++#include <utility>
+ #include <vector>
+ 
+ struct llama_model;
+@@ -123,6 +126,9 @@ struct llama_context {
+     void set_nextn_layer_offset(int32_t offset);
+     void set_causal_attn(bool value);
+     void set_warmup(bool value);
++    void set_tcmoe_domain(int32_t domain);
++
++    int32_t tcmoe_domain() const;
+ 
+     void set_adapters_lora(llama_adapter_lora ** adapters, size_t n_adapters, float * scales);
+ 
+@@ -309,6 +315,13 @@ private:
+     llama_memory_ptr memory;
+     llama_moe_cache_ptr moe_cache;
+ 
++    // E-R2: 路由概率导出（LLAMA_MOE_DUMP=<path> 时启用；与 cb_eval 无关，避免逐节点同步的开销）
++    bool moe_dump_enabled = false;
++    std::string moe_dump_path;
++    std::FILE * moe_dump_f = nullptr;
++    mutable std::vector<std::pair<int32_t, ggml_tensor *>> moe_probs;
++    void moe_dump_flush(const llama_ubatch & ubatch);
++
+     // decode output (2-dimensional array: [n_outputs][n_vocab])
+     buffer_view<float> logits = {nullptr, 0};
+ 
+diff --git a/src/llama-cparams.h b/src/llama-cparams.h
+index 0c260f7..8d330ca 100644
+--- a/src/llama-cparams.h
++++ b/src/llama-cparams.h
+@@ -21,6 +21,9 @@ struct llama_cparams {
+ 
+     int32_t  nextn_layer_offset = 0;
+ 
++    // tcmoe task domain used by the next graph build, -1 leaves the base experts alone
++    int32_t  tcmoe_domain = -1;
++
+     float rope_freq_base;
+     float rope_freq_scale;
+ 
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 43eb46e..3a5d36c 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -2101,7 +2101,8 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+          ggml_tensor * down_exps_s,
+          ggml_tensor * selected_experts_in,
+          ggml_tensor * post_exp_norm,
+-               float   post_exp_norm_eps) const {
++               float   post_exp_norm_eps,
++ const llm_graph_moe_tcmoe * tcmoe) const {
+     return build_moe_ffn(
+         cur,
+         gate_inp,  /* gate_inp_b  */ nullptr,
+@@ -2124,7 +2125,8 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         down_exps_s,
+         selected_experts_in,
+         post_exp_norm,
+-        post_exp_norm_eps
++        post_exp_norm_eps,
++        tcmoe
+     );
+ }
+ 
+@@ -2154,7 +2156,10 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+          ggml_tensor * down_exps_s,
+          ggml_tensor * selected_experts_in,
+          ggml_tensor * post_exp_norm,
+-               float   post_exp_norm_eps) const {
++               float   post_exp_norm_eps,
++ const llm_graph_moe_tcmoe * tcmoe) const {
++    GGML_ASSERT(!(tcmoe && gate_up_exps) && "tcmoe patches need separate gate and up experts");
++
+     const int64_t n_embd   = cur->ne[0];
+     const int64_t n_tokens = cur->ne[1];
+     const bool weight_before_ffn = arch == LLM_ARCH_LLAMA4; // for llama4, we apply the sigmoid-ed weights before the FFN
+@@ -2300,7 +2305,38 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+     ggml_build_forward_expand(gf, weights);
+ 
+     // the experts of host-resident layers may be read from the MoE cache
+-    ggml_tensor * slots = build_moe_cache_slots(selected_experts, up_exps, gate_exps, down_exps, gate_up_exps, il);
++    ggml_tensor * slots = tcmoe ? nullptr : build_moe_cache_slots(selected_experts, up_exps, gate_exps, down_exps, gate_up_exps, il);
++
++    // tcmoe: the base and the patch experts are separate tensors of different types, so they are
++    // multiplied in two passes; the id tables send every selected expert to exactly one pass
++    ggml_tensor * ids_base  = nullptr;
++    ggml_tensor * ids_patch = nullptr;
++
++    if (tcmoe) {
++        const int64_t n_ids = selected_experts->ne[0] * selected_experts->ne[1];
++        // top_k returns a view of the full sorted row, so flatten it only after a copy
++        ggml_tensor * sel = ggml_reshape_2d(ctx0, ggml_cont(ctx0, selected_experts), n_ids, 1);
++
++        // the tables hold one id per row, so gather scalars and then restore the expert slot layout
++        ggml_tensor * tab_base  = ggml_reshape_2d(ctx0, tcmoe->ids_base,  1, tcmoe->ids_base->ne[0]);
++        ggml_tensor * tab_patch = ggml_reshape_2d(ctx0, tcmoe->ids_patch, 1, tcmoe->ids_patch->ne[0]);
++
++        ids_base  = ggml_get_rows(ctx0, tab_base,  sel);
++        ids_patch = ggml_get_rows(ctx0, tab_patch, sel);
++        ids_base  = ggml_reshape_2d(ctx0, ids_base,  selected_experts->ne[0], selected_experts->ne[1]);
++        ids_patch = ggml_reshape_2d(ctx0, ids_patch, selected_experts->ne[0], selected_experts->ne[1]);
++        cb(ids_base,  "ffn_moe_ids_base",  il);
++        cb(ids_patch, "ffn_moe_ids_patch", il);
++    }
++
++    const auto build_exps_mm = [&](ggml_tensor * w_base, ggml_tensor * w_patch, ggml_tensor * w_s, ggml_tensor * cur_mm) -> ggml_tensor * {
++        if (w_patch) {
++            // one node and one barrier for both expert tables; the two tensors have
++            // different types, which a single mul_mat_id cannot express
++            return ggml_mul_mat_id_mixed(ctx0, w_base, w_patch, cur_mm, ids_base, ids_patch);
++        }
++        return build_lora_mm_id(w_base, cur_mm, tcmoe ? ids_base : selected_experts, w_s, slots);
++    };
+ 
+     cur = ggml_reshape_3d(ctx0, cur, n_embd, 1, n_tokens);
+ 
+@@ -2335,7 +2371,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         cb(up, "ffn_moe_up", il);
+     } else {
+         // separate gate and up path
+-        up = build_lora_mm_id(up_exps, cur, selected_experts, up_exps_s, slots); // [n_ff, n_expert_used, n_tokens]
++        up = build_exps_mm(up_exps, tcmoe ? tcmoe->up_exps : nullptr, up_exps_s, cur); // [n_ff, n_expert_used, n_tokens]
+         cb(up, "ffn_moe_up", il);
+ 
+         if (up_exps_s) {
+@@ -2348,7 +2384,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         }
+ 
+         if (gate_exps) {
+-            cur = build_lora_mm_id(gate_exps, cur, selected_experts, gate_exps_s, slots); // [n_ff, n_expert_used, n_tokens]
++            cur = build_exps_mm(gate_exps, tcmoe ? tcmoe->gate_exps : nullptr, gate_exps_s, cur); // [n_ff, n_expert_used, n_tokens]
+             cb(cur, "ffn_moe_gate", il);
+         } else {
+             cur = up;
+@@ -2461,7 +2497,7 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+             cur = amax_src1.res;
+         }
+ 
+-        experts = build_lora_mm_id(down_exps, cur, selected_experts, down_exps_s, slots); // [n_embd, n_expert_used, n_tokens]
++        experts = build_exps_mm(down_exps, tcmoe ? tcmoe->down_exps : nullptr, down_exps_s, cur); // [n_embd, n_expert_used, n_tokens]
+         //ggml_prec_set_src(experts, GGML_PREC_BF16, 1); // (see TODO above)
+         cb(experts, "ffn_moe_down", il);
+ 
+diff --git a/src/llama-graph.h b/src/llama-graph.h
+index f9497de..baea8fd 100644
+--- a/src/llama-graph.h
++++ b/src/llama-graph.h
+@@ -788,6 +788,15 @@ using llm_graph_cb = std::function<void(const llama_ubatch & ubatch, ggml_tensor
+ 
+ class llm_graph_result;
+ 
++// expert patches of one MoE layer, for the domain that the context currently selects
++struct llm_graph_moe_tcmoe {
++    struct ggml_tensor * gate_exps = nullptr; // [n_embd, n_ff, n_patch]
++    struct ggml_tensor * up_exps   = nullptr; // [n_embd, n_ff, n_patch]
++    struct ggml_tensor * down_exps = nullptr; // [n_ff, n_embd, n_patch]
++    struct ggml_tensor * ids_base  = nullptr; // [n_expert] I32
++    struct ggml_tensor * ids_patch = nullptr; // [n_expert] I32
++};
++
+ struct llm_graph_params {
+     llm_arch arch = LLM_ARCH_UNKNOWN;
+ 
+@@ -902,6 +911,7 @@ struct llm_graph_params {
+             cparams.embeddings_nextn        == other.cparams.embeddings_nextn        &&
+             cparams.embeddings_nextn_masked == other.cparams.embeddings_nextn_masked &&
+             cparams.causal_attn             == other.cparams.causal_attn             &&
++            cparams.tcmoe_domain            == other.cparams.tcmoe_domain            &&
+             arch  == other.arch  &&
+             gtype == other.gtype &&
+             cvec  == other.cvec  &&
+@@ -1195,7 +1205,8 @@ struct llm_graph_context {
+              ggml_tensor * down_exps_s = nullptr,
+              ggml_tensor * selected_experts_in = nullptr,
+              ggml_tensor * post_exp_norm = nullptr,
+-                   float   post_exp_norm_eps = 1e-5f) const;
++                   float   post_exp_norm_eps = 1e-5f,
++         const llm_graph_moe_tcmoe * tcmoe = nullptr) const;
+ 
+     ggml_tensor * build_moe_ffn(
+              ggml_tensor * cur,
+@@ -1223,7 +1234,8 @@ struct llm_graph_context {
+              ggml_tensor * down_exps_s = nullptr,
+              ggml_tensor * selected_experts_in = nullptr,
+              ggml_tensor * post_exp_norm = nullptr,
+-                   float   post_exp_norm_eps = 1e-5f) const;
++                   float   post_exp_norm_eps = 1e-5f,
++         const llm_graph_moe_tcmoe * tcmoe = nullptr) const;
+ 
+     // the slots of the selected experts in the MoE cache, nullptr if the experts of the layer are not read from the cache
+     ggml_tensor * build_moe_cache_slots(
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index 83aed01..7041408 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -7,6 +7,7 @@
+ #include "llama-mmap.h"
+ #include "llama-cparams.h"
+ #include "llama-model-loader.h"
++#include "llama-tcmoe.h"
+ 
+ #include "llama-kv-cache.h"
+ #include "llama-kv-cache-iswa.h"
+@@ -1278,6 +1279,14 @@ struct llama_model::impl {
+     // model memory mapped files
+     llama_mmaps mappings;
+ 
++    // separate mappings for the tcmoe patch tensors: the loader releases the file regions
++    // that none of its contexts wraps, and the patches are never wrapped by a loader context
++    llama_mmaps tcmoe_mappings;
++
++    // per (layer, projection) 4-entry codebooks of the tcmoe_q2nl base, kept alive for the
++    // lifetime of the model because the weight tensors point at them through ggml_tensor.extra
++    std::vector<float> tcmoe_cb_data;
++
+     // objects representing data potentially being locked in memory
+     llama_mlocks mlock_bufs;
+     llama_mlocks mlock_mmaps;
+@@ -1888,7 +1897,9 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+         }
+     }
+ 
+-    ml.done_getting_tensors();
++    // tcmoe files carry per-domain patch tensors next to the base expert weights; they are
++    // read by tcmoe_model, not by the graph loader
++    ml.done_getting_tensors(gguf_find_key(ml.metadata, "tcmoe.enabled") >= 0);
+ 
+     if (per_layer_tok_embd && ml.lazy.has(per_layer_tok_embd)) {
+         LLAMA_LOG_INFO("%s: enabling prefetch for '%s'\n", __func__, per_layer_tok_embd->name);
+@@ -2068,6 +2079,10 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+         }
+     }
+ 
++    if (!load_tensors_tcmoe(ml)) {
++        return false;
++    }
++
+     load_tensors_hadamard();
+ 
+     return true;
+@@ -2237,6 +2252,254 @@ void llama_model_base::load_hparams_hadamard(llama_model_loader & ml) {
+     }
+ }
+ 
++// map the per-domain expert patches into the layers: the patch weights stay in the file, the
++// expert id tables that the MoE branch needs are built on the host
++bool llama_model_base::load_tensors_tcmoe(llama_model_loader & ml) {
++    const int64_t kid = gguf_find_key(ml.metadata, "tcmoe.enabled");
++    if (kid < 0 || gguf_get_kv_type(ml.metadata, kid) != GGUF_TYPE_BOOL || !gguf_get_val_bool(ml.metadata, kid)) {
++        return true;
++    }
++    if (ml.no_alloc) {
++        return true;
++    }
++    if (!ml.use_mmap) {
++        throw std::runtime_error("tcmoe models require mmap");
++    }
++
++    std::vector<std::string> domains;
++    if (!ml.get_arr("tcmoe.domains", domains, true) || domains.empty()) {
++        throw std::runtime_error("tcmoe: tcmoe.domains is missing or empty");
++    }
++
++    const int n_domain = (int) domains.size();
++    const int n_layer  = hparams.n_layer();
++
++    // E21: optional 4-entry codebooks of a tcmoe_q2nl base, layer-major with gate, up, down
++    const int64_t kid_cb = gguf_find_key(ml.metadata, "tcmoe.cb");
++    if (kid_cb >= 0) {
++        if (gguf_get_kv_type(ml.metadata, kid_cb) != GGUF_TYPE_ARRAY) {
++            throw std::runtime_error("tcmoe: tcmoe.cb must be an array");
++        }
++        if (gguf_get_arr_type(ml.metadata, kid_cb) != GGUF_TYPE_FLOAT32) {
++            throw std::runtime_error("tcmoe: tcmoe.cb must hold float32 values");
++        }
++        const size_t n_cb = gguf_get_arr_n(ml.metadata, kid_cb);
++        if (n_cb != (size_t) n_layer * 3 * 4) {
++            throw std::runtime_error(format("tcmoe: tcmoe.cb has %zu values, expected %d", n_cb, n_layer * 12));
++        }
++        const float * cb = (const float *) gguf_get_arr_data(ml.metadata, kid_cb);
++        pimpl->tcmoe_cb_data.assign(cb, cb + n_cb);
++    }
++
++    struct layer_dom {
++        const llama_model_loader::llama_tensor_weight * idx  = nullptr;
++        const llama_model_loader::llama_tensor_weight * gate = nullptr;
++        const llama_model_loader::llama_tensor_weight * up   = nullptr;
++        const llama_model_loader::llama_tensor_weight * down = nullptr;
++    };
++
++    std::vector<layer_dom> ld((size_t) n_layer * n_domain);
++
++    for (const auto & kv : ml.weights_map) {
++        int         layer  = -1;
++        int         domain = -1;
++        std::string what;
++        if (!tcmoe_parse_name(kv.first.c_str(), layer, what, domain)) {
++            continue;
++        }
++        if (layer >= n_layer) {
++            throw std::runtime_error(format("tcmoe: tensor %s belongs to a layer outside the trunk", kv.first.c_str()));
++        }
++        if (domain < 0 || domain >= n_domain) {
++            throw std::runtime_error(format("tcmoe: tensor %s uses a domain that is not declared", kv.first.c_str()));
++        }
++
++        layer_dom & e = ld[(size_t) layer * n_domain + domain];
++        if (what == "idx") {
++            e.idx = &kv.second;
++            continue;
++        }
++
++        switch (tcmoe_proj_from_name(what)) {
++            case TCMOE_PROJ_GATE: e.gate = &kv.second; break;
++            case TCMOE_PROJ_UP:   e.up   = &kv.second; break;
++            case TCMOE_PROJ_DOWN: e.down = &kv.second; break;
++            default:
++                throw std::runtime_error(format("tcmoe: unsupported patch tensor %s", kv.first.c_str()));
++        }
++    }
++
++    size_t n_patch = 0;
++    size_t n_table = 0;
++    for (const auto & e : ld) {
++        const bool full = e.idx && e.gate && e.up && e.down;
++        n_patch += full ? 3 : 0;
++        n_table += full ? 2 : 0;
++    }
++    if (n_patch == 0) {
++        return true;
++    }
++
++    ggml_init_params ip = {
++        /*.mem_size   =*/ ggml_tensor_overhead() * (n_patch + n_table + 8),
++        /*.mem_buffer =*/ nullptr,
++        /*.no_alloc   =*/ true,
++    };
++
++    ggml_context_ptr ctx_patch(ggml_init(ip));
++    ggml_context_ptr ctx_ids  (ggml_init(ip));
++    if (!ctx_patch || !ctx_ids) {
++        throw std::runtime_error("tcmoe: failed to create the tensor contexts");
++    }
++
++    // the loader releases the file regions that none of its contexts wraps, so the patches get
++    // their own mappings; the pages stay shared with the ones of the loader through the page cache
++    for (uint32_t idx = 0; idx < ml.files.size(); ++idx) {
++        pimpl->tcmoe_mappings.emplace_back(new llama_mmap(ml.files[idx].get(), 0, false));
++    }
++
++    std::vector<ggml_backend_buffer_ptr> bufs_patch;
++
++    std::vector<ggml_backend_buffer_t> file_bufs(ml.files.size(), nullptr);
++    for (uint32_t idx = 0; idx < ml.files.size(); ++idx) {
++        const llama_mmap * map = pimpl->tcmoe_mappings.at(idx).get();
++        ggml_backend_buffer_t buf = ggml_backend_cpu_buffer_from_ptr(map->addr(), map->size());
++        if (buf == nullptr) {
++            throw std::runtime_error("tcmoe: failed to wrap the mapped file");
++        }
++        ggml_backend_buffer_set_usage(buf, GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
++        file_bufs[idx] = buf;
++        bufs_patch.emplace_back(buf);
++    }
++
++    const auto make_patch = [&](const llama_model_loader::llama_tensor_weight * w) -> ggml_tensor * {
++        ggml_tensor * meta = w->tensor;
++        if (meta->type != GGML_TYPE_Q4_0 && meta->type != GGML_TYPE_Q4_K) {
++            throw std::runtime_error(format("tcmoe: patch tensor %s is neither q4_0 nor q4_k", meta->name));
++        }
++        ggml_tensor * t = ggml_new_tensor(ctx_patch.get(), meta->type, ggml_n_dims(meta), meta->ne);
++        ggml_set_name(t, meta->name);
++
++        void * addr = (char *) pimpl->tcmoe_mappings.at(w->idx)->addr() + w->offs;
++        if ((uintptr_t) addr % 16 != 0) {
++            throw std::runtime_error(format("tcmoe: patch tensor %s is not 16-byte aligned", meta->name));
++        }
++        if (ggml_backend_tensor_alloc(file_bufs.at(w->idx), t, addr) != GGML_STATUS_SUCCESS) {
++            throw std::runtime_error(format("tcmoe: failed to bind patch tensor %s", meta->name));
++        }
++        return t;
++    };
++
++    for (int l = 0; l < n_layer; ++l) {
++        for (int d = 0; d < n_domain; ++d) {
++            const layer_dom & e = ld[(size_t) l * n_domain + d];
++            if (!e.idx || !e.gate || !e.up || !e.down) {
++                continue;
++            }
++
++            auto & tc = layers[l].tcmoe;
++            const size_t n = (size_t) d;
++            if (tc.ids_base.empty()) {
++                const size_t n_domain_ = (size_t) n_domain;
++                tc.gate_exps .assign(n_domain_, nullptr);
++                tc.up_exps   .assign(n_domain_, nullptr);
++                tc.down_exps .assign(n_domain_, nullptr);
++                tc.ids_base  .assign(n_domain_, nullptr);
++                tc.ids_patch .assign(n_domain_, nullptr);
++            }
++
++            tc.gate_exps[n] = make_patch(e.gate);
++            tc.up_exps  [n] = make_patch(e.up);
++            tc.down_exps[n] = make_patch(e.down);
++
++            ggml_tensor * base_exps = layers[l].ffn_down_exps;
++            if (base_exps == nullptr) {
++                throw std::runtime_error(format("tcmoe: layer %d has patches but no routed experts", l));
++            }
++            const int64_t n_expert = base_exps->ne[2];
++            const int64_t n_patch_d = e.idx->tensor->ne[0];
++            if (n_patch_d <= 0 || tc.gate_exps[n]->ne[2] != n_patch_d) {
++                throw std::runtime_error(format("tcmoe: layer %d domain %d: patch count mismatch", l, d));
++            }
++
++            tc.ids_base [n] = ggml_new_tensor_1d(ctx_ids.get(), GGML_TYPE_I32, n_expert);
++            tc.ids_patch[n] = ggml_new_tensor_1d(ctx_ids.get(), GGML_TYPE_I32, n_expert);
++            ggml_set_name(tc.ids_base [n], format("blk.%d.tcmoe.ids_base.%d",  l, d).c_str());
++            ggml_set_name(tc.ids_patch[n], format("blk.%d.tcmoe.ids_patch.%d", l, d).c_str());
++        }
++    }
++
++    ggml_backend_buffer_t buf_ids = ggml_backend_alloc_ctx_tensors_from_buft(ctx_ids.get(), ggml_backend_cpu_buffer_type());
++    if (buf_ids == nullptr) {
++        throw std::runtime_error("tcmoe: failed to allocate the expert id tables");
++    }
++
++    for (int l = 0; l < n_layer; ++l) {
++        for (int d = 0; d < n_domain; ++d) {
++            const layer_dom & e = ld[(size_t) l * n_domain + d];
++            if (!e.idx || !layers[l].tcmoe.any() || layers[l].tcmoe.ids_base[(size_t) d] == nullptr) {
++                continue;
++            }
++
++            const int64_t n_expert = layers[l].ffn_down_exps->ne[2];
++            const int64_t n_patch_d = e.idx->tensor->ne[0];
++            const int32_t * idx_data = (const int32_t *) ((const char *) pimpl->tcmoe_mappings.at(e.idx->idx)->addr() + e.idx->offs);
++
++            std::vector<int32_t> base(n_expert);
++            std::vector<int32_t> patch(n_expert, -1);
++            for (int64_t k = 0; k < n_expert; ++k) {
++                base[k] = (int32_t) k;
++            }
++            for (int64_t k = 0; k < n_patch_d; ++k) {
++                const int32_t ex = idx_data[k];
++                if (ex < 0 || ex >= n_expert) {
++                    throw std::runtime_error(format("tcmoe: layer %d domain %d: expert id %d out of range", l, d, ex));
++                }
++                base [ex] = -1;
++                patch[ex] = (int32_t) k;
++            }
++
++            const size_t n = (size_t) d;
++            ggml_backend_tensor_set(layers[l].tcmoe.ids_base [n], base .data(), 0, base .size() * sizeof(int32_t));
++            ggml_backend_tensor_set(layers[l].tcmoe.ids_patch[n], patch.data(), 0, patch.size() * sizeof(int32_t));
++        }
++    }
++
++    pimpl->ctxs_bufs.emplace_back(std::move(ctx_patch), std::move(bufs_patch));
++    {
++        std::vector<ggml_backend_buffer_ptr> b;
++        b.emplace_back(buf_ids);
++        pimpl->ctxs_bufs.emplace_back(std::move(ctx_ids), std::move(b));
++    }
++
++    // attach the codebooks to the base expert tensors; the CPU dot kernels read them from
++    // ggml_tensor.extra (see ggml_cpu_tcmoe_q2nl_set_active)
++    if (!pimpl->tcmoe_cb_data.empty()) {
++        for (int l = 0; l < n_layer; ++l) {
++            ggml_tensor * tg = layers[l].ffn_gate_exps;
++            ggml_tensor * tu = layers[l].ffn_up_exps;
++            ggml_tensor * td = layers[l].ffn_down_exps;
++            if (tg == nullptr || tu == nullptr || td == nullptr) {
++                throw std::runtime_error(format("tcmoe: layer %d has no routed experts for tcmoe.cb", l));
++            }
++            if (tg->type != GGML_TYPE_TCMOE_Q2NL || tu->type != GGML_TYPE_TCMOE_Q2NL || td->type != GGML_TYPE_TCMOE_Q2NL) {
++                throw std::runtime_error(format("tcmoe: layer %d experts are not tcmoe_q2nl", l));
++            }
++            const float * cb = pimpl->tcmoe_cb_data.data() + (size_t) l * 12;
++            tg->extra = (void *) (cb + 0);
++            tu->extra = (void *) (cb + 4);
++            td->extra = (void *) (cb + 8);
++        }
++    }
++
++    this->tcmoe_domains = domains;
++
++    LLAMA_LOG_INFO("%s: tcmoe: %d domains, %zu patch tensors, %zu expert id tables\n",
++            __func__, n_domain, n_patch, n_table);
++
++    return true;
++}
++
+ // make one Hadamard matrix per block size and one sign vector per width (the GGUF does not contain them)
+ // each tensor goes on the buffer type of its weights (never a CPU extra type), and each transform goes in hdmd.rot or hdmd.inv
+ void llama_model_base::load_tensors_hadamard() {
+@@ -3867,6 +4130,18 @@ bool llama_model_is_diffusion(const llama_model * model) {
+     return llm_arch_is_diffusion(model->arch);
+ }
+ 
++int32_t llama_model_tcmoe_n_domain(const llama_model * model) {
++    return (int32_t) model->tcmoe_domains.size();
++}
++
++const char * llama_model_tcmoe_domain_name(const llama_model * model, int32_t domain) {
++    if (domain < 0 || domain >= (int32_t) model->tcmoe_domains.size()) {
++        return nullptr;
++    }
++
++    return model->tcmoe_domains[domain].c_str();
++}
++
+ const std::vector<std::pair<std::string, ggml_tensor *>> & llama_internal_get_tensor_map(const llama_model * model) {
+     return model->tensors_by_name;
+ }
+diff --git a/src/llama-model.h b/src/llama-model.h
+index da4964c..e0ab44b 100644
+--- a/src/llama-model.h
++++ b/src/llama-model.h
+@@ -261,6 +261,24 @@ struct llama_layer_switch_lora {
+     struct ggml_tensor * b_down = nullptr;
+ };
+ 
++// per-domain expert patches of a tcmoe model, see tcmoe/spec/TCMOE-GGUF-PATCH-SPEC.md
++struct llama_layer_tcmoe {
++    // patch expert weights, one tensor per domain, n_patch experts each
++    std::vector<struct ggml_tensor *> gate_exps;
++    std::vector<struct ggml_tensor *> up_exps;
++    std::vector<struct ggml_tensor *> down_exps;
++
++    // expert id remap tables, one per domain: [n_expert] I32
++    // ids_base[e] = e for an expert without a patch, -1 otherwise
++    // ids_patch[e] = patch position of expert e, -1 when it has no patch
++    std::vector<struct ggml_tensor *> ids_base;
++    std::vector<struct ggml_tensor *> ids_patch;
++
++    bool any() const {
++        return !ids_base.empty();
++    }
++};
++
+ struct llama_layer {
+     // normalization
+     struct ggml_tensor * attn_norm       = nullptr;
+@@ -396,6 +414,9 @@ struct llama_layer {
+     struct ggml_tensor * ffn_exp_probs_b_vl = nullptr; // deepseek4 vision (bias for image tokens)
+     struct ggml_tensor * ffn_gate_tid2eid = nullptr;
+ 
++    // per-domain expert patches (tcmoe models)
++    llama_layer_tcmoe tcmoe;
++
+     struct ggml_tensor * dflash_attn_conv_base = nullptr;
+     struct ggml_tensor * dflash_attn_conv_proj = nullptr;
+     struct ggml_tensor * dflash_ffn_conv_base  = nullptr;
+@@ -739,6 +760,9 @@ struct llama_model {
+     llama_hparams hparams = {};
+     llama_vocab   vocab;
+ 
++    // task domains of a tcmoe model, empty without the extension
++    std::vector<std::string> tcmoe_domains;
++
+     // per-tensor activation precision policy
+     llama_prec_policy prec_policy;
+ 
+@@ -1002,6 +1026,9 @@ struct llama_model_base : public llama_model {
+     // helper: make the prism.hadamard rotation and sign tensors for the folded weights
+     void load_tensors_hadamard();
+ 
++    // helper: map the per-domain expert patches of a tcmoe file into the layers
++    bool load_tensors_tcmoe(llama_model_loader & ml);
++
+     // helper: read the SWA pattern as one flag per layer, or as a period expanded by set_swa_pattern
+     void load_swa_pattern(llama_model_loader & ml, uint32_t n_pattern, bool dense_first = false);
+ 
+diff --git a/src/llama-tcmoe.cpp b/src/llama-tcmoe.cpp
+new file mode 100644
+index 0000000..d33083f
+--- /dev/null
++++ b/src/llama-tcmoe.cpp
+@@ -0,0 +1,473 @@
++#include "llama-tcmoe.h"
++
++#include "gguf.h"
++
++#include <algorithm>
++#include <array>
++#include <cstdlib>
++#include <cstring>
++
++static bool tcmoe_seek(FILE * f, int64_t off) {
++#if defined(_WIN32)
++    return _fseeki64(f, off, SEEK_SET) == 0;
++#else
++    return fseeko(f, off, SEEK_SET) == 0;
++#endif
++}
++
++// blk.<layer>.tcmoe.<what>.<domain>
++bool tcmoe_parse_name(const char * name, int & layer, std::string & what, int & domain) {
++    if (std::strncmp(name, "blk.", 4) != 0) {
++        return false;
++    }
++
++    char * end = nullptr;
++    const long l = std::strtol(name + 4, &end, 10);
++    if (end == name + 4 || l < 0 || l > 100000) {
++        return false;
++    }
++    if (std::strncmp(end, ".tcmoe.", 7) != 0) {
++        return false;
++    }
++
++    const char * s   = end + 7;
++    const char * dot = std::strchr(s, '.');
++    if (dot == nullptr || dot == s || dot[1] == '\0') {
++        return false;
++    }
++
++    what.assign(s, dot - s);
++
++    const long d = std::strtol(dot + 1, &end, 10);
++    if (end == dot + 1 || *end != '\0' || d < 0) {
++        return false;
++    }
++
++    layer  = (int) l;
++    domain = (int) d;
++    return true;
++}
++
++int tcmoe_proj_from_name(const std::string & what) {
++    if (what == "gate")    return TCMOE_PROJ_GATE;
++    if (what == "up")      return TCMOE_PROJ_UP;
++    if (what == "down")    return TCMOE_PROJ_DOWN;
++    if (what == "gate_up") return TCMOE_PROJ_GATE_UP;
++    return -1;
++}
++
++tcmoe_model::~tcmoe_model() {
++    close();
++}
++
++void tcmoe_model::close() {
++    if (ctx) {
++        gguf_free(ctx);
++        ctx = nullptr;
++    }
++    if (file) {
++        std::fclose(file);
++        file = nullptr;
++    }
++}
++
++int tcmoe_model::n_expert(int layer) const {
++    if (layer < 0 || layer >= (int) n_expert_layer.size()) {
++        return 0;
++    }
++    return n_expert_layer[layer];
++}
++
++int tcmoe_model::domain_id(const std::string & name) const {
++    for (int i = 0; i < (int) cfg.domains.size(); ++i) {
++        if (cfg.domains[i] == name) {
++            return i;
++        }
++    }
++    return -1;
++}
++
++bool tcmoe_model::is_registered_tensor(const std::string & name) const {
++    for (const auto & t : tcmoe_tensors) {
++        if (t == name) {
++            return true;
++        }
++    }
++    return false;
++}
++
++const tcmoe_patch_table * tcmoe_model::table(int layer, int domain) const {
++    if (layer < 0 || layer >= (int) tables.size()) {
++        return nullptr;
++    }
++    if (domain < 0 || domain >= (int) tables[layer].size()) {
++        return nullptr;
++    }
++    const auto & t = tables[layer][domain];
++    return t.idx.empty() ? nullptr : &t;
++}
++
++int tcmoe_model::pos_of(int layer, int domain, int expert) const {
++    const tcmoe_patch_table * t = table(layer, domain);
++    if (!t || expert < 0 || expert >= (int) t->pos.size()) {
++        return -1;
++    }
++    return t->pos[expert];
++}
++
++bool tcmoe_model::parse_kv(std::string & err) {
++    const auto get_u32 = [&](const char * key, uint32_t def) -> uint32_t {
++        const int64_t id = gguf_find_key(ctx, key);
++        return id < 0 ? def : gguf_get_val_u32(ctx, id);
++    };
++
++    const auto get_f32 = [&](const char * key, float def) -> float {
++        const int64_t id = gguf_find_key(ctx, key);
++        return id < 0 ? def : gguf_get_val_f32(ctx, id);
++    };
++
++    const auto get_str = [&](const char * key, const char * def) -> std::string {
++        const int64_t id = gguf_find_key(ctx, key);
++        return id < 0 ? std::string(def) : std::string(gguf_get_val_str(ctx, id));
++    };
++
++    const int64_t id_enabled = gguf_find_key(ctx, "tcmoe.enabled");
++    if (id_enabled < 0) {
++        // plain GGUF without the extension
++        cfg.enabled = false;
++        return true;
++    }
++
++    cfg.version      = get_u32("tcmoe.version", 0);
++    cfg.enabled      = gguf_get_val_bool(ctx, id_enabled);
++    cfg.base_mode    = get_str("tcmoe.base_mode", "");
++    cfg.patch_type   = get_str("tcmoe.patch_type", "");
++    cfg.group        = get_u32("tcmoe.group", 128);
++    cfg.n_expert     = get_u32("tcmoe.n_expert", 0);
++    cfg.patch_frac   = get_f32("tcmoe.patch_frac", 0.0f);
++    cfg.sensor       = get_str("tcmoe.sensor", "");
++    cfg.default_domain = get_str("tcmoe.default_domain", "global");
++
++    const int64_t id_domains = gguf_find_key(ctx, "tcmoe.domains");
++    if (id_domains < 0) {
++        err = "tcmoe.domains missing";
++        return false;
++    }
++    if (gguf_get_kv_type(ctx, id_domains) != GGUF_TYPE_ARRAY ||
++        gguf_get_arr_type(ctx, id_domains) != GGUF_TYPE_STRING) {
++        err = "tcmoe.domains must be a string array";
++        return false;
++    }
++    const size_t n_domains = gguf_get_arr_n(ctx, id_domains);
++    for (size_t i = 0; i < n_domains; ++i) {
++        cfg.domains.push_back(gguf_get_arr_str(ctx, id_domains, i));
++    }
++    if (cfg.domains.empty()) {
++        err = "tcmoe.domains is empty";
++        return false;
++    }
++
++    if (!cfg.enabled) {
++        return true;
++    }
++    if (cfg.version != 1) {
++        err = "unsupported tcmoe.version " + std::to_string(cfg.version);
++        return false;
++    }
++    if (cfg.base_mode != "tcmoe_q2" && cfg.base_mode != "tcmoe_q2nl" && cfg.base_mode != "external") {
++        err = "unsupported tcmoe.base_mode '" + cfg.base_mode + "'";
++        return false;
++    }
++    if (cfg.patch_type != "q4_0_rows" && cfg.patch_type != "q4_k_rows") {
++        err = "unsupported tcmoe.patch_type '" + cfg.patch_type + "'";
++        return false;
++    }
++    if (cfg.patch_type == "q4_0_rows" && cfg.group == 0) {
++        err = "tcmoe.group must be non-zero";
++        return false;
++    }
++    return true;
++}
++
++bool tcmoe_model::read_tables(std::string & err) {
++    const int n_tensors = (int) gguf_get_n_tensors(ctx);
++
++    int n_layer_max = 0;
++
++    for (int i = 0; i < n_tensors; ++i) {
++        const char * name = gguf_get_tensor_name(ctx, i);
++        std::string  what;
++        int          layer = -1;
++        int          domain = -1;
++        if (!tcmoe_parse_name(name, layer, what, domain)) {
++            continue;
++        }
++        tcmoe_tensors.emplace_back(name);
++        n_layer_max = std::max(n_layer_max, layer + 1);
++    }
++
++    if (tcmoe_tensors.empty()) {
++        if (cfg.enabled) {
++            err = "tcmoe.enabled but no tcmoe tensors found";
++            return false;
++        }
++        return true;
++    }
++
++    n_layers = n_layer_max;
++    tables.assign(n_layers, std::vector<tcmoe_patch_table>(cfg.domains.size()));
++    for (int l = 0; l < n_layers; ++l) {
++        for (int d = 0; d < (int) cfg.domains.size(); ++d) {
++            tables[l][d].layer  = l;
++            tables[l][d].domain = d;
++        }
++    }
++
++    const size_t data_offset = gguf_get_data_offset(ctx);
++
++    for (int i = 0; i < n_tensors; ++i) {
++        const char * name = gguf_get_tensor_name(ctx, i);
++        std::string  what;
++        int          layer = -1;
++        int          domain = -1;
++        if (!tcmoe_parse_name(name, layer, what, domain)) {
++            continue;
++        }
++        if (domain >= (int) cfg.domains.size()) {
++            err = "tensor " + std::string(name) + " uses domain id out of range";
++            return false;
++        }
++
++        const enum ggml_type type = gguf_get_tensor_type(ctx, i);
++        const int64_t * ne = gguf_get_tensor_ne(ctx, i);
++        auto & t = tables[layer][domain];
++
++        if (what == "idx") {
++            if (type != GGML_TYPE_I32) {
++                err = "tensor " + std::string(name) + " must be I32";
++                return false;
++            }
++            if (ne[1] != 1 || ne[2] != 1) {
++                err = "tensor " + std::string(name) + " must be 1-D";
++                return false;
++            }
++            t.idx.resize(ne[0]);
++            const size_t off = data_offset + gguf_get_tensor_offset(ctx, i);
++            if (!tcmoe_seek(file, (int64_t) off) ||
++                std::fread(t.idx.data(), sizeof(int32_t), t.idx.size(), file) != t.idx.size()) {
++                err = "failed to read " + std::string(name);
++                return false;
++            }
++            continue;
++        }
++
++        const int proj = tcmoe_proj_from_name(what);
++        if (proj < 0) {
++            err = "unknown tcmoe tensor " + std::string(name);
++            return false;
++        }
++
++        tcmoe_proj_info & info = t.proj[proj];
++        info.present = true;
++        info.type = type;
++        info.ne[0] = ne[0];
++        info.ne[1] = ne[1];
++        info.ne[2] = ne[2];
++        info.off   = data_offset + gguf_get_tensor_offset(ctx, i);
++        info.row_bytes    = ggml_row_size(type, ne[0]);
++        info.expert_bytes = info.row_bytes * (size_t) ne[1];
++    }
++
++    // validate idx and build the expert -> position maps
++    n_expert_layer.assign(n_layers, 0);
++
++    // take n_expert and standard dims from the base expert tensors when present
++    static const char * expert_suffix[3] = {
++        ".ffn_gate_exps.weight", ".ffn_up_exps.weight", ".ffn_down_exps.weight",
++    };
++
++    std::vector<std::array<int64_t, 3>> std_ne[3];
++    for (int p = 0; p < 3; ++p) {
++        std_ne[p].assign(n_layers, std::array<int64_t, 3>{0, 0, 0});
++    }
++
++    for (int l = 0; l < n_layers; ++l) {
++        for (int p = 0; p < 3; ++p) {
++            const std::string name = "blk." + std::to_string(l) + expert_suffix[p];
++            const int64_t id = gguf_find_tensor(ctx, name.c_str());
++            if (id < 0) {
++                continue;
++            }
++            const int64_t * ne = gguf_get_tensor_ne(ctx, id);
++            std_ne[p][l] = { ne[0], ne[1], ne[2] };
++            if (n_expert_layer[l] == 0) {
++                n_expert_layer[l] = (int32_t) ne[2];
++            } else if (n_expert_layer[l] != (int32_t) ne[2]) {
++                err = "layer " + std::to_string(l) + ": inconsistent n_expert across expert tensors";
++                return false;
++            }
++        }
++
++        for (int d = 0; d < (int) cfg.domains.size(); ++d) {
++            auto & t = tables[l][d];
++
++            // range for idx values
++            int64_t n_expert = n_expert_layer[l];
++            if (n_expert == 0) {
++                n_expert = cfg.n_expert;
++                for (int32_t v : t.idx) {
++                    n_expert = std::max<int64_t>(n_expert, (int64_t) v + 1);
++                }
++            } else {
++                n_expert_layer[l] = (int32_t) n_expert;
++            }
++
++            for (size_t k = 0; k < t.idx.size(); ++k) {
++                const int32_t v = t.idx[k];
++                if (v < 0 || v >= n_expert) {
++                    err = "layer " + std::to_string(l) + " domain " + cfg.domains[d] +
++                          ": idx out of range";
++                    return false;
++                }
++                if (k > 0 && v <= t.idx[k - 1]) {
++                    err = "layer " + std::to_string(l) + " domain " + cfg.domains[d] +
++                          ": idx is not strictly increasing";
++                    return false;
++                }
++            }
++
++            t.pos.assign((size_t) n_expert, -1);
++            for (size_t k = 0; k < t.idx.size(); ++k) {
++                t.pos[t.idx[k]] = (int32_t) k;
++            }
++
++            const int64_t n_patch = (int64_t) t.idx.size();
++            const bool has_gate_up = t.proj[TCMOE_PROJ_GATE_UP].present;
++            const bool has_split   = t.proj[TCMOE_PROJ_GATE].present && t.proj[TCMOE_PROJ_UP].present;
++            const bool has_down    = t.proj[TCMOE_PROJ_DOWN].present;
++
++            if (n_patch > 0 && !has_down) {
++                err = "layer " + std::to_string(l) + " domain " + cfg.domains[d] + ": down patch missing";
++                return false;
++            }
++            if (n_patch > 0 && !has_gate_up && !has_split) {
++                err = "layer " + std::to_string(l) + " domain " + cfg.domains[d] +
++                      ": gate/up patch missing";
++                return false;
++            }
++
++            for (int p = 0; p < TCMOE_PROJ_COUNT; ++p) {
++                auto & info = t.proj[p];
++                if (!info.present) {
++                    continue;
++                }
++                if (info.type != GGML_TYPE_Q4_0 && info.type != GGML_TYPE_Q4_K) {
++                    err = "layer " + std::to_string(l) + ": patch tensor must be Q4_0 or Q4_K";
++                    return false;
++                }
++                if (info.ne[0] % ggml_blck_size(info.type) != 0) {
++                    err = "layer " + std::to_string(l) + ": patch ne0 is not a multiple of the block size";
++                    return false;
++                }
++                if (info.ne[2] != n_patch) {
++                    err = "layer " + std::to_string(l) + " domain " + cfg.domains[d] +
++                          ": patch ne2 != len(idx)";
++                    return false;
++                }
++
++                // split projections must match the base expert tensor shape
++                const int sp = p == TCMOE_PROJ_GATE ? 0 : p == TCMOE_PROJ_UP ? 1 : p == TCMOE_PROJ_DOWN ? 2 : -1;
++                if (sp >= 0 && std_ne[sp][l][0] != 0) {
++                    if (info.ne[0] != std_ne[sp][l][0] || info.ne[1] != std_ne[sp][l][1]) {
++                        err = "layer " + std::to_string(l) + ": patch shape does not match base expert tensor";
++                        return false;
++                    }
++                }
++            }
++        }
++    }
++
++    return true;
++}
++
++bool tcmoe_model::load(const char * fname, std::string & err) {
++    close();
++    tables.clear();
++    tcmoe_tensors.clear();
++    n_expert_layer.clear();
++    cfg = tcmoe_config();
++
++    file = std::fopen(fname, "rb");
++    if (!file) {
++        err = "failed to open " + std::string(fname);
++        return false;
++    }
++
++    gguf_init_params params = {
++        /*.no_alloc =*/ true,
++        /*.ctx      =*/ nullptr,
++    };
++    ctx = gguf_init_from_file_ptr(file, params);
++    if (!ctx) {
++        err = "failed to parse GGUF file " + std::string(fname);
++        return false;
++    }
++
++    if (gguf_get_version(ctx) != 3) {
++        err = "unsupported GGUF version";
++        return false;
++    }
++
++    if (!parse_kv(err)) {
++        return false;
++    }
++    if (!cfg.enabled) {
++        return true;
++    }
++    return read_tables(err);
++}
++
++bool tcmoe_model::patch_shape(int layer, tcmoe_proj proj, int domain, int64_t & n0, int64_t & n1) const {
++    const tcmoe_patch_table * t = table(layer, domain);
++    if (!t || proj < 0 || proj >= TCMOE_PROJ_COUNT || !t->proj[proj].present) {
++        return false;
++    }
++    n0 = t->proj[proj].ne[0];
++    n1 = t->proj[proj].ne[1];
++    return true;
++}
++
++bool tcmoe_model::read_patch_f32(int layer, tcmoe_proj proj, int domain, int expert, float * out,
++                                 int64_t & n0, int64_t & n1) const {
++    const tcmoe_patch_table * t = table(layer, domain);
++    if (!t) {
++        return false;
++    }
++    if (proj < 0 || proj >= TCMOE_PROJ_COUNT) {
++        return false;
++    }
++    const tcmoe_proj_info & info = t->proj[proj];
++    if (!info.present) {
++        return false;
++    }
++    const int pos = pos_of(layer, domain, expert);
++    if (pos < 0) {
++        return false;
++    }
++
++    const ggml_type_traits * tr = ggml_get_type_traits(info.type);
++    if (!tr || !tr->to_float) {
++        return false;
++    }
++
++    std::vector<uint8_t> buf(info.expert_bytes);
++    const int64_t off = (int64_t) info.off + (int64_t) pos * (int64_t) info.expert_bytes;
++    if (!tcmoe_seek(file, off) || std::fread(buf.data(), 1, buf.size(), file) != buf.size()) {
++        return false;
++    }
++
++    tr->to_float(buf.data(), out, info.ne[0] * info.ne[1]);
++    n0 = info.ne[0];
++    n1 = info.ne[1];
++    return true;
++}
+diff --git a/src/llama-tcmoe.h b/src/llama-tcmoe.h
+new file mode 100644
+index 0000000..e34ad62
+--- /dev/null
++++ b/src/llama-tcmoe.h
+@@ -0,0 +1,101 @@
++#pragma once
++
++// Reader for the tcmoe GGUF extension (task-conditioned quantization patch tables).
++// Format: tcmoe/spec/TCMOE-GGUF-PATCH-SPEC.md
++
++#include "ggml.h"
++
++#include <cstddef>
++#include <cstdint>
++#include <cstdio>
++#include <string>
++#include <vector>
++
++enum tcmoe_proj {
++    TCMOE_PROJ_GATE = 0,
++    TCMOE_PROJ_UP,
++    TCMOE_PROJ_DOWN,
++    TCMOE_PROJ_GATE_UP,
++    TCMOE_PROJ_COUNT,
++};
++
++struct tcmoe_config {
++    uint32_t    version   = 0;
++    bool        enabled   = false;
++    std::string base_mode;    // "tcmoe_q2" | "tcmoe_q2nl" | "external"
++    std::string patch_type;   // "q4_0_rows" | "q4_k_rows"
++    uint32_t    group     = 0;
++    uint32_t    n_expert  = 0; // optional, used when the base expert tensors are absent
++    float       patch_frac = 0.0f;
++    std::string sensor;
++    std::string default_domain;
++    std::vector<std::string> domains;
++};
++
++struct tcmoe_proj_info {
++    bool         present      = false;
++    ggml_type    type         = GGML_TYPE_COUNT;
++    int64_t      ne[3]        = {0, 0, 0};
++    size_t       off          = 0; // absolute byte offset of the tensor data in the file
++    size_t       row_bytes    = 0; // bytes of one ne[0] row
++    size_t       expert_bytes = 0; // bytes of one expert slice (row_bytes * ne[1])
++};
++
++struct tcmoe_patch_table {
++    int32_t             layer  = -1;
++    int32_t             domain = -1;
++    std::vector<int32_t> idx;   // strictly increasing expert ids
++    tcmoe_proj_info      proj[TCMOE_PROJ_COUNT];
++    std::vector<int32_t> pos;   // expert id -> patch position, -1 when not patched
++};
++
++// parses "blk.<layer>.tcmoe.<what>.<domain>", returns false for other names
++bool tcmoe_parse_name(const char * name, int & layer, std::string & what, int & domain);
++
++// maps the '<what>' part of a tcmoe tensor name to a projection, -1 when unknown
++int tcmoe_proj_from_name(const std::string & what);
++
++struct tcmoe_model {
++    tcmoe_model() = default;
++    ~tcmoe_model();
++
++    tcmoe_model(const tcmoe_model &) = delete;
++    tcmoe_model & operator=(const tcmoe_model &) = delete;
++
++    // Loads metadata and patch table locations. Returns false and fills err on validation failure.
++    bool load(const char * fname, std::string & err);
++    void close();
++
++    bool                 enabled() const { return cfg.enabled; }
++    const tcmoe_config & config()  const { return cfg; }
++    int                  n_layer() const { return n_layers; }
++    int                  n_expert(int layer) const;
++    int                  n_domains() const { return (int) cfg.domains.size(); }
++    int                  domain_id(const std::string & name) const; // -1 if unknown
++
++    bool is_registered_tensor(const std::string & name) const;
++
++    const tcmoe_patch_table * table(int layer, int domain) const;
++    int                      pos_of(int layer, int domain, int expert) const; // -1: no patch
++
++    // Shape of one patched expert slice (ne0 * ne1 values, row-major).
++    bool patch_shape(int layer, tcmoe_proj proj, int domain, int64_t & n0, int64_t & n1) const;
++
++    // Dequantizes one patched expert to f32 (ne0 * ne1 values, row-major).
++    bool read_patch_f32(int layer, tcmoe_proj proj, int domain, int expert, float * out,
++                        int64_t & n0, int64_t & n1) const;
++
++private:
++    FILE *                  file = nullptr;
++    struct gguf_context *  ctx  = nullptr;
++
++    tcmoe_config cfg;
++    int          n_layers = 0;
++
++    std::vector<std::vector<tcmoe_patch_table>> tables; // [layer][domain]
++    std::vector<int32_t>                        n_expert_layer;
++    std::vector<std::string>                    tcmoe_tensors;
++
++    bool parse_kv(std::string & err);
++    bool read_tables(std::string & err);
++};
+diff --git a/src/models/qwen35moe.cpp b/src/models/qwen35moe.cpp
+index 939f10f..9f37bc1 100644
+--- a/src/models/qwen35moe.cpp
++++ b/src/models/qwen35moe.cpp
+@@ -489,6 +489,22 @@ ggml_tensor * llama_model_qwen35moe::graph::build_layer_ffn(ggml_tensor * cur, c
+     // Check if this is an MoE layer
+     GGML_ASSERT(model.layers[il].ffn_gate_inp != nullptr);
+ 
++    // the patches of the selected tcmoe domain replace the base experts that they cover
++    llm_graph_moe_tcmoe tcmoe;
++    const llm_graph_moe_tcmoe * tcmoe_p = nullptr;
++
++    const int tcmoe_domain = cparams.tcmoe_domain;
++    const auto & tcmoe_layer = model.layers[il].tcmoe;
++    if (tcmoe_layer.any() && tcmoe_domain >= 0 && tcmoe_domain < (int) tcmoe_layer.ids_base.size()) {
++        const size_t d = (size_t) tcmoe_domain;
++        tcmoe.gate_exps = tcmoe_layer.gate_exps[d];
++        tcmoe.up_exps   = tcmoe_layer.up_exps  [d];
++        tcmoe.down_exps = tcmoe_layer.down_exps[d];
++        tcmoe.ids_base  = tcmoe_layer.ids_base [d];
++        tcmoe.ids_patch = tcmoe_layer.ids_patch[d];
++        tcmoe_p = &tcmoe;
++    }
++
+     ggml_tensor * moe_out =
+         build_moe_ffn(cur,
+             model.layers[il].ffn_gate_inp,
+@@ -503,7 +519,9 @@ ggml_tensor * llama_model_qwen35moe::graph::build_layer_ffn(ggml_tensor * cur, c
+             nullptr, model.layers[il].ffn_gate_up_exps,
+             model.layers[il].ffn_up_exps_s,
+             model.layers[il].ffn_gate_exps_s,
+-            model.layers[il].ffn_down_exps_s);
++            model.layers[il].ffn_down_exps_s,
++            nullptr, nullptr, 1e-5f,
++            tcmoe_p);
+     cb(moe_out, "ffn_moe_out", il);
+ 
+     // Add shared experts if present - following Qwen3Next reference implementation
+diff --git a/tests/test-quantize-fns.cpp b/tests/test-quantize-fns.cpp
+index ab88a23..e10c441 100644
+--- a/tests/test-quantize-fns.cpp
++++ b/tests/test-quantize-fns.cpp
+@@ -30,6 +30,8 @@ constexpr float MAX_DOT_PRODUCT_ERROR_LOWBIT = 0.04f;
+ constexpr float MAX_DOT_PRODUCT_ERROR_FP4 = 0.03f;
+ constexpr float MAX_DOT_PRODUCT_ERROR_BINARY = 0.40f;
+ constexpr float MAX_DOT_PRODUCT_ERROR_TERNARY = 0.15f;
++// tcmoe_q2 is a 2-bit base with a single scale per 128 values, so its dot error is higher than the K-quants
++constexpr float MAX_DOT_PRODUCT_ERROR_TCMOE_Q2 = 0.10f;
+ 
+ static const char* RESULT_STR[] = {"ok", "FAILED"};
+ 
+@@ -341,6 +343,8 @@ static int test_vec_dot_q(bool verbose) {
+                 type == GGML_TYPE_Q2_0    ? MAX_QUANTIZATION_TOTAL_ERROR_TERNARY :
+                 type == GGML_TYPE_Q2_K    ? MAX_QUANTIZATION_TOTAL_ERROR_2BITS :
+                 type == GGML_TYPE_IQ2_S   ? MAX_QUANTIZATION_TOTAL_ERROR_2BITS :
++                type == GGML_TYPE_TCMOE_Q2 ? MAX_QUANTIZATION_TOTAL_ERROR_2BITS :
++                type == GGML_TYPE_TCMOE_Q2NL ? MAX_QUANTIZATION_TOTAL_ERROR_2BITS :
+                 type == GGML_TYPE_Q3_K    ? MAX_QUANTIZATION_TOTAL_ERROR_3BITS :
+                 type == GGML_TYPE_IQ3_S   ? MAX_QUANTIZATION_TOTAL_ERROR_3BITS :
+                 type == GGML_TYPE_IQ3_XXS ? MAX_QUANTIZATION_TOTAL_ERROR_3BITS_XXS :
+@@ -368,6 +372,10 @@ static int test_vec_dot_q(bool verbose) {
+                 ? MAX_DOT_PRODUCT_ERROR_TERNARY
+                 : type == GGML_TYPE_NVFP4
+                 ? MAX_DOT_PRODUCT_ERROR_FP4
++                : type == GGML_TYPE_TCMOE_Q2
++                ? MAX_DOT_PRODUCT_ERROR_TCMOE_Q2
++                : type == GGML_TYPE_TCMOE_Q2NL
++                ? MAX_DOT_PRODUCT_ERROR_TCMOE_Q2
+                 : MAX_DOT_PRODUCT_ERROR;
+             failed = !(vec_dot_error < max_allowed_error);
+             num_failed += failed;
+diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
+index 6a6592c..6505326 100644
+--- a/tools/CMakeLists.txt
++++ b/tools/CMakeLists.txt
+@@ -27,6 +27,7 @@ else()
+         add_subdirectory(server)
+     endif()
+     add_subdirectory(tokenize)
++    add_subdirectory(tcmoe-verify)
+     add_subdirectory(tts)
+     add_subdirectory(mtmd)
+     if (GGML_RPC)
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 9377e3c..42a133c 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -310,6 +310,9 @@ struct server_slot {
+     // used to determine the slot that has been used the longest
+     int64_t t_last_used = -1;
+ 
++    // tcmoe domain of the prompt currently in the slot, -1 also when the model has no patches
++    int32_t prompt_domain = -1;
++
+     // generation props
+     int32_t n_ctx   = 0;  // context size per slot
+     int32_t n_keep  = 0;
+@@ -353,7 +356,7 @@ struct server_slot {
+         SRV_TRC(" - saving prompt with length %d, total state size = %.3f MiB (draft: %.3f MiB)\n",
+                 (int) prompt.tokens.size(), cur_size / (1024.0 * 1024.0), cur_size_dft / (1024.0 * 1024.0));
+ 
+-        auto * cur = prompt_cache.alloc(prompt, cur_size_tgt, cur_size_dft);
++        auto * cur = prompt_cache.alloc(prompt, cur_size_tgt, cur_size_dft, prompt_domain);
+         if (cur == nullptr) {
+             return false;
+         }
+@@ -366,8 +369,8 @@ struct server_slot {
+         return true;
+     }
+ 
+-    bool prompt_load(server_prompt_cache & prompt_cache, const server_tokens & tokens) {
+-        bool res = prompt_cache.load(prompt, tokens, ctx_tgt, ctx_dft, id);
++    bool prompt_load(server_prompt_cache & prompt_cache, const server_tokens & tokens, int32_t domain) {
++        bool res = prompt_cache.load(prompt, tokens, ctx_tgt, ctx_dft, id, domain);
+         if (!res) {
+             SLT_WRN(*this, "%s", "failed to load prompt from cache\n");
+         }
+@@ -540,7 +543,9 @@ struct server_slot {
+             return false;
+         }
+ 
++        // the tcmoe domain selects the expert patches, a batch decodes with a single one
+         return task->type == other_slot.task->type
++            && task->params.domain_id == other_slot.task->params.domain_id
+             && inp_embd.size() == other_slot.inp_embd.size()
+             && are_lora_equal(lora, other_slot.lora);
+     }
+@@ -1767,6 +1772,50 @@ private:
+         return true;
+     }
+ 
++    // tcmoe: number of task domains declared by the model, 0 when it has no expert patches
++    int32_t n_tcmoe_domains() const {
++        return model_tgt ? llama_model_tcmoe_n_domain(model_tgt) : 0;
++    }
++
++    // tcmoe: applies the domain of the slot's task to the shared context, the graph is rebuilt on change
++    void set_tcmoe_domain(const server_slot & slot) {
++        if (n_tcmoe_domains() > 0 && slot.task) {
++            llama_context_tcmoe_set_domain(ctx_tgt, slot.task->params.domain_id);
++        }
++    }
++
++    // tcmoe: resolves the optional request "domain" name, -1 selects the base experts
++    bool resolve_tcmoe_domain(server_task & task) {
++        const int32_t n_domain = n_tcmoe_domains();
++        if (n_domain == 0) {
++            return true; // the model has no patches, the field has no effect
++        }
++
++        if (task.params.domain.empty()) {
++            task.params.domain_id = 0; // default: the first declared domain (global)
++            if (const char * name = llama_model_tcmoe_domain_name(model_tgt, 0)) {
++                task.params.domain = name;
++            }
++            return true;
++        }
++
++        if (task.params.domain == "base" || task.params.domain == "-1") {
++            task.params.domain_id = -1;
++            return true;
++        }
++
++        for (int32_t d = 0; d < n_domain; ++d) {
++            const char * name = llama_model_tcmoe_domain_name(model_tgt, d);
++            if (name && task.params.domain == name) {
++                task.params.domain_id = d;
++                return true;
++            }
++        }
++
++        send_error(task, string_format("unknown tcmoe domain '%s'", task.params.domain.c_str()), ERROR_TYPE_INVALID_REQUEST);
++        return false;
++    }
++
+     server_slot * get_slot_by_id(int id_slot) {
+         // note: allow id_slot to be out of bounds (wrap around)
+         id_slot = id_slot % slots.size();
+@@ -1827,6 +1876,12 @@ private:
+                     continue;
+                 }
+ 
++                // a prompt evaluated with other expert patches has different KV values
++                if (n_tcmoe_domains() > 0 && slot.prompt_domain != task.params.domain_id) {
++                    SLT_TRC(slot, " - skipping, prompt domain %d != task domain %d\n", slot.prompt_domain, task.params.domain_id);
++                    continue;
++                }
++
+                 const auto & tokens = slot.prompt.tokens;
+ 
+                 // skip the slot if it does not contains cached tokens
+@@ -1890,7 +1945,7 @@ private:
+ 
+                 ret->prompt_save(*prompt_cache);
+ 
+-                if (!ret->prompt_load(*prompt_cache, task.tokens)) {
++                if (!ret->prompt_load(*prompt_cache, task.tokens, task.params.domain_id)) {
+                     ret->prompt_clear();
+                 }
+ 
+@@ -1966,6 +2021,13 @@ private:
+             slot.lora = params_base.lora_adapters;
+         }
+ 
++        // tcmoe: the KV cache of a prompt depends on the expert patches that produced it
++        if (n_tcmoe_domains() > 0 && task.params.domain_id != slot.prompt_domain) {
++            SLT_TRC(slot, "clearing cache for the domain change: %d -> %d\n", slot.prompt_domain, task.params.domain_id);
++            slot.prompt.clear();
++            slot.prompt_domain = task.params.domain_id;
++        }
++
+         // if using alora, make sure it's only a single one requested and active
+         size_t alora_invocation_start = task.tokens.size();
+         if (lora_all_alora(slot.lora)) {
+@@ -2701,6 +2763,12 @@ private:
+                 prompt_cache->update();
+             }
+ 
++            // children copy the params of the parent, their domain is not resolved yet
++            if (!resolve_tcmoe_domain(parent_task.child_tasks[idx])) {
++                release_slots();
++                return false;
++            }
++
+             int id_child = parent_task.child_tasks[idx].id;
+             if (!launch_slot_with_task(*slot, std::move(parent_task.child_tasks[idx]))) {
+                 SRV_ERR("failed to launch slot with child task, id_task = %d\n", id_child);
+@@ -3028,6 +3096,11 @@ private:
+                         }
+                     }
+ 
++                    // tcmoe: select the expert patches of this request before it takes a slot
++                    if (!resolve_tcmoe_domain(task)) {
++                        break;
++                    }
++
+                     const int id_task = task.id;
+ 
+                     server_slot * slot = get_available_slot(task);
+@@ -3674,6 +3747,9 @@ private:
+             if (!slot.is_processing() || !slot.rt) {
+                 return;
+             }
++
++            set_tcmoe_domain(slot);
++
+             if (!slot.rt->update()) {
+                 send_error(slot, slot.rt->error, slot.rt->error_type);
+                 slot.release();
+@@ -3689,6 +3765,8 @@ private:
+                 return;
+             }
+ 
++            set_tcmoe_domain(slot);
++
+             llama_set_embeddings(ctx_tgt, true);
+ 
+             if (slot.state == SLOT_STATE_PROCESSING_PROMPT) {
+@@ -4672,6 +4750,11 @@ private:
+             n_empty_consecutive = 0;
+         }
+ 
++        // tcmoe: the whole batch decodes with the domain of the slot that owns it
++        if (batch.slot_batched) {
++            set_tcmoe_domain(*batch.slot_batched);
++        }
++
+         // TODO @ngxson : dft model may have different n_embd than the tgt model, so we check & reject if that's the case
+         // this case is not currently used by any models, but may need to be supported in the future
+         if (spec && batch.has_embd()) {
+diff --git a/tools/server/server-schema.cpp b/tools/server/server-schema.cpp
+index 0a14a96..2cb9fbd 100644
+--- a/tools/server/server-schema.cpp
++++ b/tools/server/server-schema.cpp
+@@ -77,6 +77,12 @@ std::vector<std::unique_ptr<field>> make_llama_cmpl_schema(const common_params &
+         ->set_hard_limits(-1, std::numeric_limits<int64_t>::max())
+         ->set_desc("Set a time limit in milliseconds for the prediction phase. The timeout triggers if generation exceeds this time (measured since the first token) and a newline has been generated. Useful for FIM applications"));
+ 
++    add((new field_str("domain"))
++        ->set_desc("tcmoe task domain for this request, by default the first declared domain of the model. Use \"base\" for the experts without patches. Ignored by models without tcmoe patches")
++        ->set_handler([&](field_eval_context & ctx, const json & data) {
++            ctx.params.domain = data.at("domain").get<std::string>();
++        }));
++
+     add((new field_json("response_fields"))
+         ->set_desc("A list of response fields to return. Missing fields are omitted without error. Fields with a slash are unnested (e.g. generation_settings/n_predict moves n_predict to the root)")
+         ->set_handler([&](field_eval_context & ctx, const json & data) {
+diff --git a/tools/server/server-task.cpp b/tools/server/server-task.cpp
+index 1a0d434..fa87ce7 100644
+--- a/tools/server/server-task.cpp
++++ b/tools/server/server-task.cpp
+@@ -40,7 +40,7 @@ json task_params::to_json(bool only_metrics) const {
+     }
+ 
+     if (only_metrics) {
+-        return json {
++        json res = json {
+             {"seed",                      sampling.seed},
+             {"temperature",               sampling.temp},
+             {"dynatemp_range",            sampling.dynatemp_range},
+@@ -84,6 +84,12 @@ json task_params::to_json(bool only_metrics) const {
+             {"backend_sampling",          sampling.backend_sampling},
+             {"lora",                      lora},
+         };
++
++        if (!domain.empty()) {
++            res["domain"] = domain;
++        }
++
++        return res;
+     }
+ 
+     auto grammar_triggers = json::array();
+@@ -92,7 +98,7 @@ json task_params::to_json(bool only_metrics) const {
+         grammar_triggers.push_back(ct.to_json());
+     }
+ 
+-    return json {
++    json res = json {
+         {"seed",                      sampling.seed},
+         {"temperature",               sampling.temp},
+         {"dynatemp_range",            sampling.dynatemp_range},
+@@ -143,6 +149,12 @@ json task_params::to_json(bool only_metrics) const {
+         {"backend_sampling",          sampling.backend_sampling},
+         {"lora",                      lora},
+     };
++
++    if (!domain.empty()) {
++        res["domain"] = domain;
++    }
++
++    return res;
+ }
+ 
+ //
+@@ -1753,9 +1765,13 @@ size_t server_prompt_cache::n_tokens() const {
+     return res;
+ }
+ 
+-server_prompt_cache_state * server_prompt_cache::alloc(const server_prompt & prompt, size_t state_size_tgt, size_t state_size_dft) {
++server_prompt_cache_state * server_prompt_cache::alloc(const server_prompt & prompt, size_t state_size_tgt, size_t state_size_dft, int32_t domain) {
+     // first check if the current state is contained fully in the cache
+     for (auto it = states.begin(); it != states.end(); ++it) {
++        if (it->domain != domain) {
++            continue;
++        }
++
+         const int cur_lcp_len = it->prompt.tokens.get_common_prefix(prompt.tokens);
+ 
+         if (cur_lcp_len == (int) prompt.tokens.size()) {
+@@ -1781,6 +1797,11 @@ server_prompt_cache_state * server_prompt_cache::alloc(const server_prompt & pro
+ 
+     // remove any cached prompts that are fully contained in the current prompt
+     for (auto it = states.begin(); it != states.end();) {
++        if (it->domain != domain) {
++            ++it;
++            continue;
++        }
++
+         const int len = it->prompt.tokens.get_common_prefix(prompt.tokens);
+ 
+         if (len == (int) it->prompt.tokens.size()) {
+@@ -1830,12 +1851,13 @@ server_prompt_cache_state * server_prompt_cache::alloc(const server_prompt & pro
+             /*.main =*/ std::move(state_data_tgt),
+             /*.drft =*/ std::move(state_data_dft),
+         },
++        /*.domain =*/ domain,
+     });
+ 
+     return &states.back();
+ }
+ 
+-bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tokens_new, llama_context * ctx_tgt, llama_context * ctx_dft, int32_t id_slot) {
++bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tokens_new, llama_context * ctx_tgt, llama_context * ctx_dft, int32_t id_slot, int32_t domain) {
+     const int lcp_best = prompt.tokens.get_common_prefix(tokens_new);
+ 
+     float f_keep_best = prompt.tokens.size() > 0 ? float(lcp_best) / prompt.tokens.size() : -1.0f; // empty slot: any cache entry wins
+@@ -1847,6 +1869,11 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
+ 
+     // find the most similar cached prompt, that would also preserve the most context
+     for (auto it = states.begin(); it != states.end(); ++it) {
++        // the state was computed by other expert patches, it cannot be loaded here
++        if (it->domain != domain) {
++            continue;
++        }
++
+         const int lcp_cur = it->prompt.tokens.get_common_prefix(tokens_new);
+ 
+         const float f_keep_cur = float(lcp_cur) / it->prompt.tokens.size();
+diff --git a/tools/server/server-task.h b/tools/server/server-task.h
+index 21b649a..e564a93 100644
+--- a/tools/server/server-task.h
++++ b/tools/server/server-task.h
+@@ -94,6 +94,11 @@ struct task_params {
+ 
+     std::map<int, float> lora; // mapping adapter ID -> scale
+ 
++    // tcmoe task domain, the optional request field "domain" selects it by name
++    // empty when the request did not ask for one, the scheduler then uses the first declared domain
++    std::string domain;
++    int32_t     domain_id = -1; // resolved at scheduling time, -1 = the base experts
++
+     std::vector<std::string> antiprompt;
+     std::vector<std::string> response_fields;
+ 
+@@ -717,6 +722,8 @@ struct server_prompt_data {
+ struct server_prompt_cache_state {
+     server_prompt prompt;
+     server_prompt_data data;
++    // tcmoe domain that produced this state, states of different domains are not interchangeable
++    int32_t domain = -1;
+ 
+     size_t size() const {
+         size_t res = data.size();
+@@ -747,9 +754,9 @@ struct server_prompt_cache {
+ 
+     size_t n_tokens() const;
+ 
+-    server_prompt_cache_state * alloc(const server_prompt & prompt, size_t state_size_main, size_t state_size_drft);
++    server_prompt_cache_state * alloc(const server_prompt & prompt, size_t state_size_main, size_t state_size_drft, int32_t domain);
+ 
+-    bool load(server_prompt & prompt, const server_tokens & tokens_new, llama_context * ctx_tgt, llama_context * ctx_dft, int32_t id_slot);
++    bool load(server_prompt & prompt, const server_tokens & tokens_new, llama_context * ctx_tgt, llama_context * ctx_dft, int32_t id_slot, int32_t domain);
+ 
+     void update();
+ };
+diff --git a/tools/tcmoe-verify/CMakeLists.txt b/tools/tcmoe-verify/CMakeLists.txt
+new file mode 100644
+index 0000000..c59cce3
+--- /dev/null
++++ b/tools/tcmoe-verify/CMakeLists.txt
+@@ -0,0 +1,10 @@
++set(TARGET llama-tcmoe-verify)
++# the reader lives in the library for later loader integration; building it here as well
++# keeps the tool linkable against the shared llama.dll without exporting the symbols
++add_executable(${TARGET} main.cpp ../../src/llama-tcmoe.cpp)
++if(LLAMA_TOOLS_INSTALL)
++    install(TARGETS ${TARGET} RUNTIME)
++endif()
++target_link_libraries(${TARGET} PRIVATE llama ${CMAKE_THREAD_LIBS_INIT})
++target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
++target_compile_features(${TARGET} PRIVATE cxx_std_17)
+diff --git a/tools/tcmoe-verify/main.cpp b/tools/tcmoe-verify/main.cpp
+new file mode 100644
+index 0000000..29ce5cc
+--- /dev/null
++++ b/tools/tcmoe-verify/main.cpp
+@@ -0,0 +1,854 @@
++// Dumps patched expert weights from a tcmoe GGUF so they can be compared bit-for-bit
++// against the reference quantizer (coserving/moe_lib.quantize_int4).
++
++#include "llama.h"
++#include "llama-tcmoe.h"
++
++#include "ggml-alloc.h"
++#include "ggml-backend.h"
++#include "ggml-cpu.h"
++
++#include <algorithm>
++#include <chrono>
++#include <cmath>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <string>
++#include <thread>
++#include <vector>
++
++struct sample {
++    int    layer;
++    int    proj;
++    int    expert;
++};
++
++static int parse_proj(const char * s) {
++    if (std::strcmp(s, "gate")    == 0) return TCMOE_PROJ_GATE;
++    if (std::strcmp(s, "up")      == 0) return TCMOE_PROJ_UP;
++    if (std::strcmp(s, "down")    == 0) return TCMOE_PROJ_DOWN;
++    if (std::strcmp(s, "gate_up") == 0) return TCMOE_PROJ_GATE_UP;
++    return -1;
++}
++
++static void usage(const char * argv0) {
++    std::printf(
++        "usage: %s -m model.gguf --sample sample.txt [options]\n"
++        "       %s -m model.gguf --nll --text text.txt [--domains 0,1] [--alt 100]\n"
++        "\n"
++        "  --sample FILE    text file with 'layer proj expert' lines (proj: gate|up|down|gate_up)\n"
++        "  --domain NAME    domain to read patches from (default: first domain)\n"
++        "  -o FILE          write dequantized patch weights as f32 (default: out.bin)\n"
++        "  --manifest FILE  write the layout manifest (default: out.bin.manifest)\n"
++        "  --info           print the extension metadata and exit\n"
++        "\n"
++        "  --nll            score a text per domain (teacher forcing, NLL per token)\n"
++        "  --nll-prefix     score each position from one decode of its prompt prefix, as llama-server does\n"
++        "  --text FILE      text to score (required by --nll)\n"
++        "  --domains LIST   comma separated domain ids, -1 is the base experts only (default: all)\n"
++        "  --alt N          run N extra passes, alternating the domains, and compare with the first pass\n"
++        "  --n-tokens N     use at most N tokens of the text (default 64)\n"
++        "\n"
++        "  --bench          time mul_mat_id on the expert shapes, 25%% of the slots patched (no model needed)\n"
++        "  --bench-iters N  timed iterations per case (default 50)\n"
++        "  --bench-repeats N take the best of N timed runs per case (default 3)\n"
++        "  --bench-tokens N tokens per pass (default 1, decode shape)\n"
++        "  --bench-used N   expert slots per token (default 8)\n"
++        "  --bench-threads N threads for the bench (default: hardware concurrency)\n",
++        argv0, argv0);
++}
++
++struct nll_pass {
++    double              nll = 0.0;   // mean NLL over the predicted tokens
++    std::vector<double> nll_tok;     // NLL per predicted token, encodes the full softmax
++    double              ms  = 0.0;
++};
++
++// the logits of a 1-token decode are the distribution for the next token, so the NLL of
++// the next gold token is the log-sum-exp of the logits minus the logit of that token
++static bool nll_pass_run(llama_context * ctx, const std::vector<llama_token> & tok, int domain, nll_pass & out) {
++    const auto t0 = std::chrono::steady_clock::now();
++
++    llama_context_tcmoe_set_domain(ctx, domain);
++    llama_memory_clear(llama_get_memory(ctx), true);
++
++    const llama_vocab * vocab   = llama_model_get_vocab(llama_get_model(ctx));
++    const int32_t       n_vocab = llama_vocab_n_tokens(vocab);
++
++    out.nll_tok.assign(tok.empty() ? 0 : tok.size() - 1, 0.0);
++    out.nll = 0.0;
++
++    for (size_t i = 0; i + 1 < tok.size(); ++i) {
++        llama_batch batch = llama_batch_get_one(const_cast<llama_token *>(&tok[i]), 1);
++        if (llama_decode(ctx, batch) != 0) {
++            std::fprintf(stderr, "error: llama_decode failed at token %zu\n", i);
++            return false;
++        }
++
++        const float * logits = llama_get_logits(ctx);
++
++        double mx = logits[0];
++        for (int32_t v = 1; v < n_vocab; ++v) {
++            mx = std::max(mx, (double) logits[v]);
++        }
++        double sum = 0.0;
++        for (int32_t v = 0; v < n_vocab; ++v) {
++            sum += std::exp((double) logits[v] - mx);
++        }
++        out.nll_tok[i] = mx + std::log(sum) - (double) logits[tok[i + 1]];
++        out.nll += out.nll_tok[i];
++    }
++
++    if (!out.nll_tok.empty()) {
++        out.nll /= (double) out.nll_tok.size();
++    }
++
++    out.ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
++    return true;
++}
++
++// score every position from a single decode of the prompt prefix, the shape the server uses
++static bool nll_prefix_run(llama_context * ctx, const std::vector<llama_token> & tok, int domain, nll_pass & out) {
++    const auto t0 = std::chrono::steady_clock::now();
++
++    llama_context_tcmoe_set_domain(ctx, domain);
++
++    const llama_vocab * vocab   = llama_model_get_vocab(llama_get_model(ctx));
++    const int32_t       n_vocab = llama_vocab_n_tokens(vocab);
++
++    out.nll_tok.assign(tok.empty() ? 0 : tok.size() - 1, 0.0);
++    out.nll = 0.0;
++
++    for (size_t n = 1; n < tok.size(); ++n) {
++        llama_memory_clear(llama_get_memory(ctx), true);
++
++        llama_batch batch = llama_batch_init((int32_t) n, 0, 1);
++        for (size_t i = 0; i < n; ++i) {
++            const int32_t k = (int32_t) i;
++            batch.token[k]    = tok[i];
++            batch.pos[k]      = (llama_pos) i;
++            batch.n_seq_id[k] = 1;
++            batch.seq_id[k][0] = 0;
++            batch.logits[k]   = i + 1 == n;
++        }
++        batch.n_tokens = (int32_t) n;
++
++        if (llama_decode(ctx, batch) != 0) {
++            std::fprintf(stderr, "error: llama_decode failed at prefix %zu\n", n);
++            llama_batch_free(batch);
++            return false;
++        }
++        llama_batch_free(batch);
++
++        const float * logits = llama_get_logits_ith(ctx, (int32_t) n - 1);
++
++        double mx = logits[0];
++        for (int32_t v = 1; v < n_vocab; ++v) {
++            mx = std::max(mx, (double) logits[v]);
++        }
++        double sum = 0.0;
++        for (int32_t v = 0; v < n_vocab; ++v) {
++            sum += std::exp((double) logits[v] - mx);
++        }
++        out.nll_tok[n - 1] = mx + std::log(sum) - (double) logits[tok[n]];
++        out.nll += out.nll_tok[n - 1];
++    }
++
++    if (!out.nll_tok.empty()) {
++        out.nll /= (double) out.nll_tok.size();
++    }
++
++    out.ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
++    return true;
++}
++
++static bool read_text(const char * path, std::string & out) {
++    FILE * f = std::fopen(path, "rb");
++    if (!f) {
++        std::fprintf(stderr, "error: cannot open text file %s\n", path);
++        return false;
++    }
++    char buf[4096];
++    size_t n = 0;
++    while ((n = std::fread(buf, 1, sizeof(buf), f)) > 0) {
++        out.append(buf, n);
++    }
++    std::fclose(f);
++    return true;
++}
++
++static std::vector<int> parse_domains(const char * s) {
++    std::vector<int> res;
++    const char * p = s;
++    while (*p) {
++        char * end = nullptr;
++        const long d = std::strtol(p, &end, 10);
++        if (end == p) {
++            break;
++        }
++        res.push_back((int) d);
++        p = end;
++        if (*p == ',') {
++            ++p;
++        }
++    }
++    return res;
++}
++
++static bool read_samples(const char * path, std::vector<sample> & out) {
++    FILE * f = std::fopen(path, "r");
++    if (!f) {
++        std::fprintf(stderr, "error: cannot open sample file %s\n", path);
++        return false;
++    }
++    char line[256];
++    int  line_no = 0;
++    while (std::fgets(line, sizeof(line), f)) {
++        ++line_no;
++        char * p = line;
++        while (*p == ' ' || *p == '\t') {
++            ++p;
++        }
++        if (*p == '#' || *p == '\n' || *p == '\r' || *p == '\0') {
++            continue;
++        }
++        char proj_s[32] = {0};
++        int  layer = -1;
++        int  expert = -1;
++        if (std::sscanf(p, "%d %31s %d", &layer, proj_s, &expert) != 3) {
++            std::fprintf(stderr, "error: %s:%d: expected 'layer proj expert'\n", path, line_no);
++            return false;
++        }
++        const int proj = parse_proj(proj_s);
++        if (proj < 0) {
++            std::fprintf(stderr, "error: %s:%d: unknown projection '%s'\n", path, line_no, proj_s);
++            return false;
++        }
++        out.push_back({ layer, proj, expert });
++    }
++    std::fclose(f);
++    return true;
++}
++
++// ---------------------------------------------------------------------------------
++// expert matmul microbenchmark: mul_mat_id on the real expert shapes at decode shape.
++// the patched experts are plain Q4_0 rows, so their speed is compared with the types a
++// native Q4_K_M file uses (Q4_K for most experts, Q6_K for some, Q2_K for the 2bit variant).
++// ---------------------------------------------------------------------------------
++
++struct bench_shape {
++    const char * name;
++    int64_t      k; // input width of one expert slice
++    int64_t      m; // output width of one expert slice
++};
++
++// E21: one fixed codebook for the tcmoe_q2nl bench rows (the dot kernel reads it from extra)
++static const float bench_cb_q2nl[4] = { -0.78f, -0.215f, 0.225f, 0.78f };
++
++static void bench_fill(ggml_tensor * t, const std::vector<float> & src, ggml_type type,
++                       int64_t k, int64_t m, int n_expert) {
++    const size_t row_size    = ggml_row_size(type, k);
++    const size_t expert_size = row_size * (size_t) m;
++    for (int e = 0; e < n_expert; ++e) {
++        ggml_quantize_chunk(type, src.data() + (size_t) e * (size_t) k * (size_t) m,
++                (char *) t->data + (size_t) e * expert_size, 0, m, k, nullptr);
++    }
++}
++
++// one mul_mat_id (type_patch == GGML_TYPE_COUNT), the two-pass base+patch+add form, or the
++// fused mul_mat_id_mixed node when fused is set
++static double bench_moe(ggml_backend_t backend, const bench_shape & sh, int n_expert,
++                        ggml_type type_base, ggml_type type_patch,
++                        int n_used, int n_patch, int n_tok, int iters, int repeats, bool fused = false) {
++    const int64_t k = sh.k;
++    const int64_t m = sh.m;
++
++    std::vector<float> src((size_t) k * (size_t) m * (size_t) n_expert);
++    for (size_t i = 0; i < src.size(); ++i) {
++        src[i] = (float) (std::sin((double) i * 0.001) * 0.4 + ((int) (i % 11) - 5) * 0.02);
++    }
++
++    ggml_context * ctx = ggml_init({ (size_t) (ggml_tensor_overhead() * 16 + ggml_graph_overhead() * 4), nullptr, true });
++    ggml_tensor * as  = ggml_new_tensor_3d(ctx, type_base, k, m, n_expert);
++    ggml_tensor * ap  = type_patch == GGML_TYPE_COUNT ? nullptr : ggml_new_tensor_3d(ctx, type_patch, k, m, n_expert);
++    ggml_tensor * b   = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, k, n_used, n_tok);
++    ggml_tensor * ids = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_used, n_tok);
++    ggml_tensor * ids_p = ap ? ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_used, n_tok) : nullptr;
++
++    ggml_tensor * out = nullptr;
++    if (ap && fused) {
++        out = ggml_mul_mat_id_mixed(ctx, as, ap, b, ids, ids_p);
++    } else {
++        out = ggml_mul_mat_id(ctx, as, b, ids);
++        if (ap) {
++            out = ggml_add(ctx, out, ggml_mul_mat_id(ctx, ap, b, ids_p));
++        }
++    }
++
++    ggml_cgraph * gf = ggml_new_graph(ctx);
++    ggml_build_forward_expand(gf, out);
++
++    // the graph must exist before the allocation, otherwise the results have no buffer
++    ggml_backend_buffer_t buf = ggml_backend_alloc_ctx_tensors(ctx, backend);
++    if (buf == nullptr) {
++        std::fprintf(stderr, "error: cannot allocate the bench tensors\n");
++        ggml_free(ctx);
++        return -1.0;
++    }
++
++    bench_fill(as, src, type_base, k, m, n_expert);
++    if (type_base == GGML_TYPE_TCMOE_Q2NL) {
++        as->extra = (void *) bench_cb_q2nl;
++    }
++    if (ap) {
++        bench_fill(ap, src, type_patch, k, m, n_expert);
++    }
++
++    for (int i = 0; i < (int) (k * n_used * n_tok); ++i) {
++        ((float *) b->data)[i] = (float) (std::sin((double) i * 0.01) * 0.5);
++    }
++    for (int t = 0; t < n_tok; ++t) {
++        for (int s = 0; s < n_used; ++s) {
++            const bool patched = (s >= n_used - n_patch);
++            ((int32_t *) ids->data)[t * n_used + s]   = patched ? -1 : s;
++            if (ap) {
++                ((int32_t *) ids_p->data)[t * n_used + s] = patched ? s - (n_used - n_patch) : -1;
++            }
++        }
++    }
++
++    for (int i = 0; i < 3; ++i) {
++        ggml_backend_graph_compute(backend, gf);
++    }
++
++    // the timings on this machine swing a lot between runs, so report the best of several
++    double ms = 1e9;
++    for (int r = 0; r < repeats; ++r) {
++        const auto t0 = std::chrono::steady_clock::now();
++        for (int i = 0; i < iters; ++i) {
++            ggml_backend_graph_compute(backend, gf);
++        }
++        ms = std::min(ms, std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count() / (double) iters);
++    }
++
++    ggml_backend_buffer_free(buf);
++    ggml_free(ctx);
++    return ms;
++}
++
++// the fused node must reproduce mul_mat_id(base) + mul_mat_id(patch) + add exactly
++static double check_mixed(ggml_backend_t backend, const bench_shape & sh, int n_expert,
++                          ggml_type type_base, ggml_type type_patch, int n_used, int n_patch, int n_tok) {
++    const int64_t k = sh.k;
++    const int64_t m = sh.m;
++
++    std::vector<float> src((size_t) k * (size_t) m * (size_t) n_expert);
++    for (size_t i = 0; i < src.size(); ++i) {
++        src[i] = (float) (std::sin((double) i * 0.001) * 0.4 + ((int) (i % 11) - 5) * 0.02);
++    }
++
++    ggml_context * ctx = ggml_init({ (size_t) (ggml_tensor_overhead() * 32 + ggml_graph_overhead() * 8), nullptr, true });
++    ggml_tensor * as  = ggml_new_tensor_3d(ctx, type_base,  k, m, n_expert);
++    ggml_tensor * ap  = ggml_new_tensor_3d(ctx, type_patch, k, m, n_expert);
++    ggml_tensor * b   = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, k, n_used, n_tok);
++    ggml_tensor * ids = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_used, n_tok);
++    ggml_tensor * idp = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_used, n_tok);
++
++    ggml_tensor * ref = ggml_add(ctx, ggml_mul_mat_id(ctx, as, b, ids), ggml_mul_mat_id(ctx, ap, b, idp));
++    ggml_tensor * mix = ggml_mul_mat_id_mixed(ctx, as, ap, b, ids, idp);
++
++    ggml_cgraph * gf_ref = ggml_new_graph(ctx);
++    ggml_build_forward_expand(gf_ref, ref);
++    ggml_cgraph * gf_mix = ggml_new_graph(ctx);
++    ggml_build_forward_expand(gf_mix, mix);
++
++    ggml_backend_buffer_t buf = ggml_backend_alloc_ctx_tensors(ctx, backend);
++    if (buf == nullptr) {
++        std::fprintf(stderr, "error: cannot allocate the check tensors\n");
++        ggml_free(ctx);
++        return -1.0;
++    }
++
++    bench_fill(as, src, type_base,  k, m, n_expert);
++    if (type_base == GGML_TYPE_TCMOE_Q2NL) {
++        as->extra = (void *) bench_cb_q2nl;
++    }
++    bench_fill(ap, src, type_patch, k, m, n_expert);
++
++    for (int i = 0; i < (int) (k * n_used * n_tok); ++i) {
++        ((float *) b->data)[i] = (float) (std::sin((double) i * 0.01) * 0.5);
++    }
++    // one slot of every token is unused (both ids -1), the rest is split between the tables
++    for (int t = 0; t < n_tok; ++t) {
++        for (int s = 0; s < n_used; ++s) {
++            const bool patched = (s >= n_used - n_patch);
++            const bool unused  = (s == n_used - 1 && !patched);
++            ((int32_t *) ids->data)[t * n_used + s] = (patched || unused) ? -1 : s;
++            ((int32_t *) idp->data)[t * n_used + s] = patched ? s - (n_used - n_patch) : -1;
++        }
++    }
++
++    ggml_backend_graph_compute(backend, gf_ref);
++    ggml_backend_graph_compute(backend, gf_mix);
++
++    double max_diff = 0.0;
++    for (int64_t i = 0; i < ggml_nelements(ref); ++i) {
++        max_diff = std::max(max_diff, std::fabs((double) ((float *) ref->data)[i] - (double) ((float *) mix->data)[i]));
++    }
++
++    ggml_backend_buffer_free(buf);
++    ggml_free(ctx);
++    return max_diff;
++}
++
++static int bench_run(int iters, int n_tok, int n_used, int n_threads, int repeats) {
++    ggml_backend_t backend = ggml_backend_cpu_init();
++    ggml_backend_cpu_set_n_threads(backend, n_threads);
++
++    static const bench_shape shapes[] = {
++        { "gate", 2048, 512 },
++        { "up",   2048, 512 },
++        { "down",  512, 2048 },
++    };
++    static const ggml_type ref_types[] = { GGML_TYPE_Q4_0, GGML_TYPE_Q4_K, GGML_TYPE_Q6_K, GGML_TYPE_Q2_K, GGML_TYPE_TCMOE_Q2, GGML_TYPE_TCMOE_Q2NL };
++
++    const int n_patch = n_used / 4; // the deployed patch fraction is 25%
++    const int n_expert = 8;         // eight experts per pass, the patch rows are re-indexed
++
++    std::printf("bench: %d threads, %d experts per pass, %d tokens, %d patched, %d iterations x %d repeats\n",
++            n_threads, n_used, n_tok, n_patch, iters, repeats);
++
++    double ratio_two_q4_0_min = 1e9; // two-pass with Q4_0 patch rows against the native Q4_K expert
++    double ratio_two_q4_k_min = 1e9; // two-pass with Q4_K patch rows
++    double ratio_mix_q4_0_min = 1e9; // fused mul_mat_id_mixed, Q4_0 patch rows
++    double ratio_mix_q4_k_min = 1e9; // fused mul_mat_id_mixed, Q4_K patch rows
++    double ratio_ideal_k_min  = 1e9; // fused design with zero dispatch/barrier cost
++    double ratio_same_min     = 1e9; // same-type single pass (patched rows kept in the base type)
++    double max_diff           = 0.0; // fused node against the two-pass reference
++
++    for (const auto & sh : shapes) {
++        std::printf("\nbench %-4s k=%lld m=%lld (per pass of %d experts)\n", sh.name,
++                (long long) sh.k, (long long) sh.m, n_used);
++        std::printf("  %-22s %10s %12s %10s\n", "case", "ms/pass", "us/expert", "rel Q4_K");
++
++        double ms_q4k   = 0.0;
++        double ms_tcmoe = 0.0;
++        for (const auto type : ref_types) {
++            const double ms = bench_moe(backend, sh, n_expert, type, GGML_TYPE_COUNT, n_used, n_patch, n_tok, iters, repeats);
++            if (type == GGML_TYPE_Q4_K) {
++                ms_q4k = ms;
++            }
++            if (type == GGML_TYPE_TCMOE_Q2) {
++                ms_tcmoe = ms;
++            }
++            std::printf("  %-22s %10.3f %12.2f %10s\n", ggml_type_name(type), ms,
++                    ms * 1000.0 / (double) n_used, "-");
++        }
++
++        // the deployed forms: base pass carries the unpatched slots, patch pass the rest
++        const double ms_two_q4_0 = bench_moe(backend, sh, n_expert, GGML_TYPE_TCMOE_Q2, GGML_TYPE_Q4_0, n_used, n_patch, n_tok, iters, repeats);
++        const double ms_two_q4_k = bench_moe(backend, sh, n_expert, GGML_TYPE_TCMOE_Q2, GGML_TYPE_Q4_K, n_used, n_patch, n_tok, iters, repeats);
++        std::printf("  %-22s %10.3f %12.2f %10.3f  (two-pass, Q4_0 patch)\n", "two-pass q4_0",
++                ms_two_q4_0, ms_two_q4_0 * 1000.0 / (double) n_used, ms_q4k / ms_two_q4_0);
++        std::printf("  %-22s %10.3f %12.2f %10.3f  (two-pass, Q4_K patch)\n", "two-pass q4_k",
++                ms_two_q4_k, ms_two_q4_k * 1000.0 / (double) n_used, ms_q4k / ms_two_q4_k);
++
++        // the fused node: one dispatch and one barrier for both expert tables
++        const double ms_mix_q4_0 = bench_moe(backend, sh, n_expert, GGML_TYPE_TCMOE_Q2, GGML_TYPE_Q4_0, n_used, n_patch, n_tok, iters, repeats, true);
++        const double ms_mix_q4_k = bench_moe(backend, sh, n_expert, GGML_TYPE_TCMOE_Q2, GGML_TYPE_Q4_K, n_used, n_patch, n_tok, iters, repeats, true);
++        std::printf("  %-22s %10.3f %12.2f %10.3f  (mixed node, Q4_0 patch)\n", "mixed q4_0",
++                ms_mix_q4_0, ms_mix_q4_0 * 1000.0 / (double) n_used, ms_q4k / ms_mix_q4_0);
++        std::printf("  %-22s %10.3f %12.2f %10.3f  (mixed node, Q4_K patch)\n", "mixed q4_k",
++                ms_mix_q4_k, ms_mix_q4_k * 1000.0 / (double) n_used, ms_q4k / ms_mix_q4_k);
++
++        // the best the fused design can do: the base slots at the tcmoe_q2 rate and the
++        // patched slots at the patch type rate, with no dispatch or barrier cost at all
++        const double frac_patch = (double) n_patch / (double) n_used;
++        const double ms_ideal_k = (1.0 - frac_patch)*ms_tcmoe + frac_patch*ms_q4k;
++        std::printf("  %-22s %10.3f %12.2f %10.3f  (mixed bound, no overhead)\n", "ideal q4_k patch",
++                ms_ideal_k, ms_ideal_k * 1000.0 / (double) n_used, ms_q4k / ms_ideal_k);
++
++        // the diff between the fused node and the two-pass reference must be exactly zero
++        const double diff_q4_0 = check_mixed(backend, sh, n_expert, GGML_TYPE_TCMOE_Q2, GGML_TYPE_Q4_0, n_used, n_patch, n_tok);
++        const double diff_q4_k = check_mixed(backend, sh, n_expert, GGML_TYPE_TCMOE_Q2, GGML_TYPE_Q4_K, n_used, n_patch, n_tok);
++        std::printf("  %-22s %10.3g %12.3g\n", "check mixed diff", diff_q4_0, diff_q4_k);
++        max_diff = std::max(max_diff, std::max(diff_q4_0, diff_q4_k));
++
++        // relative speed: patched experts against the native Q4_K_M expert type
++        const double ms_q4_0 = bench_moe(backend, sh, n_expert, GGML_TYPE_Q4_0, GGML_TYPE_COUNT, n_used, n_patch, n_tok, iters, repeats);
++        const double rel_patch = ms_q4k / ms_q4_0; // > 1 means the patch kernel is faster
++        std::printf("  %-22s %10.3f %12.2f %10.3f  (patch rows only)\n", "Q4_0 (patch rows)", ms_q4_0,
++                ms_q4_0 * 1000.0 / (double) n_used, rel_patch);
++
++        // the same-type variant keeps the patched rows in the base type, so one pass covers every slot
++        const double rel_same = ms_q4k / ms_tcmoe;
++        std::printf("  %-22s %10.3f %12.2f %10.3f  (same-type single pass)\n", "tcmoe_q2 (all slots)",
++                ms_tcmoe, ms_tcmoe * 1000.0 / (double) n_used, rel_same);
++
++        ratio_two_q4_0_min = std::min(ratio_two_q4_0_min, ms_q4k / ms_two_q4_0);
++        ratio_two_q4_k_min = std::min(ratio_two_q4_k_min, ms_q4k / ms_two_q4_k);
++        ratio_mix_q4_0_min = std::min(ratio_mix_q4_0_min, ms_q4k / ms_mix_q4_0);
++        ratio_mix_q4_k_min = std::min(ratio_mix_q4_k_min, ms_q4k / ms_mix_q4_k);
++        ratio_ideal_k_min  = std::min(ratio_ideal_k_min,  ms_q4k / ms_ideal_k);
++        ratio_same_min     = std::min(ratio_same_min,     rel_same);
++    }
++
++    const bool summary_ok = ratio_mix_q4_k_min >= 0.95 && max_diff == 0.0;
++    std::printf("\nbench summary: two-pass/native Q4_K ratio %.3f (Q4_0 patch) %.3f (Q4_K patch)\n",
++            ratio_two_q4_0_min, ratio_two_q4_k_min);
++    std::printf("               mixed/native Q4_K ratio    %.3f (Q4_0 patch) %.3f (Q4_K patch) -> %s (target >= 0.95)\n",
++            ratio_mix_q4_0_min, ratio_mix_q4_k_min, summary_ok ? "PASS" : "FAIL");
++    std::printf("               mixed bound/native Q4_K    %.3f (Q4_K patch, zero overhead)\n", ratio_ideal_k_min);
++    std::printf("               same-type/native Q4_K ratio %.3f (upper bound of the all-same-type design)\n",
++            ratio_same_min);
++    std::printf("               fused node vs two-pass max |diff| %.3g\n", max_diff);
++
++    ggml_backend_free(backend);
++    return summary_ok ? 0 : 1;
++}
++
++int main(int argc, char ** argv) {
++    const char * model_path   = nullptr;
++    const char * sample_path  = nullptr;
++    const char * out_path     = "out.bin";
++    const char * manifest_path = nullptr;
++    const char * domain_name  = nullptr;
++    const char * text_path    = nullptr;
++    const char * domains_arg  = nullptr;
++    bool         info_only    = false;
++    bool         nll_mode     = false;
++    bool         nll_prefix   = false;
++    bool         bench_mode   = false;
++    int          bench_iters  = 50;
++    int          bench_repeats = 3;
++    int          bench_tokens = 1;
++    int          bench_used   = 8;
++    int          bench_threads = (int) std::thread::hardware_concurrency();
++    int          n_alt        = 0;
++    int          n_tokens_max = 64;
++
++    for (int i = 1; i < argc; ++i) {
++        if (std::strcmp(argv[i], "-m") == 0 && i + 1 < argc) {
++            model_path = argv[++i];
++        } else if (std::strcmp(argv[i], "--sample") == 0 && i + 1 < argc) {
++            sample_path = argv[++i];
++        } else if (std::strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
++            out_path = argv[++i];
++        } else if (std::strcmp(argv[i], "--manifest") == 0 && i + 1 < argc) {
++            manifest_path = argv[++i];
++        } else if (std::strcmp(argv[i], "--domain") == 0 && i + 1 < argc) {
++            domain_name = argv[++i];
++        } else if (std::strcmp(argv[i], "--info") == 0) {
++            info_only = true;
++        } else if (std::strcmp(argv[i], "--nll") == 0) {
++            nll_mode = true;
++        } else if (std::strcmp(argv[i], "--nll-prefix") == 0) {
++            nll_mode   = true;
++            nll_prefix = true;
++        } else if (std::strcmp(argv[i], "--text") == 0 && i + 1 < argc) {
++            text_path = argv[++i];
++        } else if (std::strcmp(argv[i], "--domains") == 0 && i + 1 < argc) {
++            domains_arg = argv[++i];
++        } else if (std::strcmp(argv[i], "--alt") == 0 && i + 1 < argc) {
++            n_alt = std::atoi(argv[++i]);
++        } else if (std::strcmp(argv[i], "--n-tokens") == 0 && i + 1 < argc) {
++            n_tokens_max = std::atoi(argv[++i]);
++        } else if (std::strcmp(argv[i], "--bench") == 0) {
++            bench_mode = true;
++        } else if (std::strcmp(argv[i], "--bench-iters") == 0 && i + 1 < argc) {
++            bench_iters = std::atoi(argv[++i]);
++        } else if (std::strcmp(argv[i], "--bench-repeats") == 0 && i + 1 < argc) {
++            bench_repeats = std::atoi(argv[++i]);
++        } else if (std::strcmp(argv[i], "--bench-tokens") == 0 && i + 1 < argc) {
++            bench_tokens = std::atoi(argv[++i]);
++        } else if (std::strcmp(argv[i], "--bench-used") == 0 && i + 1 < argc) {
++            bench_used = std::atoi(argv[++i]);
++        } else if (std::strcmp(argv[i], "--bench-threads") == 0 && i + 1 < argc) {
++            bench_threads = std::atoi(argv[++i]);
++        } else if (std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help") == 0) {
++            usage(argv[0]);
++            return 0;
++        } else {
++            std::fprintf(stderr, "error: unknown argument '%s'\n", argv[i]);
++            usage(argv[0]);
++            return 1;
++        }
++    }
++
++    if (bench_mode) {
++        return bench_run(bench_iters, bench_tokens, bench_used, bench_threads, bench_repeats);
++    }
++
++    if (!model_path) {
++        usage(argv[0]);
++        return 1;
++    }
++
++    tcmoe_model model;
++    std::string err;
++    if (!model.load(model_path, err)) {
++        std::fprintf(stderr, "error: %s\n", err.c_str());
++        return 1;
++    }
++
++    const tcmoe_config & cfg = model.config();
++    if (!model.enabled()) {
++        std::fprintf(stderr, "error: %s has no enabled tcmoe extension\n", model_path);
++        return 1;
++    }
++
++    std::printf("tcmoe: version %u, base_mode '%s', patch_type '%s', group %u, n_layer %d\n",
++                cfg.version, cfg.base_mode.c_str(), cfg.patch_type.c_str(), cfg.group, model.n_layer());
++    std::printf("tcmoe: domains:");
++    for (int d = 0; d < model.n_domains(); ++d) {
++        std::printf(" %d=%s", d, cfg.domains[d].c_str());
++    }
++    std::printf("\n");
++
++    if (info_only) {
++        for (int l = 0; l < model.n_layer(); ++l) {
++            std::printf("layer %2d: n_expert %d", l, model.n_expert(l));
++            for (int d = 0; d < model.n_domains(); ++d) {
++                const tcmoe_patch_table * t = model.table(l, d);
++                std::printf(" | %s:%zu", cfg.domains[d].c_str(), t ? t->idx.size() : (size_t) 0);
++            }
++            std::printf("\n");
++        }
++        return 0;
++    }
++
++    if (nll_mode) {
++        if (!text_path) {
++            std::fprintf(stderr, "error: --text is required with --nll\n");
++            return 1;
++        }
++
++        std::vector<int> domains;
++        if (domains_arg) {
++            domains = parse_domains(domains_arg);
++        } else {
++            for (int d = 0; d < model.n_domains(); ++d) {
++                domains.push_back(d);
++            }
++        }
++        for (int d : domains) {
++            if (d < -1 || d >= model.n_domains()) {
++                std::fprintf(stderr, "error: domain %d is not declared (0..%d, -1 for the base experts)\n",
++                        d, model.n_domains() - 1);
++                return 1;
++            }
++        }
++
++        std::string text;
++        if (!read_text(text_path, text)) {
++            return 1;
++        }
++
++        llama_model_params mp = llama_model_default_params();
++        mp.load_mode = LLAMA_LOAD_MODE_MMAP;
++
++        llama_model * lmodel = llama_model_load_from_file(model_path, mp);
++        if (lmodel == nullptr) {
++            std::fprintf(stderr, "error: llama.cpp cannot load %s\n", model_path);
++            return 1;
++        }
++
++        const int n_domain_llama = llama_model_tcmoe_n_domain(lmodel);
++        if (n_domain_llama != model.n_domains()) {
++            std::fprintf(stderr, "error: the model declares %d tcmoe domains, the reader sees %d\n",
++                    n_domain_llama, model.n_domains());
++            llama_model_free(lmodel);
++            return 1;
++        }
++
++        std::printf("tcmoe: llama.cpp sees %d domains:", n_domain_llama);
++        for (int d = 0; d < n_domain_llama; ++d) {
++            std::printf(" %d=%s", d, llama_model_tcmoe_domain_name(lmodel, d));
++        }
++        std::printf("\n");
++
++        const llama_vocab * vocab = llama_model_get_vocab(lmodel);
++
++        int32_t n_tok = llama_tokenize(vocab, text.c_str(), (int32_t) text.size(), nullptr, 0, true, false);
++        if (n_tok < 0) {
++            n_tok = -n_tok;
++        }
++        if (n_tok < 2) {
++            std::fprintf(stderr, "error: the text is too short\n");
++            llama_model_free(lmodel);
++            return 1;
++        }
++
++        std::vector<llama_token> tok((size_t) n_tok);
++        if (llama_tokenize(vocab, text.c_str(), (int32_t) text.size(), tok.data(), n_tok, true, false) != n_tok) {
++            std::fprintf(stderr, "error: tokenization changed size\n");
++            llama_model_free(lmodel);
++            return 1;
++        }
++        if (n_tokens_max > 0 && n_tok > n_tokens_max) {
++            n_tok = n_tokens_max;
++            tok.resize((size_t) n_tok);
++        }
++        std::printf("tcmoe: %zu tokens\n", tok.size());
++        std::printf("tokens:");
++        for (const auto t : tok) {
++            std::printf(" %d", t);
++        }
++        std::printf("\n");
++
++        llama_context_params cp = llama_context_default_params();
++        cp.n_ctx     = (uint32_t) (tok.size() + 8);
++        cp.n_batch   = (uint32_t) tok.size();
++        cp.n_ubatch  = (uint32_t) tok.size();
++        cp.n_seq_max = 1;
++
++        llama_context * ctx = llama_init_from_model(lmodel, cp);
++        if (ctx == nullptr) {
++            std::fprintf(stderr, "error: cannot create the context\n");
++            llama_model_free(lmodel);
++            return 1;
++        }
++
++        int rc = 0;
++
++        const auto run_pass = nll_prefix ? nll_prefix_run : nll_pass_run;
++
++        // the first pass of every domain is its reference, the alternating passes below must match it
++        std::vector<nll_pass> ref_per_domain(domains.size());
++        for (size_t k = 0; k < domains.size(); ++k) {
++            const int d = domains[k];
++            nll_pass & r = ref_per_domain[k];
++            if (!run_pass(ctx, tok, d, r)) {
++                llama_free(ctx);
++                llama_model_free(lmodel);
++                return 1;
++            }
++            std::printf("nll: domain %2d (%-8s) %f  (%f ms)\n",
++                    d, d < 0 ? "base" : llama_model_tcmoe_domain_name(lmodel, d), r.nll, r.ms);
++
++            // per-token NLL, the server checks each position separately
++            std::printf("nll_tok:");
++            for (const auto v : r.nll_tok) {
++                std::printf(" %.6f", v);
++            }
++            std::printf("\n");
++        }
++
++        if (n_alt > 0) {
++            double max_diff = 0.0;
++            double sum_ms   = 0.0;
++            for (int p = 0; p < n_alt; ++p) {
++                const size_t k = (size_t) p % domains.size();
++
++                nll_pass r;
++                if (!run_pass(ctx, tok, domains[k], r)) {
++                    llama_free(ctx);
++                    llama_model_free(lmodel);
++                    return 1;
++                }
++
++                double diff = 0.0;
++                for (size_t i = 0; i < r.nll_tok.size(); ++i) {
++                    diff = std::max(diff, std::fabs(r.nll_tok[i] - ref_per_domain[k].nll_tok[i]));
++                }
++                max_diff = std::max(max_diff, diff);
++                sum_ms  += r.ms;
++            }
++
++            std::printf("alt: %d passes over %zu domains, mean %f ms/pass, max |dNLL| %e %s\n",
++                    n_alt, domains.size(), sum_ms / (double) n_alt, max_diff,
++                    max_diff < 1e-4 ? "PASS" : "FAIL");
++
++            if (!(max_diff < 1e-4)) {
++                rc = 1;
++            }
++        }
++
++        llama_free(ctx);
++        llama_model_free(lmodel);
++        return rc;
++    }
++
++    if (!sample_path) {
++        std::fprintf(stderr, "error: --sample is required\n");
++        return 1;
++    }
++
++    int domain = domain_name ? model.domain_id(domain_name) : 0;
++    if (domain < 0) {
++        std::fprintf(stderr, "error: unknown domain '%s'\n", domain_name);
++        return 1;
++    }
++
++    std::vector<sample> samples;
++    if (!read_samples(sample_path, samples)) {
++        return 1;
++    }
++
++    std::string manifest = manifest_path ? std::string(manifest_path) : std::string(out_path) + ".manifest";
++    FILE * f_out = std::fopen(out_path, "wb");
++    if (!f_out) {
++        std::fprintf(stderr, "error: cannot write %s\n", out_path);
++        return 1;
++    }
++    FILE * f_man = std::fopen(manifest.c_str(), "w");
++    if (!f_man) {
++        std::fprintf(stderr, "error: cannot write %s\n", manifest.c_str());
++        std::fclose(f_out);
++        return 1;
++    }
++
++    std::fprintf(f_man, "# tcmoe-verify v1\n");
++    std::fprintf(f_man, "# model: %s\n", model_path);
++    std::fprintf(f_man, "# domain: %d %s\n", domain, cfg.domains[domain].c_str());
++    std::fprintf(f_man, "# columns: layer proj expert pos ne0 ne1 offset\n");
++
++    int64_t total = 0;
++    int     n_miss = 0;
++    int     n_ok   = 0;
++    for (const auto & s : samples) {
++        if (model.pos_of(s.layer, domain, s.expert) < 0) {
++            n_miss++;
++            std::fprintf(f_man, "miss %d %d %d - 0 0 -1\n", s.layer, s.proj, s.expert);
++            continue;
++        }
++
++        int64_t n0 = 0;
++        int64_t n1 = 0;
++        if (!model.patch_shape(s.layer, (tcmoe_proj) s.proj, domain, n0, n1)) {
++            std::fprintf(stderr, "error: layer %d proj %d: no such patch projection\n", s.layer, s.proj);
++            std::fclose(f_man);
++            std::fclose(f_out);
++            return 1;
++        }
++
++        std::vector<float> buf((size_t) (n0 * n1));
++        if (!model.read_patch_f32(s.layer, (tcmoe_proj) s.proj, domain, s.expert, buf.data(), n0, n1)) {
++            std::fprintf(stderr, "error: layer %d proj %d expert %d: read failed\n", s.layer, s.proj, s.expert);
++            std::fclose(f_man);
++            std::fclose(f_out);
++            return 1;
++        }
++
++        if (std::fwrite(buf.data(), sizeof(float), buf.size(), f_out) != buf.size()) {
++            std::fprintf(stderr, "error: write to %s failed\n", out_path);
++            std::fclose(f_man);
++            std::fclose(f_out);
++            return 1;
++        }
++
++        std::fprintf(f_man, "ok %d %d %d %d %lld %lld %lld\n", s.layer, s.proj, s.expert,
++                     model.pos_of(s.layer, domain, s.expert), (long long) n0, (long long) n1,
++                     (long long) total);
++        total += (int64_t) buf.size() * (int64_t) sizeof(float);
++        n_ok++;
++    }
++
++    std::fclose(f_man);
++    std::fclose(f_out);
++
++    std::printf("tcmoe: %d samples, %d dumped, %d not patched, %lld bytes -> %s\n",
++                (int) samples.size(), n_ok, n_miss, (long long) total, out_path);
++    return 0;
++}
