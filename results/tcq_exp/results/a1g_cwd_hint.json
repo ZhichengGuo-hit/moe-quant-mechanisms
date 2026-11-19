@@ -1,0 +1,293 @@
+{
+  "mode": "cwd_hint",
+  "config": "tcq_nl_global",
+  "path": "model-tcmoe-q4k-nl.gguf",
+  "domain": "global",
+  "subset": "multi_turn_base",
+  "limit": 20,
+  "threads": 32,
+  "ctx": 69632,
+  "status": "ok",
+  "error": null,
+  "report": {
+    "bfcl_v3": {
+      "schema_version": 2,
+      "name": "tcq_nl_global@bfcl_v3",
+      "dataset_name": "bfcl_v3",
+      "dataset_pretty_name": "BFCL-v3",
+      "dataset_description": "\n## Overview\n\nBFCL (Berkeley Function Calling Leaderboard) v3 is the first comprehensive and executable function call evaluation benchmark for assessing LLMs' ability to invoke functions. It evaluates various forms of function calls, diverse scenarios, and executability.\n\n## Task Description\n\n- **Task Type**: Function Calling / Tool Use Evaluation\n- **Input**: User query with available function definitions\n- **Output**: Correct function call with parameters\n- **Categories**: AST_NON_LIVE, AST_LIVE, RELEVANCE, MULTI_TURN\n\n## Key Features\n\n- Comprehensive function call evaluation\n- Tests simple, multiple, and parallel function calls\n- Multi-language support (Python, Java, JavaScript)\n- Relevance detection (irrelevance handling)\n- Multi-turn conversation function calling\n- Live API endpoints for execution testing\n\n## Evaluation Notes\n\n- Requires `pip install bfcl-eval==2025.10.27.1` before evaluation\n- Set `is_fc_model=True` for models with native function calling support\n- `underscore_to_dot` parameter controls function name formatting\n- See the [usage documentation](https://evalscope.readthedocs.io/en/latest/third_party/bfcl_v3.html) for detailed setup\n- Results broken down by category (AST, Relevance, Multi-turn)\n",
+      "model_name": "tcq_nl_global",
+      "metrics": [
+        {
+          "identity": {
+            "name": "accuracy",
+            "aggregation": "mean",
+            "dimensions": {}
+          },
+          "legacy_name": null,
+          "num": 20,
+          "score": 0.55,
+          "macro_score": 0.55,
+          "categories": [
+            {
+              "name": [
+                "MULTI_TURN"
+              ],
+              "num": 20,
+              "score": 0.55,
+              "macro_score": 0.55,
+              "subsets": [
+                {
+                  "name": "multi_turn_base",
+                  "score": 0.55,
+                  "num": 20,
+                  "metadata": null,
+                  "is_aggregate": false
+                }
+              ]
+            },
+            {
+              "name": [
+                "-"
+              ],
+              "num": 0,
+              "score": 0.0,
+              "macro_score": 0.0,
+              "subsets": [
+                {
+                  "name": "NON_LIVE",
+                  "score": 0.0,
+                  "num": 0,
+                  "metadata": null,
+                  "is_aggregate": true
+                },
+                {
+                  "name": "LIVE",
+                  "score": 0.0,
+                  "num": 0,
+                  "metadata": null,
+                  "is_aggregate": true
+                },
+                {
+                  "name": "MULTI_TURN",
+                  "score": 0.55,
+                  "num": 20,
+                  "metadata": null,
+                  "is_aggregate": true
+                },
+                {
+                  "name": "OVERALL",
+                  "score": 0.55,
+                  "num": 20,
+                  "metadata": null,
+                  "is_aggregate": true
+                }
+              ]
+            }
+          ],
+          "semantics": {
+            "semantic_id": "quality.accuracy.ratio",
+            "metric_name": "Accuracy",
+            "display_name": null,
+            "kind": "quality",
+            "direction": "higher_is_better",
+            "raw_unit": null,
+            "value_range": {
+              "min": 0.0,
+              "max": 1.0
+            },
+            "display_kind": "percent",
+            "display_multiplier": 100.0,
+            "display_unit": "%",
+            "display_precision": 1
+          }
+        }
+      ],
+      "analysis": "N/A",
+      "perf_metrics": {
+        "summary": {
+          "n_samples": 305,
+          "latency": {
+            "mean": 10.212046,
+            "std": 11.928052,
+            "min": 2.89,
+            "25%": 5.469,
+            "50%": 7.89,
+            "75%": 11.016,
+            "90%": 15.0818,
+            "99%": 76.68,
+            "max": 118.797
+          },
+          "throughput": {
+            "avg_output_tps": 4.56,
+            "avg_req_ps": 0.0979
+          },
+          "usage": {
+            "input_tokens": {
+              "mean": 5140.140984,
+              "std": 1161.709336,
+              "min": 3227.0,
+              "25%": 4265.0,
+              "50%": 5165.0,
+              "75%": 5780.0,
+              "90%": 6592.0,
+              "99%": 8169.76,
+              "max": 8480.0
+            },
+            "output_tokens": {
+              "mean": 46.560656,
+              "std": 28.290965,
+              "min": 12.0,
+              "25%": 26.0,
+              "50%": 40.0,
+              "75%": 58.0,
+              "90%": 80.6,
+              "99%": 148.48,
+              "max": 219.0
+            },
+            "total_tokens": {
+              "mean": 5186.701639,
+              "std": 1160.36923,
+              "min": 3254.0,
+              "25%": 4327.0,
+              "50%": 5204.0,
+              "75%": 5848.0,
+              "90%": 6628.2,
+              "99%": 8184.24,
+              "max": 8508.0
+            },
+            "total_input_tokens": 1567743,
+            "total_output_tokens": 14201,
+            "total_tokens_count": 1581944
+          }
+        },
+        "coverage": {
+          "requests_with_metrics": 305,
+          "total_requests": 305
+        },
+        "metric_semantics": {
+          "n_samples": {
+            "semantic_id": "diagnostic.count.items",
+            "metric_name": "Samples",
+            "display_name": null,
+            "kind": "diagnostic",
+            "direction": "none",
+            "raw_unit": null,
+            "value_range": null,
+            "display_kind": "number",
+            "display_multiplier": null,
+            "display_unit": null,
+            "display_precision": 0
+          },
+          "latency": {
+            "semantic_id": "perf.latency.seconds",
+            "metric_name": "Latency",
+            "display_name": null,
+            "kind": "quality",
+            "direction": "lower_is_better",
+            "raw_unit": "s",
+            "value_range": null,
+            "display_kind": "number",
+            "display_multiplier": null,
+            "display_unit": "s",
+            "display_precision": 3
+          },
+          "throughput.avg_output_tps": {
+            "semantic_id": "perf.throughput.tokens_per_second",
+            "metric_name": "Output Throughput",
+            "display_name": null,
+            "kind": "quality",
+            "direction": "higher_is_better",
+            "raw_unit": "tok/s",
+            "value_range": null,
+            "display_kind": "number",
+            "display_multiplier": null,
+            "display_unit": "tok/s",
+            "display_precision": 2
+          },
+          "throughput.avg_req_ps": {
+            "semantic_id": "perf.throughput.requests_per_second",
+            "metric_name": "Request Throughput",
+            "display_name": null,
+            "kind": "quality",
+            "direction": "higher_is_better",
+            "raw_unit": "req/s",
+            "value_range": null,
+            "display_kind": "number",
+            "display_multiplier": null,
+            "display_unit": "req/s",
+            "display_precision": 2
+          },
+          "usage.input_tokens": {
+            "semantic_id": "diagnostic.count.items",
+            "metric_name": "Input Tokens",
+            "display_name": null,
+            "kind": "diagnostic",
+            "direction": "none",
+            "raw_unit": null,
+            "value_range": null,
+            "display_kind": "number",
+            "display_multiplier": null,
+            "display_unit": null,
+            "display_precision": 0
+          },
+          "usage.output_tokens": {
+            "semantic_id": "diagnostic.count.items",
+            "metric_name": "Output Tokens",
+            "display_name": null,
+            "kind": "diagnostic",
+            "direction": "none",
+            "raw_unit": null,
+            "value_range": null,
+            "display_kind": "number",
+            "display_multiplier": null,
+            "display_unit": null,
+            "display_precision": 0
+          },
+          "usage.total_tokens": {
+            "semantic_id": "diagnostic.count.items",
+            "metric_name": "Total Tokens",
+            "display_name": null,
+            "kind": "diagnostic",
+            "direction": "none",
+            "raw_unit": null,
+            "value_range": null,
+            "display_kind": "number",
+            "display_multiplier": null,
+            "display_unit": null,
+            "display_precision": 0
+          }
+        }
+      },
+      "primary_metric_identity": {
+        "name": "accuracy",
+        "aggregation": "mean",
+        "dimensions": {}
+      },
+      "primary_metric_unavailable_reason": null,
+      "judge_summary": null,
+      "execution_summary": {
+        "requested": 20,
+        "succeeded": 20,
+        "errored": 0,
+        "incomplete": false,
+        "subsets": {
+          "multi_turn_base": {
+            "requested": 20,
+            "succeeded": 20,
+            "errored": 0
+          }
+        }
+      },
+      "num": 20
+    }
+  },
+  "behavior": {
+    "bfcl_v3_multi_turn_base.jsonl": {
+      "n": 20,
+      "format_error_rate": 0.0,
+      "loop_rate": 0.1
+    }
+  },
+  "minutes": 52.3
+}

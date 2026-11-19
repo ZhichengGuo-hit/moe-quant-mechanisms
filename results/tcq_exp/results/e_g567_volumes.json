@@ -1,0 +1,122 @@
+{
+ "generated_at": "2026-11-19 08:16:27",
+ "note": "E-G5/G6/G7 制品体积补录；size_gib = size_bytes / 2^30，直接 stat 磁盘制品",
+ "models": [
+  {
+   "suite": "E-G5",
+   "model": "GLM-4.7-Flash 30B-A3B",
+   "rows": [
+    {
+     "tag": "A_udq2kxl",
+     "role": "官方 UD-Q2_K_XL",
+     "file": "GLM-4.7-Flash-UD-Q2_K_XL.gguf",
+     "size_bytes": 11888759136,
+     "size_gib": 11.072
+    },
+    {
+     "tag": "B_udq3kxl",
+     "role": "官方 UD-Q3_K_XL",
+     "file": "GLM-4.7-Flash-UD-Q3_K_XL.gguf",
+     "size_bytes": 13782004064,
+     "size_gib": 12.835
+    },
+    {
+     "tag": "C_roleq4",
+     "role": "角色对齐: 专家 Q4_K + 非专家 Q5_K",
+     "file": "e_g5_c.gguf",
+     "size_bytes": 16945467488,
+     "size_gib": 15.782
+    },
+    {
+     "tag": "D_roleq4_im",
+     "role": "C + imatrix",
+     "file": "e_g5_d.gguf",
+     "size_bytes": 16945467776,
+     "size_gib": 15.782
+    },
+    {
+     "tag": "R_roleq3_im",
+     "role": "专家 Q3_K + imatrix",
+     "file": "e_g5_r.gguf",
+     "size_bytes": 13177531776,
+     "size_gib": 12.273
+    }
+   ]
+  },
+  {
+   "suite": "E-G6",
+   "model": "Nemotron-Cascade-2-30B-A3B",
+   "rows": [
+    {
+     "tag": "A_i1q2k",
+     "role": "官方 i1-Q2_K",
+     "file": "Nemotron-Cascade-2-30B-A3B.i1-Q2_K.gguf",
+     "size_bytes": 17908994944,
+     "size_gib": 16.679
+    },
+    {
+     "tag": "B_i1q3km",
+     "role": "官方 i1-Q3_K_M",
+     "file": "Nemotron-Cascade-2-30B-A3B.i1-Q3_K_M.gguf",
+     "size_bytes": 19849236352,
+     "size_gib": 18.486
+    },
+    {
+     "tag": "C_roleq4",
+     "role": "角色对齐: 专家 Q4_K + 非专家 Q5_K",
+     "file": "e_g6_c.gguf",
+     "size_bytes": 21736383136,
+     "size_gib": 20.244
+    },
+    {
+     "tag": "D_roleq4_im",
+     "role": "C + imatrix",
+     "file": "e_g6_d.gguf",
+     "size_bytes": 21736383424,
+     "size_gib": 20.244
+    },
+    {
+     "tag": "R_roleq3_im",
+     "role": "专家 Q3_K + imatrix",
+     "file": "e_g6_r.gguf",
+     "size_bytes": 17942067136,
+     "size_gib": 16.71
+    }
+   ]
+  },
+  {
+   "suite": "E-G7",
+   "model": "Raon-1-mini-preview 30B-A4B",
+   "rows": [
+    {
+     "tag": "A_iq4xs",
+     "role": "官方 IQ4_XS",
+     "file": "raon-1-mini-preview-IQ4_XS.gguf",
+     "size_bytes": 16071801280,
+     "size_gib": 14.968
+    },
+    {
+     "tag": "C_roleq4",
+     "role": "角色对齐: 专家 Q4_K + 非专家 Q5_K",
+     "file": "e_g7_c.gguf",
+     "size_bytes": 17878916352,
+     "size_gib": 16.651
+    },
+    {
+     "tag": "D_roleq4_im",
+     "role": "C + imatrix",
+     "file": "e_g7_d.gguf",
+     "size_bytes": 17878916608,
+     "size_gib": 16.651
+    },
+    {
+     "tag": "R_roleq3_im",
+     "role": "专家 Q3_K + imatrix",
+     "file": "e_g7_r.gguf",
+     "size_bytes": 14088698368,
+     "size_gib": 13.121
+    }
+   ]
+  }
+ ]
+}

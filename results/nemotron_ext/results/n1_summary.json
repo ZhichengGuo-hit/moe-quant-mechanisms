@@ -3,10 +3,16 @@
  "seed": 20261118,
  "nboot": 1000,
  "protocol_note": "Nemotron = C4 协议 (GSM8K 前 100, -ngl 20, 1024, 保留 CoT)；Qwen = E17 协议 (GSM8K 200 取前 100, 1024)；仅同模型内趋势并置",
+ "models": {
+  "nemotron": "Nemotron-Cascade-2-30B-A3B (i1 系列, 31.58B)",
+  "qwen": "Qwen3.6-35B-A3B (34.66B)"
+ },
  "nemotron": {
   "quants": {
    "Q2_K": {
-    "bpw": 2.63,
+    "bpw": 4.537,
+    "n_params": 31577940288,
+    "bpw_source": "measured (bytes*8/params)",
     "n": 100,
     "acc": 0.97,
     "acc_ci95": [
@@ -239,7 +245,9 @@
     "loop_rate": 0.03
    },
    "Q3_K_S": {
-    "bpw": 3.5,
+    "bpw": 4.544,
+    "n_params": 31577940288,
+    "bpw_source": "measured (bytes*8/params)",
     "n": 100,
     "acc": 0.95,
     "acc_ci95": [
@@ -472,7 +480,9 @@
     "loop_rate": 0.06
    },
    "Q3_K_M": {
-    "bpw": 3.91,
+    "bpw": 5.029,
+    "n_params": 31577940288,
+    "bpw_source": "measured (bytes*8/params)",
     "n": 100,
     "acc": 0.98,
     "acc_ci95": [
@@ -705,7 +715,9 @@
     "loop_rate": 0.06
    },
    "Q4_K_M": {
-    "bpw": 4.83,
+    "bpw": 6.211,
+    "n_params": 31577940288,
+    "bpw_source": "measured (bytes*8/params)",
     "n": 100,
     "acc": 0.96,
     "acc_ci95": [
@@ -938,7 +950,9 @@
     "loop_rate": 0.02
    },
    "Q6_K": {
-    "bpw": 6.56,
+    "bpw": 8.489,
+    "n_params": 31577940288,
+    "bpw_source": "measured (bytes*8/params)",
     "n": 100,
     "acc": 0.97,
     "acc_ci95": [

@@ -1,0 +1,335 @@
+{
+ "n_eval_seq": {
+  "math": 64,
+  "code": 64,
+  "general": 64
+ },
+ "fracs": [
+  0.0,
+  0.05,
+  0.1,
+  0.15,
+  0.25
+ ],
+ "selectors": [
+  "global",
+  "task_math",
+  "task_code"
+ ],
+ "store": "packed2_sym4",
+ "configs": [
+  {
+   "name": "base2",
+   "base_bits": 2,
+   "frac": 0.0,
+   "selector": "global",
+   "nll": {
+    "math": 2.3908814929780506,
+    "code": 2.119106006005203,
+    "general": 2.343628527667071
+   },
+   "volume": {
+    "keep_both": 7.97,
+    "replace": 7.97
+   },
+   "eval_s": 1941.9,
+   "nll_mean": 2.2845386755501083
+  },
+  {
+   "name": "base2_q5_global",
+   "base_bits": 2,
+   "frac": 0.05,
+   "selector": "global",
+   "nll": {
+    "math": 2.0521326367817228,
+    "code": 1.5530346290812438,
+    "general": 2.0819283975137246
+   },
+   "volume": {
+    "keep_both": 8.72,
+    "replace": 8.34
+   },
+   "eval_s": 1873.3,
+   "nll_mean": 1.8956985544588971
+  },
+  {
+   "name": "base2_q5_task_math",
+   "base_bits": 2,
+   "frac": 0.05,
+   "selector": "task_math",
+   "nll": {
+    "math": 1.9858996224781824,
+    "code": 1.8695740991709184,
+    "general": 2.0984889468631227
+   },
+   "volume": {
+    "keep_both": 8.72,
+    "replace": 8.34
+   },
+   "eval_s": 1893.9,
+   "nll_mean": 1.984654222837408
+  },
+  {
+   "name": "base2_q5_task_code",
+   "base_bits": 2,
+   "frac": 0.05,
+   "selector": "task_code",
+   "nll": {
+    "math": 2.236096261039613,
+    "code": 1.4319294103049947,
+    "general": 2.127464129473712
+   },
+   "volume": {
+    "keep_both": 8.72,
+    "replace": 8.34
+   },
+   "eval_s": 1885.1,
+   "nll_mean": 1.9318299336061067
+  },
+  {
+   "name": "base2_q10_global",
+   "base_bits": 2,
+   "frac": 0.1,
+   "selector": "global",
+   "nll": {
+    "math": 1.9169635167197576,
+    "code": 1.4070537257633617,
+    "general": 2.0535176973085147
+   },
+   "volume": {
+    "keep_both": 9.47,
+    "replace": 8.72
+   },
+   "eval_s": 1750.6,
+   "nll_mean": 1.7925116465972113
+  },
+  {
+   "name": "base2_q10_task_math",
+   "base_bits": 2,
+   "frac": 0.1,
+   "selector": "task_math",
+   "nll": {
+    "math": 1.875363198537675,
+    "code": 1.7711114195106397,
+    "general": 2.048327451138883
+   },
+   "volume": {
+    "keep_both": 9.47,
+    "replace": 8.72
+   },
+   "eval_s": 1798.3,
+   "nll_mean": 1.8982673563957324
+  },
+  {
+   "name": "base2_q10_task_code",
+   "base_bits": 2,
+   "frac": 0.1,
+   "selector": "task_code",
+   "nll": {
+    "math": 2.1291883710830932,
+    "code": 1.2345457100761417,
+    "general": 2.098033740069415
+   },
+   "volume": {
+    "keep_both": 9.47,
+    "replace": 8.72
+   },
+   "eval_s": 1806.5,
+   "nll_mean": 1.8205892737428833
+  },
+  {
+   "name": "base2_q15_global",
+   "base_bits": 2,
+   "frac": 0.15,
+   "selector": "global",
+   "nll": {
+    "math": 1.8809511850750635,
+    "code": 1.2494016488788733,
+    "general": 1.9966037956443994
+   },
+   "volume": {
+    "keep_both": 10.22,
+    "replace": 9.09
+   },
+   "eval_s": 1643.8,
+   "nll_mean": 1.7089855431994454
+  },
+  {
+   "name": "base2_q15_task_math",
+   "base_bits": 2,
+   "frac": 0.15,
+   "selector": "task_math",
+   "nll": {
+    "math": 1.8387435428679935,
+    "code": 1.6754147048729935,
+    "general": 2.01829976262273
+   },
+   "volume": {
+    "keep_both": 10.22,
+    "replace": 9.09
+   },
+   "eval_s": 1722.3,
+   "nll_mean": 1.844152670121239
+  },
+  {
+   "name": "base2_q15_task_code",
+   "base_bits": 2,
+   "frac": 0.15,
+   "selector": "task_code",
+   "nll": {
+    "math": 2.0727422048175144,
+    "code": 1.092909148820542,
+    "general": 2.057743031269795
+   },
+   "volume": {
+    "keep_both": 10.22,
+    "replace": 9.09
+   },
+   "eval_s": 1748.0,
+   "nll_mean": 1.7411314616359503
+  },
+  {
+   "name": "base2_q25_global",
+   "base_bits": 2,
+   "frac": 0.25,
+   "selector": "global",
+   "nll": {
+    "math": 1.7905127510191903,
+    "code": 1.0840990095959782,
+    "general": 1.9425816097775022
+   },
+   "volume": {
+    "keep_both": 11.72,
+    "replace": 9.84
+   },
+   "eval_s": 1446.0,
+   "nll_mean": 1.6057311234642235
+  },
+  {
+   "name": "base2_q25_task_math",
+   "base_bits": 2,
+   "frac": 0.25,
+   "selector": "task_math",
+   "nll": {
+    "math": 1.763202636960953,
+    "code": 1.4628777131326998,
+    "general": 1.9507117194098396
+   },
+   "volume": {
+    "keep_both": 11.72,
+    "replace": 9.84
+   },
+   "eval_s": 1543.9,
+   "nll_mean": 1.7255973565011642
+  },
+  {
+   "name": "base2_q25_task_code",
+   "base_bits": 2,
+   "frac": 0.25,
+   "selector": "task_code",
+   "nll": {
+    "math": 1.9606881974235413,
+    "code": 0.9184538412592552,
+    "general": 1.9965637928730733
+   },
+   "volume": {
+    "keep_both": 11.72,
+    "replace": 9.84
+   },
+   "eval_s": 1594.7,
+   "nll_mean": 1.6252352771852898
+  },
+  {
+   "name": "base3",
+   "base_bits": 3,
+   "frac": 0.0,
+   "nll": {
+    "math": 1.738942403641958,
+    "code": 1.0038854998697269,
+    "general": 1.802642873815588
+   },
+   "volume": {
+    "keep_both": 11.72,
+    "replace": 11.72
+   },
+   "nll_mean": 1.5151569257757576
+  },
+  {
+   "name": "base3_global",
+   "base_bits": 3,
+   "frac": 0.25,
+   "nll": {
+    "math": 1.678320536537776,
+    "code": 0.747428799102768,
+    "general": 1.8168630136025918
+   },
+   "volume": {
+    "keep_both": 15.47,
+    "replace": 12.66
+   },
+   "nll_mean": 1.4142041164143786
+  },
+  {
+   "name": "base3_task_math",
+   "base_bits": 3,
+   "frac": 0.25,
+   "nll": {
+    "math": 1.6556605989970858,
+    "code": 0.8444488358295872,
+    "general": 1.8170585529224292
+   },
+   "volume": {
+    "keep_both": 15.47,
+    "replace": 12.66
+   },
+   "nll_mean": 1.4390559959163676
+  },
+  {
+   "name": "base3_task_code",
+   "base_bits": 3,
+   "frac": 0.25,
+   "nll": {
+    "math": 1.70400327349466,
+    "code": 0.717642351666038,
+    "general": 1.817424423630173
+   },
+   "volume": {
+    "keep_both": 15.47,
+    "replace": 12.66
+   },
+   "nll_mean": 1.4130233495969573
+  },
+  {
+   "name": "int4",
+   "base_bits": 4,
+   "frac": 0.0,
+   "nll": {
+    "math": 1.6345989287845673,
+    "code": 0.6954793213255195,
+    "general": 1.8104171134330131
+   },
+   "volume": {
+    "keep_both": 15.58,
+    "replace": 15.58
+   },
+   "nll_mean": 1.3801651211810333
+  }
+ ],
+ "frontier": [
+  "base2",
+  "base2_q5_global",
+  "base2_q10_global",
+  "base2_q15_global",
+  "base2_q25_global",
+  "base3",
+  "base3_global",
+  "base3_task_code",
+  "int4"
+ ],
+ "volume_basis": {
+  "base2_gib": 7.97,
+  "row4_gib_per_all": 15.0,
+  "int4_gib": 15.58
+ },
+ "elapsed_s": 22648.3
+}

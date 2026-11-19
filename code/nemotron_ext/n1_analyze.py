@@ -24,6 +24,14 @@ GGUF_PY = r"E:\CUDA11.8\train\llama.cpp\gguf-py"
 MODEL_ROOT = r"E:\CUDA11.8\model"
 
 NEMO_TAGS = ["Q2_K", "Q3_K_S", "Q3_K_M", "Q4_K_M", "Q6_K"]
+# Nemotron: 档位 -> GGUF（bpw 与 Qwen 同口径：文件字节 x 8 / 参数量实算）
+NEMO_FILES = {
+    "Q2_K":   os.path.join(MODEL_ROOT, "nemotron", "Nemotron-Cascade-2-30B-A3B.i1-Q2_K.gguf"),
+    "Q3_K_S": os.path.join(MODEL_ROOT, "nemotron", "Nemotron-Cascade-2-30B-A3B.i1-Q3_K_S.gguf"),
+    "Q3_K_M": os.path.join(MODEL_ROOT, "nemotron", "Nemotron-Cascade-2-30B-A3B.i1-Q3_K_M.gguf"),
+    "Q4_K_M": os.path.join(MODEL_ROOT, "nemotron", "Nemotron-Cascade-2-30B-A3B.i1-Q4_K_M.gguf"),
+    "Q6_K":   os.path.join(MODEL_ROOT, "nemotron", "Nemotron-Cascade-2-30B-A3B.i1-Q6_K.gguf"),
+}
 N_PAIR = 100
 CLIFF_ACC = 0.15      # 相邻档 acc 跌幅 >= 15 pp
 CLIFF_PN = 0.70       # 或 CoT 均值跌到 < 70%
@@ -112,14 +120,12 @@ def nemo_section(rng):
         rs = sorted(by_tag[t], key=lambda x: int(x["task_id"].split("-")[1]))
         ok = [bool(r.get("acc")) for r in rs]
         pn = [int(r.get("predicted_n") or 0) for r in rs]
-        bpw = float(rs[0]["bpw"]) if rs and "bpw" in rs[0] else None
-        if bpw is None:
-            # C4 行内含 bpw；若缺失则从 QUANTS 表兜底
-            bpw = {"Q2_K": 2.63, "Q3_K_S": 3.50, "Q3_K_M": 3.91,
-                   "Q4_K_M": 4.83, "Q6_K": 6.56}.get(t)
+        bpw, n_params = parse_qtype_bpw(NEMO_FILES[t])
         beh, beh_n = behavior_stats(rs)
         data[t] = {
-            "bpw": bpw, "n": len(rs), "acc": float(np.mean(ok)) if ok else None,
+            "bpw": round(bpw, 3), "n_params": n_params,
+            "bpw_source": "measured (bytes*8/params)",
+            "n": len(rs), "acc": float(np.mean(ok)) if ok else None,
             "acc_ci95": wilson(int(sum(ok)), len(ok)),
             "acc_ok": ok, "pn": pn,
             "mean_pn": float(np.mean(pn)) if pn else None,
@@ -247,6 +253,8 @@ def main():
         "seed": SEED, "nboot": NBOOT,
         "protocol_note": "Nemotron = C4 协议 (GSM8K 前 100, -ngl 20, 1024, 保留 CoT)；"
                          "Qwen = E17 协议 (GSM8K 200 取前 100, 1024)；仅同模型内趋势并置",
+        "models": {"nemotron": "Nemotron-Cascade-2-30B-A3B (i1 系列, 31.58B)",
+                   "qwen": "Qwen3.6-35B-A3B (34.66B)"},
         "nemotron": nemo,
         "qwen": qwen,
         "verdict": nemo["verdict"],

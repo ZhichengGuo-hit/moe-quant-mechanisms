@@ -1,0 +1,70 @@
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 0, "multi": false, "ok": true, "out": "ZKQ0-5428", "out_tokens": 1, "prompt_tokens": 4363, "repeat4": 0, "dur_s": 96.4}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 1, "multi": false, "ok": true, "out": "ZKQ1-1201", "out_tokens": 1, "prompt_tokens": 4301, "repeat4": 0, "dur_s": 184.4}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 2, "multi": false, "ok": true, "out": "ZKQ2-1440", "out_tokens": 1, "prompt_tokens": 4315, "repeat4": 0, "dur_s": 272.4}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 3, "multi": false, "ok": true, "out": "ZKQ3-5593", "out_tokens": 1, "prompt_tokens": 4349, "repeat4": 0, "dur_s": 360.8}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 4, "multi": false, "ok": true, "out": "ZKQ4-4419", "out_tokens": 1, "prompt_tokens": 4303, "repeat4": 0, "dur_s": 448.1}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 5, "multi": false, "ok": true, "out": "ZKQ5-8326", "out_tokens": 1, "prompt_tokens": 4359, "repeat4": 0, "dur_s": 536.7}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 6, "multi": false, "ok": true, "out": "ZKQ6-3097", "out_tokens": 1, "prompt_tokens": 4353, "repeat4": 0, "dur_s": 625.1}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 7, "multi": false, "ok": true, "out": "ZKQ7-1940", "out_tokens": 1, "prompt_tokens": 4336, "repeat4": 0, "dur_s": 712.9}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 8, "multi": true, "ok": true, "out": "ZKQ8-2412, ZKQ8-5621, ZKQ8-4675", "out_tokens": 3, "prompt_tokens": 4366, "repeat4": 0, "dur_s": 804.3}
+{"arm": "tcq_nl_math", "task": "niah", "len": 4096, "idx": 9, "multi": true, "ok": true, "out": "ZKQ9-6242, ZKQ9-1725, ZKQ9-5311", "out_tokens": 3, "prompt_tokens": 4390, "repeat4": 0, "dur_s": 896.1}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 0, "multi": false, "ok": false, "out": "11", "out_tokens": 1, "prompt_tokens": 8470, "repeat4": 0, "dur_s": 1073.6}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 1, "multi": false, "ok": true, "out": "100", "out_tokens": 1, "prompt_tokens": 8429, "repeat4": 0, "dur_s": 1250.2}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 2, "multi": false, "ok": false, "out": "16", "out_tokens": 1, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 1427.6}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 3, "multi": false, "ok": true, "out": "88", "out_tokens": 1, "prompt_tokens": 8448, "repeat4": 0, "dur_s": 1604.8}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 4, "multi": false, "ok": true, "out": "55", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 1782.4}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "172", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 1959.9}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 6, "multi": false, "ok": false, "out": "16", "out_tokens": 1, "prompt_tokens": 8424, "repeat4": 0, "dur_s": 2136.5}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "11", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 2316.2}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "19", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 2497.4}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "40", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 2674.0}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 10, "multi": false, "ok": true, "out": "67", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 2852.7}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 11, "multi": false, "ok": true, "out": "82", "out_tokens": 1, "prompt_tokens": 8471, "repeat4": 0, "dur_s": 3031.0}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 12, "multi": false, "ok": false, "out": "18", "out_tokens": 1, "prompt_tokens": 8456, "repeat4": 0, "dur_s": 3208.5}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "606", "out_tokens": 1, "prompt_tokens": 8430, "repeat4": 0, "dur_s": 3385.7}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 14, "multi": false, "ok": false, "out": "114", "out_tokens": 1, "prompt_tokens": 8474, "repeat4": 0, "dur_s": 3564.2}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "213", "out_tokens": 1, "prompt_tokens": 8440, "repeat4": 0, "dur_s": 3741.3}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 16, "multi": false, "ok": true, "out": "69", "out_tokens": 1, "prompt_tokens": 8456, "repeat4": 0, "dur_s": 3919.8}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 17, "multi": false, "ok": false, "out": "4", "out_tokens": 1, "prompt_tokens": 8457, "repeat4": 0, "dur_s": 4098.3}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 18, "multi": false, "ok": false, "out": "51", "out_tokens": 1, "prompt_tokens": 8453, "repeat4": 0, "dur_s": 4277.3}
+{"arm": "tcq_nl_math", "task": "vt", "len": 8192, "idx": 19, "multi": false, "ok": true, "out": "57", "out_tokens": 1, "prompt_tokens": 8469, "repeat4": 0, "dur_s": 4454.8}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 0, "multi": false, "ok": true, "out": "zibet, sunep, pemro, avora", "out_tokens": 4, "prompt_tokens": 8454, "repeat4": 1, "dur_s": 4633.0}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 1, "multi": false, "ok": false, "out": "blorf, quane, sunep, vundy, pemro, holt, durmo", "out_tokens": 7, "prompt_tokens": 8425, "repeat4": 1, "dur_s": 4811.7}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 2, "multi": false, "ok": true, "out": "blorf, zibet, marl, sunep, vundy, nixle, durmo", "out_tokens": 7, "prompt_tokens": 8431, "repeat4": 1, "dur_s": 4990.8}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 3, "multi": false, "ok": false, "out": "pemro, nixle", "out_tokens": 2, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 5167.9}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 4, "multi": false, "ok": true, "out": "zibet, sunep, torix, pemro, durmo", "out_tokens": 5, "prompt_tokens": 8418, "repeat4": 1, "dur_s": 5345.5}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "zibet, klast, pemro, gresk, nixle, avora", "out_tokens": 6, "prompt_tokens": 8440, "repeat4": 1, "dur_s": 5524.5}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 6, "multi": false, "ok": false, "out": "quane, zibet, marl, pemro, gresk, torix, vundy, durmo", "out_tokens": 8, "prompt_tokens": 8410, "repeat4": 1, "dur_s": 5703.6}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "blorf, klast, durmo, holt", "out_tokens": 4, "prompt_tokens": 8409, "repeat4": 1, "dur_s": 5881.0}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "quane, zibet, sunep, vundy, pemro", "out_tokens": 5, "prompt_tokens": 8449, "repeat4": 1, "dur_s": 6059.9}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "blorf, quane, zibet, marl, torix, nixle, gresk, holt", "out_tokens": 8, "prompt_tokens": 8414, "repeat4": 1, "dur_s": 6238.6}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 10, "multi": false, "ok": false, "out": "quane, zibet, marl, sunep, torix, pemro, holt, nixle, durmo", "out_tokens": 9, "prompt_tokens": 8464, "repeat4": 1, "dur_s": 6419.1}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 11, "multi": false, "ok": true, "out": "zibet, marl, klast, gresk, durmo", "out_tokens": 5, "prompt_tokens": 8453, "repeat4": 1, "dur_s": 6598.2}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 12, "multi": false, "ok": true, "out": "quane, sunep, klast, holt", "out_tokens": 4, "prompt_tokens": 8421, "repeat4": 1, "dur_s": 6775.8}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "blorf, quane, zibet, marl, sunep, vundy, gresk, torix", "out_tokens": 8, "prompt_tokens": 8410, "repeat4": 1, "dur_s": 6955.1}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 14, "multi": false, "ok": true, "out": "marl, klast, pemro, gresk, durmo", "out_tokens": 5, "prompt_tokens": 8418, "repeat4": 1, "dur_s": 7132.5}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "zibet, vundy, klast, pemro, avora", "out_tokens": 5, "prompt_tokens": 8451, "repeat4": 1, "dur_s": 7311.0}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 16, "multi": false, "ok": true, "out": "blorf, quane, sunep, vundy, gresk, holt, avora", "out_tokens": 7, "prompt_tokens": 8433, "repeat4": 1, "dur_s": 7490.3}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 17, "multi": false, "ok": false, "out": "pemro, gresk, holt, avora, nixle", "out_tokens": 5, "prompt_tokens": 8454, "repeat4": 1, "dur_s": 7668.7}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 18, "multi": false, "ok": true, "out": "blorf, zibet, marl, pemro, holt, nixle, vundy", "out_tokens": 7, "prompt_tokens": 8440, "repeat4": 1, "dur_s": 7848.6}
+{"arm": "tcq_nl_math", "task": "cw", "len": 8192, "idx": 19, "multi": false, "ok": true, "out": "zibet, marl, daxil, sunep, torix, vundy, klast, pemro, gresk, holt, nixle, durmo", "out_tokens": 12, "prompt_tokens": 8447, "repeat4": 1, "dur_s": 8029.8}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 0, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8445, "repeat4": 0, "dur_s": 8206.2}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 1, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 8382.0}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 2, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8441, "repeat4": 0, "dur_s": 8558.2}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 3, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8459, "repeat4": 0, "dur_s": 8735.4}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 4, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8429, "repeat4": 0, "dur_s": 8911.6}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 5, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8422, "repeat4": 0, "dur_s": 9087.6}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 6, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8450, "repeat4": 0, "dur_s": 9263.8}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 9440.1}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8460, "repeat4": 0, "dur_s": 9618.9}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8449, "repeat4": 0, "dur_s": 9796.8}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 10, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8412, "repeat4": 0, "dur_s": 9973.2}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 11, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8411, "repeat4": 0, "dur_s": 10148.9}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 12, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 10325.6}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8451, "repeat4": 0, "dur_s": 10502.1}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 14, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 10678.2}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 10854.4}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 16, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 11030.7}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 17, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8413, "repeat4": 0, "dur_s": 11207.7}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 18, "multi": false, "ok": true, "out": "West", "out_tokens": 1, "prompt_tokens": 8433, "repeat4": 0, "dur_s": 11384.5}
+{"arm": "tcq_nl_math", "task": "mh", "len": 8192, "idx": 19, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8463, "repeat4": 0, "dur_s": 11561.0}

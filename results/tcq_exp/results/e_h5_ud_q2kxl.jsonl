@@ -1,0 +1,180 @@
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 0, "multi": false, "ok": true, "out": "ZKQ0-5428", "out_tokens": 1, "prompt_tokens": 4363, "repeat4": 0, "dur_s": 3.1}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 1, "multi": false, "ok": true, "out": "ZKQ1-1201", "out_tokens": 1, "prompt_tokens": 4301, "repeat4": 0, "dur_s": 6.0}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 2, "multi": false, "ok": true, "out": "ZKQ2-1440", "out_tokens": 1, "prompt_tokens": 4315, "repeat4": 0, "dur_s": 9.0}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 3, "multi": false, "ok": true, "out": "ZKQ3-5593", "out_tokens": 1, "prompt_tokens": 4349, "repeat4": 0, "dur_s": 12.0}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 4, "multi": false, "ok": true, "out": "ZKQ4-4419", "out_tokens": 1, "prompt_tokens": 4303, "repeat4": 0, "dur_s": 15.0}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 5, "multi": false, "ok": true, "out": "ZKQ5-8326", "out_tokens": 1, "prompt_tokens": 4359, "repeat4": 0, "dur_s": 18.1}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 6, "multi": false, "ok": true, "out": "ZKQ6-3097", "out_tokens": 1, "prompt_tokens": 4353, "repeat4": 0, "dur_s": 21.1}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 7, "multi": false, "ok": true, "out": "ZKQ7-1940", "out_tokens": 1, "prompt_tokens": 4336, "repeat4": 0, "dur_s": 24.1}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 8, "multi": true, "ok": true, "out": "ZKQ8-2412, ZKQ8-5621, ZKQ8-4675", "out_tokens": 3, "prompt_tokens": 4366, "repeat4": 0, "dur_s": 27.4}
+{"arm": "ud_q2kxl", "task": "niah", "len": 4096, "idx": 9, "multi": true, "ok": true, "out": "ZKQ9-6242, ZKQ9-1725, ZKQ9-5311", "out_tokens": 3, "prompt_tokens": 4390, "repeat4": 0, "dur_s": 30.7}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 0, "multi": false, "ok": true, "out": "ZKQ0-2987", "out_tokens": 1, "prompt_tokens": 17061, "repeat4": 0, "dur_s": 42.0}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 1, "multi": false, "ok": true, "out": "ZKQ1-2168", "out_tokens": 1, "prompt_tokens": 17099, "repeat4": 0, "dur_s": 53.6}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 2, "multi": false, "ok": true, "out": "ZKQ2-7077", "out_tokens": 1, "prompt_tokens": 17096, "repeat4": 0, "dur_s": 65.2}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 3, "multi": false, "ok": true, "out": "ZKQ3-0995", "out_tokens": 1, "prompt_tokens": 17036, "repeat4": 0, "dur_s": 76.8}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 4, "multi": false, "ok": true, "out": "ZKQ4-1765", "out_tokens": 1, "prompt_tokens": 17090, "repeat4": 0, "dur_s": 88.4}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 5, "multi": false, "ok": true, "out": "ZKQ5-8035", "out_tokens": 1, "prompt_tokens": 17061, "repeat4": 0, "dur_s": 100.0}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 6, "multi": false, "ok": true, "out": "ZKQ6-9582", "out_tokens": 1, "prompt_tokens": 17090, "repeat4": 0, "dur_s": 111.6}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 7, "multi": false, "ok": true, "out": "ZKQ7-1542", "out_tokens": 1, "prompt_tokens": 17089, "repeat4": 0, "dur_s": 123.2}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 8, "multi": true, "ok": true, "out": "ZKQ8-1605, ZKQ8-0673, ZKQ8-7842", "out_tokens": 3, "prompt_tokens": 17157, "repeat4": 0, "dur_s": 135.2}
+{"arm": "ud_q2kxl", "task": "niah", "len": 16384, "idx": 9, "multi": true, "ok": true, "out": "ZKQ9-4260, ZKQ9-3153, ZKQ9-9969", "out_tokens": 3, "prompt_tokens": 17126, "repeat4": 0, "dur_s": 147.1}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 0, "multi": false, "ok": false, "out": "89", "out_tokens": 1, "prompt_tokens": 8470, "repeat4": 0, "dur_s": 154.2}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 1, "multi": false, "ok": true, "out": "100", "out_tokens": 1, "prompt_tokens": 8429, "repeat4": 0, "dur_s": 159.6}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 2, "multi": false, "ok": false, "out": "10", "out_tokens": 1, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 165.1}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 3, "multi": false, "ok": true, "out": "88", "out_tokens": 1, "prompt_tokens": 8448, "repeat4": 0, "dur_s": 170.6}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 4, "multi": false, "ok": true, "out": "55", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 176.1}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "172", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 181.6}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 6, "multi": false, "ok": false, "out": "11", "out_tokens": 1, "prompt_tokens": 8424, "repeat4": 0, "dur_s": 187.1}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "11", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 192.5}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "71", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 197.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "32", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 203.4}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 10, "multi": false, "ok": true, "out": "67", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 208.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 11, "multi": false, "ok": true, "out": "82", "out_tokens": 1, "prompt_tokens": 8471, "repeat4": 0, "dur_s": 214.3}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 12, "multi": false, "ok": false, "out": "108", "out_tokens": 1, "prompt_tokens": 8456, "repeat4": 0, "dur_s": 219.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "603", "out_tokens": 1, "prompt_tokens": 8430, "repeat4": 0, "dur_s": 225.3}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 14, "multi": false, "ok": false, "out": "57", "out_tokens": 1, "prompt_tokens": 8474, "repeat4": 0, "dur_s": 230.7}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "219", "out_tokens": 1, "prompt_tokens": 8440, "repeat4": 0, "dur_s": 236.3}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 16, "multi": false, "ok": true, "out": "69", "out_tokens": 1, "prompt_tokens": 8456, "repeat4": 0, "dur_s": 241.8}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 17, "multi": false, "ok": false, "out": "5", "out_tokens": 1, "prompt_tokens": 8457, "repeat4": 0, "dur_s": 247.4}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 18, "multi": false, "ok": false, "out": "45", "out_tokens": 1, "prompt_tokens": 8453, "repeat4": 0, "dur_s": 252.8}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 19, "multi": false, "ok": true, "out": "57", "out_tokens": 1, "prompt_tokens": 8469, "repeat4": 0, "dur_s": 258.3}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 20, "multi": false, "ok": false, "out": "85", "out_tokens": 1, "prompt_tokens": 8450, "repeat4": 0, "dur_s": 263.8}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 21, "multi": false, "ok": false, "out": "31", "out_tokens": 1, "prompt_tokens": 8475, "repeat4": 0, "dur_s": 269.3}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 22, "multi": false, "ok": true, "out": "80", "out_tokens": 1, "prompt_tokens": 8451, "repeat4": 0, "dur_s": 274.8}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 23, "multi": false, "ok": false, "out": "1037", "out_tokens": 1, "prompt_tokens": 8461, "repeat4": 0, "dur_s": 280.3}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 24, "multi": false, "ok": true, "out": "3", "out_tokens": 1, "prompt_tokens": 8453, "repeat4": 0, "dur_s": 285.7}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 25, "multi": false, "ok": true, "out": "101", "out_tokens": 1, "prompt_tokens": 8483, "repeat4": 0, "dur_s": 291.2}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 26, "multi": false, "ok": true, "out": "26", "out_tokens": 1, "prompt_tokens": 8428, "repeat4": 0, "dur_s": 296.7}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 27, "multi": false, "ok": true, "out": "27", "out_tokens": 1, "prompt_tokens": 8421, "repeat4": 0, "dur_s": 302.2}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 28, "multi": false, "ok": true, "out": "72", "out_tokens": 1, "prompt_tokens": 8447, "repeat4": 0, "dur_s": 307.6}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 29, "multi": false, "ok": false, "out": "15", "out_tokens": 1, "prompt_tokens": 8414, "repeat4": 0, "dur_s": 313.1}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 30, "multi": false, "ok": false, "out": "106", "out_tokens": 1, "prompt_tokens": 8411, "repeat4": 0, "dur_s": 318.6}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 31, "multi": false, "ok": false, "out": "150", "out_tokens": 1, "prompt_tokens": 8482, "repeat4": 0, "dur_s": 324.0}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 32, "multi": false, "ok": false, "out": "12", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 329.5}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 33, "multi": false, "ok": false, "out": "11", "out_tokens": 1, "prompt_tokens": 8421, "repeat4": 0, "dur_s": 335.0}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 34, "multi": false, "ok": true, "out": "59", "out_tokens": 1, "prompt_tokens": 8426, "repeat4": 0, "dur_s": 340.5}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 35, "multi": false, "ok": false, "out": "14", "out_tokens": 1, "prompt_tokens": 8479, "repeat4": 0, "dur_s": 345.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 36, "multi": false, "ok": true, "out": "39", "out_tokens": 1, "prompt_tokens": 8447, "repeat4": 0, "dur_s": 351.4}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 37, "multi": false, "ok": false, "out": "51", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 356.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 38, "multi": false, "ok": true, "out": "26", "out_tokens": 1, "prompt_tokens": 8439, "repeat4": 0, "dur_s": 362.4}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 39, "multi": false, "ok": false, "out": "108", "out_tokens": 1, "prompt_tokens": 8439, "repeat4": 0, "dur_s": 367.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 40, "multi": false, "ok": false, "out": "15", "out_tokens": 1, "prompt_tokens": 8453, "repeat4": 0, "dur_s": 373.5}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 41, "multi": false, "ok": false, "out": "4", "out_tokens": 1, "prompt_tokens": 8432, "repeat4": 0, "dur_s": 378.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 42, "multi": false, "ok": false, "out": "153", "out_tokens": 1, "prompt_tokens": 8428, "repeat4": 0, "dur_s": 384.4}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 43, "multi": false, "ok": false, "out": "118", "out_tokens": 1, "prompt_tokens": 8447, "repeat4": 0, "dur_s": 389.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 44, "multi": false, "ok": false, "out": "15", "out_tokens": 1, "prompt_tokens": 8462, "repeat4": 0, "dur_s": 395.4}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 45, "multi": false, "ok": false, "out": "23", "out_tokens": 1, "prompt_tokens": 8469, "repeat4": 0, "dur_s": 400.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 46, "multi": false, "ok": true, "out": "83", "out_tokens": 1, "prompt_tokens": 8438, "repeat4": 0, "dur_s": 406.4}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 47, "multi": false, "ok": false, "out": "10", "out_tokens": 1, "prompt_tokens": 8445, "repeat4": 0, "dur_s": 411.9}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 48, "multi": false, "ok": false, "out": "157", "out_tokens": 1, "prompt_tokens": 8487, "repeat4": 0, "dur_s": 417.3}
+{"arm": "ud_q2kxl", "task": "vt", "len": 8192, "idx": 49, "multi": false, "ok": false, "out": "112", "out_tokens": 1, "prompt_tokens": 8416, "repeat4": 0, "dur_s": 422.8}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 0, "multi": false, "ok": false, "out": "quane, zibet, sunep, torix, pemro, avora", "out_tokens": 6, "prompt_tokens": 8454, "repeat4": 1, "dur_s": 428.5}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 1, "multi": false, "ok": false, "out": "blorf, quane, vundy, pemro, holt, durmo", "out_tokens": 6, "prompt_tokens": 8425, "repeat4": 1, "dur_s": 434.2}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 2, "multi": false, "ok": true, "out": "blorf, zibet, marl, sunep, vundy, nixle, durmo", "out_tokens": 7, "prompt_tokens": 8431, "repeat4": 1, "dur_s": 439.9}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 3, "multi": false, "ok": false, "out": "blorf, zibet, marl, pemro, nixle", "out_tokens": 5, "prompt_tokens": 8431, "repeat4": 1, "dur_s": 445.6}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 4, "multi": false, "ok": true, "out": "zibet, sunep, torix, durmo, pemro", "out_tokens": 5, "prompt_tokens": 8418, "repeat4": 1, "dur_s": 451.2}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "zibet, klast, pemro, gresk, avora, nixle", "out_tokens": 6, "prompt_tokens": 8440, "repeat4": 1, "dur_s": 456.9}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 6, "multi": false, "ok": false, "out": "blorf, quane, zibet, marl, torix, vundy, pemro, gresk", "out_tokens": 8, "prompt_tokens": 8410, "repeat4": 1, "dur_s": 462.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "blorf, durmo, klast, holt", "out_tokens": 4, "prompt_tokens": 8409, "repeat4": 1, "dur_s": 468.3}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "quane, zibet, sunep, vundy", "out_tokens": 4, "prompt_tokens": 8449, "repeat4": 1, "dur_s": 474.0}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "blorf, quane, zibet, marl, torix, nixle, gresk, holt", "out_tokens": 8, "prompt_tokens": 8414, "repeat4": 1, "dur_s": 479.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 10, "multi": false, "ok": false, "out": "quane, zibet, marl, sunep, torix, vundy, pemro, holt, durmo", "out_tokens": 9, "prompt_tokens": 8464, "repeat4": 1, "dur_s": 485.6}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 11, "multi": false, "ok": false, "out": "zibet, marl, klast, gresk", "out_tokens": 4, "prompt_tokens": 8453, "repeat4": 1, "dur_s": 491.3}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 12, "multi": false, "ok": true, "out": "quane, sunep, klast, holt", "out_tokens": 4, "prompt_tokens": 8421, "repeat4": 1, "dur_s": 496.9}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "blorf, quane, zibet, marl, sunep, torix, vundy, gresk", "out_tokens": 8, "prompt_tokens": 8410, "repeat4": 1, "dur_s": 502.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 14, "multi": false, "ok": true, "out": "marl, klast, pemro, gresk, durmo", "out_tokens": 5, "prompt_tokens": 8418, "repeat4": 1, "dur_s": 508.3}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 15, "multi": false, "ok": true, "out": "zibet, daxil, sunep, torix, vundy, klast, pemro, avora", "out_tokens": 8, "prompt_tokens": 8451, "repeat4": 1, "dur_s": 514.1}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 16, "multi": false, "ok": true, "out": "blorf, quane, sunep, vundy, gresk, holt, avora", "out_tokens": 7, "prompt_tokens": 8433, "repeat4": 1, "dur_s": 519.9}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 17, "multi": false, "ok": true, "out": "blorf, zibet, marl, daxil, torix, vundy, pemro, gresk, holt, avora, nixle", "out_tokens": 11, "prompt_tokens": 8454, "repeat4": 1, "dur_s": 525.8}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 18, "multi": false, "ok": false, "out": "blorf, zibet, marl, vundy, klast, pemro, holt, nixle", "out_tokens": 8, "prompt_tokens": 8440, "repeat4": 1, "dur_s": 531.6}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 19, "multi": false, "ok": false, "out": "zibet, marl, torix, vundy, klast, pemro, gresk, holt, nixle, durmo", "out_tokens": 10, "prompt_tokens": 8447, "repeat4": 1, "dur_s": 537.5}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 20, "multi": false, "ok": true, "out": "quane, marl, torix, nixle, durmo", "out_tokens": 5, "prompt_tokens": 8422, "repeat4": 1, "dur_s": 543.1}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 21, "multi": false, "ok": true, "out": "daxil, avora, torix, blorf, durmo", "out_tokens": 5, "prompt_tokens": 8462, "repeat4": 1, "dur_s": 548.8}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 22, "multi": false, "ok": false, "out": "quane, marl, torix, vundy, klast, pemro, gresk, holt, avora, durmo", "out_tokens": 10, "prompt_tokens": 8447, "repeat4": 1, "dur_s": 554.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 23, "multi": false, "ok": false, "out": "quane, sunep, torix, vundy, avora, nixle, durmo, pemro, marl, holt", "out_tokens": 10, "prompt_tokens": 8464, "repeat4": 1, "dur_s": 560.6}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 24, "multi": false, "ok": true, "out": "zibet, sunep, durmo", "out_tokens": 3, "prompt_tokens": 8404, "repeat4": 0, "dur_s": 566.2}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 25, "multi": false, "ok": false, "out": "blorf, nixle, durmo", "out_tokens": 3, "prompt_tokens": 8437, "repeat4": 0, "dur_s": 571.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 26, "multi": false, "ok": true, "out": "blorf, quane, gresk, holt, avora, nixle", "out_tokens": 6, "prompt_tokens": 8409, "repeat4": 1, "dur_s": 577.4}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 27, "multi": false, "ok": false, "out": "daxil, sunep, torix, klast, gresk, holt, durmo", "out_tokens": 7, "prompt_tokens": 8433, "repeat4": 1, "dur_s": 583.1}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 28, "multi": false, "ok": false, "out": "marl, daxil, torix, klast, pemro, gresk, durmo", "out_tokens": 7, "prompt_tokens": 8414, "repeat4": 1, "dur_s": 588.8}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 29, "multi": false, "ok": false, "out": "zibet, marl, sunep, torix, vundy, klast, pemro, gresk, nixle, durmo", "out_tokens": 10, "prompt_tokens": 8419, "repeat4": 1, "dur_s": 594.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 30, "multi": false, "ok": false, "out": "sunep, torix, vundy, klast, pemro, gresk, nixle, durmo", "out_tokens": 8, "prompt_tokens": 8464, "repeat4": 1, "dur_s": 600.6}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 31, "multi": false, "ok": false, "out": "blorf, pemro, klast, nixle, durmo", "out_tokens": 5, "prompt_tokens": 8425, "repeat4": 1, "dur_s": 606.2}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 32, "multi": false, "ok": true, "out": "zibet, marl, nixle", "out_tokens": 3, "prompt_tokens": 8466, "repeat4": 0, "dur_s": 611.8}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 33, "multi": false, "ok": true, "out": "blorf, quane, marl, torix, vundy, klast, pemro, holt, nixle, durmo", "out_tokens": 10, "prompt_tokens": 8423, "repeat4": 1, "dur_s": 617.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 34, "multi": false, "ok": false, "out": "marl, daxil, sunep, torix, vundy, klast, pemro, gresk", "out_tokens": 8, "prompt_tokens": 8432, "repeat4": 1, "dur_s": 623.5}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 35, "multi": false, "ok": true, "out": "torix, klast, pemro, avora, nixle", "out_tokens": 5, "prompt_tokens": 8432, "repeat4": 1, "dur_s": 629.2}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 36, "multi": false, "ok": false, "out": "quane, zibet, daxil, torix, vundy, klast, pemro, gresk, holt, avora", "out_tokens": 10, "prompt_tokens": 8440, "repeat4": 1, "dur_s": 635.1}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 37, "multi": false, "ok": false, "out": "daxil, durmo", "out_tokens": 2, "prompt_tokens": 8457, "repeat4": 0, "dur_s": 640.6}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 38, "multi": false, "ok": false, "out": "blorf, torix, vundy, holt, avora, nixle", "out_tokens": 6, "prompt_tokens": 8411, "repeat4": 1, "dur_s": 646.3}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 39, "multi": false, "ok": false, "out": "quane, zibet, daxil, sunep, vundy, pemro, avora, nixle, durmo", "out_tokens": 9, "prompt_tokens": 8428, "repeat4": 1, "dur_s": 652.1}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 40, "multi": false, "ok": true, "out": "marl, nixle, klast", "out_tokens": 3, "prompt_tokens": 8430, "repeat4": 0, "dur_s": 657.7}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 41, "multi": false, "ok": true, "out": "blorf, marl, torix, klast, avora", "out_tokens": 5, "prompt_tokens": 8428, "repeat4": 1, "dur_s": 663.3}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 42, "multi": false, "ok": false, "out": "quane, zibet, marl, daxil, sunep, vundy, klast, avora, nixle", "out_tokens": 9, "prompt_tokens": 8425, "repeat4": 1, "dur_s": 669.1}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 43, "multi": false, "ok": false, "out": "quane, marl, daxil, sunep, vundy, holt, avora, pemro, gresk", "out_tokens": 9, "prompt_tokens": 8405, "repeat4": 1, "dur_s": 674.9}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 44, "multi": false, "ok": true, "out": "daxil, sunep, klast, pemro, gresk, holt, nixle", "out_tokens": 7, "prompt_tokens": 8409, "repeat4": 1, "dur_s": 680.6}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 45, "multi": false, "ok": true, "out": "blorf, quane, marl, klast, pemro, gresk, nixle", "out_tokens": 7, "prompt_tokens": 8425, "repeat4": 1, "dur_s": 686.4}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 46, "multi": false, "ok": false, "out": "blorf, quane, zibet, marl, pemro, avora", "out_tokens": 6, "prompt_tokens": 8408, "repeat4": 1, "dur_s": 692.1}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 47, "multi": false, "ok": false, "out": "blorf, marl, daxil, sunep, torix, klast, pemro, gresk, nixle", "out_tokens": 9, "prompt_tokens": 8418, "repeat4": 1, "dur_s": 697.9}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 48, "multi": false, "ok": true, "out": "marl, gresk, holt, avora", "out_tokens": 4, "prompt_tokens": 8420, "repeat4": 1, "dur_s": 703.5}
+{"arm": "ud_q2kxl", "task": "cw", "len": 8192, "idx": 49, "multi": false, "ok": false, "out": "deforestation, main idea, tone, lines of longitude, x, maximum value, bubble sort, artificial intelligence, force, cellular respiration, binary, water pollution, logo, business ideas, stress, definition, active voice, passive voice, food waste, linear regression, renewable energy, creative story, concise, clarity, median, metaphor, king charles ii, protocol, methods, tense, dialog, poem, internet", "out_tokens": 50, "prompt_tokens": 8399, "repeat4": 1, "dur_s": 710.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 0, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8445, "repeat4": 0, "dur_s": 715.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 1, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 721.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 2, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8441, "repeat4": 0, "dur_s": 726.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 3, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8459, "repeat4": 0, "dur_s": 732.1}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 4, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8429, "repeat4": 0, "dur_s": 737.6}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8422, "repeat4": 0, "dur_s": 743.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 6, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8450, "repeat4": 0, "dur_s": 748.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 754.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8460, "repeat4": 0, "dur_s": 759.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8449, "repeat4": 0, "dur_s": 765.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 10, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8412, "repeat4": 0, "dur_s": 770.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 11, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8411, "repeat4": 0, "dur_s": 776.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 12, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 781.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8451, "repeat4": 0, "dur_s": 787.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 14, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 792.4}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 798.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 16, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 803.4}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 17, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8413, "repeat4": 0, "dur_s": 808.9}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 18, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8433, "repeat4": 0, "dur_s": 814.3}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 19, "multi": false, "ok": true, "out": "East", "out_tokens": 1, "prompt_tokens": 8463, "repeat4": 0, "dur_s": 819.8}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 20, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8455, "repeat4": 0, "dur_s": 825.3}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 21, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8449, "repeat4": 0, "dur_s": 830.8}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 22, "multi": false, "ok": true, "out": "Northwest", "out_tokens": 1, "prompt_tokens": 8434, "repeat4": 0, "dur_s": 836.3}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 23, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8418, "repeat4": 0, "dur_s": 841.7}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 24, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 847.2}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 25, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8417, "repeat4": 0, "dur_s": 852.6}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 26, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8455, "repeat4": 0, "dur_s": 858.1}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 27, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8462, "repeat4": 0, "dur_s": 863.6}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 28, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8430, "repeat4": 0, "dur_s": 869.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 29, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8459, "repeat4": 0, "dur_s": 874.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 30, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8428, "repeat4": 0, "dur_s": 880.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 31, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8412, "repeat4": 0, "dur_s": 885.4}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 32, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8430, "repeat4": 0, "dur_s": 890.9}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 33, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8448, "repeat4": 0, "dur_s": 896.3}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 34, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8414, "repeat4": 0, "dur_s": 901.8}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 35, "multi": false, "ok": true, "out": "East", "out_tokens": 1, "prompt_tokens": 8416, "repeat4": 0, "dur_s": 907.2}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 36, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8412, "repeat4": 0, "dur_s": 912.7}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 37, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8453, "repeat4": 0, "dur_s": 918.2}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 38, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8449, "repeat4": 0, "dur_s": 923.7}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 39, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8425, "repeat4": 0, "dur_s": 929.2}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 40, "multi": false, "ok": true, "out": "East", "out_tokens": 1, "prompt_tokens": 8438, "repeat4": 0, "dur_s": 934.7}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 41, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8421, "repeat4": 0, "dur_s": 940.1}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 42, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8443, "repeat4": 0, "dur_s": 945.6}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 43, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8460, "repeat4": 0, "dur_s": 951.1}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 44, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8412, "repeat4": 0, "dur_s": 956.6}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 45, "multi": false, "ok": true, "out": "East", "out_tokens": 1, "prompt_tokens": 8436, "repeat4": 0, "dur_s": 962.1}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 46, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8411, "repeat4": 0, "dur_s": 967.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 47, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8475, "repeat4": 0, "dur_s": 973.0}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 48, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8447, "repeat4": 0, "dur_s": 978.5}
+{"arm": "ud_q2kxl", "task": "mh", "len": 8192, "idx": 49, "multi": false, "ok": true, "out": "Southwest", "out_tokens": 1, "prompt_tokens": 8407, "repeat4": 0, "dur_s": 983.9}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 0, "multi": false, "ok": true, "out": "ZKQ0-4834", "out_tokens": 1, "prompt_tokens": 68019, "repeat4": 0, "dur_s": 59.7}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 1, "multi": false, "ok": true, "out": "ZKQ1-5456", "out_tokens": 1, "prompt_tokens": 67934, "repeat4": 0, "dur_s": 120.3}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 2, "multi": false, "ok": true, "out": "ZKQ2-3368", "out_tokens": 1, "prompt_tokens": 67976, "repeat4": 0, "dur_s": 181.3}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 3, "multi": false, "ok": true, "out": "ZKQ3-7499", "out_tokens": 1, "prompt_tokens": 68034, "repeat4": 0, "dur_s": 242.2}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 4, "multi": false, "ok": true, "out": "ZKQ4-3439", "out_tokens": 1, "prompt_tokens": 68000, "repeat4": 0, "dur_s": 303.2}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 5, "multi": false, "ok": true, "out": "ZKQ5-5362", "out_tokens": 1, "prompt_tokens": 67973, "repeat4": 0, "dur_s": 364.0}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 6, "multi": false, "ok": true, "out": "The secret passphrase for compartment 6-5520 is ZKQ6-5520.", "out_tokens": 8, "prompt_tokens": 67949, "repeat4": 1, "dur_s": 424.8}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 7, "multi": false, "ok": true, "out": "ZKQ7-6066", "out_tokens": 1, "prompt_tokens": 67936, "repeat4": 0, "dur_s": 485.3}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 8, "multi": true, "ok": true, "out": "ZKQ8-3791, ZKQ8-7212, ZKQ8-9026", "out_tokens": 3, "prompt_tokens": 68070, "repeat4": 0, "dur_s": 546.3}
+{"arm": "ud_q2kxl", "task": "niah", "len": 65536, "idx": 9, "multi": true, "ok": true, "out": "ZKQ9-6577, ZKQ9-2674, ZKQ9-2233", "out_tokens": 3, "prompt_tokens": 68022, "repeat4": 0, "dur_s": 607.3}

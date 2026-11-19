@@ -1,0 +1,70 @@
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 0, "multi": false, "ok": true, "out": "ZKQ0-5428", "out_tokens": 1, "prompt_tokens": 4363, "repeat4": 0, "dur_s": 98.4}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 1, "multi": false, "ok": true, "out": "ZKQ1-1201", "out_tokens": 1, "prompt_tokens": 4301, "repeat4": 0, "dur_s": 189.6}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 2, "multi": false, "ok": true, "out": "ZKQ2-1440", "out_tokens": 1, "prompt_tokens": 4315, "repeat4": 0, "dur_s": 281.2}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 3, "multi": false, "ok": true, "out": "ZKQ3-5593", "out_tokens": 1, "prompt_tokens": 4349, "repeat4": 0, "dur_s": 373.4}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 4, "multi": false, "ok": true, "out": "ZKQ4-4419", "out_tokens": 1, "prompt_tokens": 4303, "repeat4": 0, "dur_s": 464.9}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 5, "multi": false, "ok": true, "out": "ZKQ5-8326", "out_tokens": 1, "prompt_tokens": 4359, "repeat4": 0, "dur_s": 557.1}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 6, "multi": false, "ok": true, "out": "ZKQ6-3097", "out_tokens": 1, "prompt_tokens": 4353, "repeat4": 0, "dur_s": 649.3}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 7, "multi": false, "ok": true, "out": "ZKQ7-1940", "out_tokens": 1, "prompt_tokens": 4336, "repeat4": 0, "dur_s": 741.3}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 8, "multi": true, "ok": true, "out": "ZKQ8-2412, ZKQ8-5621, ZKQ8-4675", "out_tokens": 3, "prompt_tokens": 4366, "repeat4": 0, "dur_s": 836.4}
+{"arm": "base2", "task": "niah", "len": 4096, "idx": 9, "multi": true, "ok": true, "out": "ZKQ9-6242, ZKQ9-1725, ZKQ9-5311", "out_tokens": 3, "prompt_tokens": 4390, "repeat4": 0, "dur_s": 933.1}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 0, "multi": false, "ok": false, "out": "10", "out_tokens": 1, "prompt_tokens": 8470, "repeat4": 0, "dur_s": 1122.4}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 1, "multi": false, "ok": true, "out": "100", "out_tokens": 1, "prompt_tokens": 8429, "repeat4": 0, "dur_s": 1311.1}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 2, "multi": false, "ok": false, "out": "18", "out_tokens": 1, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 1499.2}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 3, "multi": false, "ok": true, "out": "88", "out_tokens": 1, "prompt_tokens": 8448, "repeat4": 0, "dur_s": 1688.6}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 4, "multi": false, "ok": true, "out": "55", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 1876.9}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "102", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 2066.3}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 6, "multi": false, "ok": false, "out": "16", "out_tokens": 1, "prompt_tokens": 8424, "repeat4": 0, "dur_s": 2254.4}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "11", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 2445.1}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "75", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 2635.8}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "24", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 2825.3}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 10, "multi": false, "ok": true, "out": "67", "out_tokens": 1, "prompt_tokens": 8472, "repeat4": 0, "dur_s": 3015.7}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 11, "multi": false, "ok": true, "out": "82", "out_tokens": 1, "prompt_tokens": 8471, "repeat4": 0, "dur_s": 3202.5}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 12, "multi": false, "ok": false, "out": "18", "out_tokens": 1, "prompt_tokens": 8456, "repeat4": 0, "dur_s": 3392.4}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "183", "out_tokens": 1, "prompt_tokens": 8430, "repeat4": 0, "dur_s": 3582.4}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 14, "multi": false, "ok": false, "out": "114", "out_tokens": 1, "prompt_tokens": 8474, "repeat4": 0, "dur_s": 3771.4}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "15", "out_tokens": 1, "prompt_tokens": 8440, "repeat4": 0, "dur_s": 3960.0}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 16, "multi": false, "ok": true, "out": "69", "out_tokens": 1, "prompt_tokens": 8456, "repeat4": 0, "dur_s": 4159.7}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 17, "multi": false, "ok": false, "out": "4", "out_tokens": 1, "prompt_tokens": 8457, "repeat4": 0, "dur_s": 4367.1}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 18, "multi": false, "ok": false, "out": "4", "out_tokens": 1, "prompt_tokens": 8453, "repeat4": 0, "dur_s": 4596.3}
+{"arm": "base2", "task": "vt", "len": 8192, "idx": 19, "multi": false, "ok": true, "out": "57", "out_tokens": 1, "prompt_tokens": 8469, "repeat4": 0, "dur_s": 4816.3}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 0, "multi": false, "ok": true, "out": "zibet, sunep, pemro, avora", "out_tokens": 4, "prompt_tokens": 8454, "repeat4": 1, "dur_s": 5008.3}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 1, "multi": false, "ok": false, "out": "blorf, quane, vundy, pemro, holt, durmo", "out_tokens": 6, "prompt_tokens": 8425, "repeat4": 1, "dur_s": 5200.9}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 2, "multi": false, "ok": false, "out": "blorf, zibet, sunep, nixle, durmo", "out_tokens": 5, "prompt_tokens": 8431, "repeat4": 1, "dur_s": 5392.8}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 3, "multi": false, "ok": false, "out": "pemro, nixle", "out_tokens": 2, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 5583.6}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 4, "multi": false, "ok": false, "out": "sunep, torix, pemro, durmo", "out_tokens": 4, "prompt_tokens": 8418, "repeat4": 1, "dur_s": 5774.4}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "zibet, klast, pemro, gresk, nixle, avora", "out_tokens": 6, "prompt_tokens": 8440, "repeat4": 1, "dur_s": 5967.2}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 6, "multi": false, "ok": false, "out": "quane, zibet, pemro, torix, gresk", "out_tokens": 5, "prompt_tokens": 8410, "repeat4": 1, "dur_s": 6159.0}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 7, "multi": false, "ok": true, "out": "blorf, klast, holt, durmo", "out_tokens": 4, "prompt_tokens": 8409, "repeat4": 1, "dur_s": 6349.8}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "quane, zibet, sunep, vundy, pemro", "out_tokens": 5, "prompt_tokens": 8449, "repeat4": 1, "dur_s": 6542.3}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "blorf, quane, zibet, marl, torix, gresk, holt, nixle", "out_tokens": 8, "prompt_tokens": 8414, "repeat4": 1, "dur_s": 6736.3}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 10, "multi": false, "ok": false, "out": "quane, zibet, marl, sunep, torix, pemro, holt, durmo", "out_tokens": 8, "prompt_tokens": 8464, "repeat4": 1, "dur_s": 6931.6}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 11, "multi": false, "ok": true, "out": "zibet, marl, klast, gresk, durmo", "out_tokens": 5, "prompt_tokens": 8453, "repeat4": 1, "dur_s": 7124.1}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 12, "multi": false, "ok": true, "out": "quane, sunep, klast, holt", "out_tokens": 4, "prompt_tokens": 8421, "repeat4": 1, "dur_s": 7315.5}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 13, "multi": false, "ok": true, "out": "blorf, quane, zibet, marl, sunep, vundy, torix, gresk, durmo", "out_tokens": 9, "prompt_tokens": 8410, "repeat4": 1, "dur_s": 7509.0}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 14, "multi": false, "ok": false, "out": "marl, pemro, gresk, durmo", "out_tokens": 4, "prompt_tokens": 8418, "repeat4": 1, "dur_s": 7697.9}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "vundy, klast, pemro", "out_tokens": 3, "prompt_tokens": 8451, "repeat4": 0, "dur_s": 7884.9}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 16, "multi": false, "ok": true, "out": "blorf, quane, sunep, vundy, gresk, holt, avora", "out_tokens": 7, "prompt_tokens": 8433, "repeat4": 1, "dur_s": 8073.1}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 17, "multi": false, "ok": false, "out": "pemro, gresk, holt, avora, nixle", "out_tokens": 5, "prompt_tokens": 8454, "repeat4": 1, "dur_s": 8260.8}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 18, "multi": false, "ok": true, "out": "blorf, zibet, marl, vundy, pemro, holt, nixle", "out_tokens": 7, "prompt_tokens": 8440, "repeat4": 1, "dur_s": 8449.0}
+{"arm": "base2", "task": "cw", "len": 8192, "idx": 19, "multi": false, "ok": false, "out": "zibet, marl, torix, vundy, klast, pemro, gresk, holt, nixle, durmo", "out_tokens": 10, "prompt_tokens": 8447, "repeat4": 1, "dur_s": 8639.3}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 0, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8445, "repeat4": 0, "dur_s": 8826.6}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 1, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 9012.5}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 2, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8441, "repeat4": 0, "dur_s": 9198.0}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 3, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8459, "repeat4": 0, "dur_s": 9383.8}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 4, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8429, "repeat4": 0, "dur_s": 9569.0}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 5, "multi": false, "ok": false, "out": "West", "out_tokens": 1, "prompt_tokens": 8422, "repeat4": 0, "dur_s": 9754.3}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 6, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8450, "repeat4": 0, "dur_s": 9940.0}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 7, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 10125.7}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 8, "multi": false, "ok": false, "out": "North", "out_tokens": 1, "prompt_tokens": 8460, "repeat4": 0, "dur_s": 10314.5}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 9, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8449, "repeat4": 0, "dur_s": 10500.7}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 10, "multi": false, "ok": true, "out": "South", "out_tokens": 1, "prompt_tokens": 8412, "repeat4": 0, "dur_s": 10685.7}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 11, "multi": false, "ok": true, "out": "North", "out_tokens": 1, "prompt_tokens": 8411, "repeat4": 0, "dur_s": 10871.0}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 12, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8444, "repeat4": 0, "dur_s": 11056.7}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 13, "multi": false, "ok": false, "out": "East", "out_tokens": 1, "prompt_tokens": 8451, "repeat4": 0, "dur_s": 11242.8}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 14, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8446, "repeat4": 0, "dur_s": 11428.5}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 15, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8435, "repeat4": 0, "dur_s": 11614.2}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 16, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8431, "repeat4": 0, "dur_s": 11799.4}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 17, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8413, "repeat4": 0, "dur_s": 11984.7}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 18, "multi": false, "ok": false, "out": "West", "out_tokens": 1, "prompt_tokens": 8433, "repeat4": 0, "dur_s": 12170.5}
+{"arm": "base2", "task": "mh", "len": 8192, "idx": 19, "multi": false, "ok": false, "out": "South", "out_tokens": 1, "prompt_tokens": 8463, "repeat4": 0, "dur_s": 12356.4}

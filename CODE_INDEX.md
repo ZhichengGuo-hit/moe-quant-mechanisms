@@ -1,6 +1,6 @@
 # 代码清单
 
-生成时间：2026-11-18；扫描 `tcq_exp/`、`tcmoe/`、`reverse/`、`route_consistency/`、`nemotron_ext/`、`gptq_baseline/`（实验脚本与 TCQ 打包工具），排除 `_tmp` 调试脚本、数据/结果目录与 `erc/`（开源导出不含 ERC 内容）；`llamacpp/` 为对上游 llama.cpp 的本地改动（`git diff` patch + 未跟踪新文件副本，基线 commit 见行内说明）；说明取每个文件首段 docstring（缺失时取首个注释行）。
+生成时间：2026-11-19；扫描 `tcq_exp/`、`tcmoe/`、`reverse/`、`route_consistency/`、`nemotron_ext/`、`gptq_baseline/`（实验脚本与 TCQ 打包工具），排除 `_tmp` 调试脚本、数据/结果目录与 `erc/`（开源导出不含 ERC 内容）；`tcq_exp/moe_lib.py` 与 `tcmoe/moe_lib.py` 为同一份 vendored INT4 核心库（与脚本同目录，保证 `from moe_lib import ...` 开箱可用）；结果文件副本见 `results/`；`llamacpp/` 为对上游 llama.cpp 的本地改动（`git diff` patch + 未跟踪新文件副本，基线 commit 见行内说明）；说明取每个文件首段 docstring（缺失时取首个注释行）。
 
 | 文件 | 大小 KB | 说明 |
 |---|---|---|
@@ -111,10 +111,12 @@
 | `tcq_exp/int2_ext.py` | 1.5 | int2_ext 构建/加载 helper: 2bit 密排底座 + INT4 补丁 混合 FFN 扩展 (A1)。 |
 | `tcq_exp/make_data.py` | 3.3 | 构建三域校准/评测数据: math(GSM8K), code(HumanEval), general(Alpaca)。 |
 | `tcq_exp/make_data_stage2.py` | 5.7 | 阶段 2 数据构建: |
+| `tcq_exp/moe_lib.py` | 44.0 | MoE 推训一体 INT4 核心库 (Qwen3.6-35B-A3B) |
 | `tcq_exp/pin.py` | 5.0 | CPU 亲和性绑定 (Windows 双路 Xeon, 2 NUMA node)。 |
 | `tcq_exp/smoke_probe.py` | 4.6 | 冒烟测试: 验证 Qwen3.6-35B-A3B INT4 引擎在本机(16GB GPU + CPU offload)可跑前向, |
 | `tcq_exp/smoke_speed.py` | 2.7 | 速度对比: GPU缓存prefill(默认) vs CPU批量直接INT4 prefill, 以及decode。 |
 | `tcq_exp/tcq_lib.py` | 11.3 | 任务条件化量化实验公共库: |
+| `tcmoe/moe_lib.py` | 44.0 | MoE 推训一体 INT4 核心库 (Qwen3.6-35B-A3B) |
 | `tcmoe/pack_tcmoe.py` | 17.3 | !/usr/bin/env python3 |
 | `tcmoe/verify_bitwise.py` | 4.3 | !/usr/bin/env python3 |
 | `reverse/e_g1_eval.py` | 17.0 | E-G1 跨模型评测: gemma-4-26B-A4B (MoE) 三任务 (gsm8k / humaneval / gpqa)。 |
@@ -123,7 +125,7 @@
 | `reverse/run_tasks.py` | 5.0 | C1: 用一个臂跑 GSM8K200 + HumanEval164 (协议 = e17 / e_g1_eval, 与 E-H1c 完全相同)。 |
 | `route_consistency/r2_analyze.py` | 14.7 | E-R2 分析：三配置路由一致性 + 翻转 token 的 NLL 代价 + 预注册判定。 |
 | `route_consistency/r2_run.py` | 4.2 | E-R2 采集：对三个配置导出 eval64 三域的逐 token 路由概率 + NLL。 |
-| `nemotron_ext/n1_analyze.py` | 12.0 | E-N1: Nemotron 四档 + Q6 锚 vs Qwen3.6 六档的 acc/CoT-位宽曲线与断崖判定。 |
+| `nemotron_ext/n1_analyze.py` | 12.6 | E-N1: Nemotron 四档 + Q6 锚 vs Qwen3.6 六档的 acc/CoT-位宽曲线与断崖判定。 |
 | `nemotron_ext/route/nr_analyze.py` | 6.1 | E-R2 Nemotron 臂分析：Q3_K_M vs Q6_K 的路由一致性。 |
 | `nemotron_ext/route/nr_run.py` | 2.5 | E-R2 Nemotron 臂采集：i1-Q3_K_M vs i1-Q6_K 的逐 token 路由。 |
 | `gptq_baseline/eval_gptq.py` | 4.2 | E-GPTQ 评测：GPTQ-3bit（HF 格式）在 GSM8K 200 + HumanEval 164 上。 |

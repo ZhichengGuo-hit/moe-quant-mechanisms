@@ -1,0 +1,43 @@
+{
+  "ts": "2026-11-07T05:47:18",
+  "model": "Xing4.0-29B-A4B",
+  "builds": [
+    {
+      "tag": "c",
+      "file": "E:\\CUDA11.8\\model\\xing\\g3\\e_g3_c.gguf",
+      "gib": 16.636,
+      "est_gib": 16.633,
+      "dev_pct": 0.02,
+      "within_5pct": true
+    },
+    {
+      "tag": "d",
+      "file": "E:\\CUDA11.8\\model\\xing\\g3\\e_g3_d.gguf",
+      "gib": 16.636,
+      "est_gib": 16.633,
+      "dev_pct": 0.02,
+      "within_5pct": true
+    },
+    {
+      "tag": "r",
+      "file": "E:\\CUDA11.8\\model\\xing\\g3\\e_g3_r.gguf",
+      "gib": 13.117,
+      "est_gib": 13.114,
+      "dev_pct": 0.02,
+      "within_5pct": true
+    }
+  ],
+  "refs": {
+    "a": "官方 xing4_0-29b-iq4_xs",
+    "b1": "社区 Venastine Q4_K_M",
+    "b2": "社区 dealignai CRACK Q4_K_M"
+  },
+  "bin": "E:\\CUDA11.8\\train\\llama-upstream\\build-cuda\\bin",
+  "imatrix": {
+    "file": "E:\\CUDA11.8\\train\\tcq_exp\\results\\e_g3_imatrix.gguf",
+    "size_gib": 0.17,
+    "corpus": "E:\\CUDA11.8\\train\\tcq_exp\\data\\g1_calib.txt",
+    "corpus_bytes": 23441
+  },
+  "note": "角色对齐 llama-quantize; 专家为融合张量 → 只能整层/整张量分档"
+}

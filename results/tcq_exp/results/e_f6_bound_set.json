@@ -1,0 +1,49 @@
+{
+ "generated_at": "2026-11-19 08:20:56",
+ "suite": "E18 / E-F6",
+ "full_file": {
+  "name": "TCQ-nl_global full file",
+  "artifact": "tcmoe/out/model-tcmoe-q4k-nl.gguf",
+  "bytes": 24711991680,
+  "gib": 23.015,
+  "verified": true
+ },
+ "decomposition": {
+  "method": "GGUF tensor n_bytes 求和（排除文件元数据/对齐，约 10 MiB）",
+  "base_gib": 10.348,
+  "patch_gib_each": 4.219,
+  "n_domain_patches": 3,
+  "tensor_sum_gib": 23.005,
+  "single_patch_bound_gib": 14.567,
+  "verified": true
+ },
+ "single_patch_bound_set": {
+  "gib": 14.57,
+  "derived_gib": 14.567,
+  "source": "base + 1 个域补丁；e_f6_pareto.py ANCHORS 使用 14.57",
+  "verified": true,
+  "note": "23.005 = 10.348 + 3 x 4.219；14.567 = 10.348 + 4.219，与正文 14.57 一致"
+ },
+ "ratio_full_over_bound": 1.58,
+ "e18_volume_basis": {
+  "base2_gib": 7.97,
+  "row4_gib_per_all": 15.0,
+  "int4_gib": 15.58
+ },
+ "e18_frontier": [
+  "base2",
+  "base2_q5_global",
+  "base2_q10_global",
+  "base2_q15_global",
+  "base2_q25_global",
+  "base3",
+  "base3_global",
+  "base3_task_code",
+  "int4"
+ ],
+ "related_files": [
+  "pareto.json",
+  "e_f6_pareto.csv",
+  "e_f6_pareto.png"
+ ]
+}

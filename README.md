@@ -64,7 +64,7 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 
 | 路径 | 内容 |
 |---|---|
-| `code/tcq_exp/` | 主体实验脚本（111 个），`a*` 换装与运行时、`b*` 路由分离度、`c*` 统计与配对、`d*` 残差谱与换装代价、`e*` 端到端评测 |
+| `code/tcq_exp/` | 主体实验脚本（112 个，含 vendored `moe_lib.py`），`a*` 换装与运行时、`b*` 路由分离度、`c*` 统计与配对、`d*` 残差谱与换装代价、`e*` 端到端评测 |
 | `code/tcmoe/` | 单文件多补丁容器打包与逐位一致性校验 |
 | `code/reverse/` | 由容器反解类型表、配对评测 |
 | `code/route_consistency/` | 路由一致性复测 |
@@ -72,6 +72,8 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 | `code/gptq_baseline/` | GPTQ 基线量化与评测 |
 | `docs/` | 五组实验的**预注册 PREREG** 与**执行记录 PROGRESS** |
 | `llamacpp/` | 上游与 TCQ 两套补丁 + `llama-tcmoe.{h,cpp}`、`tcmoe-verify` |
+| `results/` | 各模块原始结果，按 `results/<module>/results/` 组织 |
+| `paper-v6-fixed.tex` | 论文 LaTeX 源 |
 
 ## 关键文档
 
@@ -106,18 +108,18 @@ git -C /path/to/llama.cpp apply llamacpp/llama.cpp-tcmoe.patch
 
 ## 路径约定与结果文件
 
-仓库根的 `code/` 对应原工作目录。文档中出现的 `tcq_exp/...`、`tcmoe/...` 等相对路径**均相对于 `code/`**（实际位置 `code/tcq_exp/...`）。
+仓库根的 `code/` 对应原工作目录。文档中出现的不带前缀的脚本路径（如 `tcq_exp/e_f2_gsm8k.py`）**均相对于 `code/`**（实际位置 `code/tcq_exp/e_f2_gsm8k.py`）。
 
-各模块的原始结果（JSON / JSONL / CSV）**已随仓库提供**，共 58 个文件，位于 `code/<module>/results/`：
+各模块的原始结果（JSON / JSONL / CSV / SVG）随仓库提供，共 **157 个文件**，位于仓库根的 `results/`：
 
 | 目录 | 文件数 | 内容 |
 |---|---|---|
-| `code/tcq_exp/results/` | 51 | 组件阶梯、KLD、配对检验、码本拟合、换装代价、跨模型汇总 |
-| `code/reverse/results/` | 3 | 容器反解元数据与配对评测 |
-| `code/route_consistency/results/` | 2 | 逐层路由一致性 |
-| `code/nemotron_ext/results/` · `route/results/` | 2 | Nemotron 外延与路由 |
+| `results/tcq_exp/results/` | 148 | 组件阶梯、KLD、配对检验、码本拟合、换装代价、逐题输出、跨模型汇总 |
+| `results/nemotron_ext/results/` · `route/results/` | 4 | Nemotron 位宽曲线与路由统计 |
+| `results/reverse/results/` | 3 | 容器反解元数据与配对评测 |
+| `results/route_consistency/results/` | 2 | 逐层路由一致性 |
 
-`DATA_TABLE.md` 中每一行都标注了对应的结果文件路径，可直接对照定位。ERC（残差补偿）实验的结果按导出约定不含在内。
+`DATA_TABLE.md` 中每一行的结果路径可直接对照定位。ERC（残差补偿）实验按导出约定不含在内；`_tmp_*`、`*smoke*` 等调试产物亦未纳入。
 
 ## 引用
 

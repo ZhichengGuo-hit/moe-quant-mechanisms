@@ -1,0 +1,779 @@
+{
+  "arm": "tcq_nl_global",
+  "subset": "multi_turn_base",
+  "baseline_acc_ref": 0.15,
+  "baseline": {
+    "n": 20,
+    "source": "E:\\CUDA11.8\\train\\tcq_exp\\results\\a1a\\tcq_nl_global\\reviews\\tcq_nl_global\\bfcl_v3_multi_turn_base.jsonl",
+    "acc": 0.15,
+    "turns_mean": 20.35,
+    "calls_mean": 18.25,
+    "multi_call_rate": 0.45,
+    "repeat_pairs_mean": 7.15,
+    "tool_errors_mean": 6.65,
+    "tool_errors_total": 133,
+    "cd_errors_mean": 4.7,
+    "cd_errors_total": 94,
+    "terminated_rate": 0.9,
+    "fail": {
+      "n": 17,
+      "turns_mean": 22.059,
+      "repeat_pairs_mean": 8.412,
+      "tool_errors_mean": 7.412,
+      "cd_errors_mean": 5.235
+    },
+    "rows": [
+      {
+        "index": 0,
+        "acc": 0.0,
+        "turns": 23,
+        "n_calls": 19,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 2,
+        "cd_errors": 2,
+        "terminated": true
+      },
+      {
+        "index": 1,
+        "acc": 0.0,
+        "turns": 18,
+        "n_calls": 17,
+        "multi": 3,
+        "repeat_pairs": 0,
+        "tool_errors": 5,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 2,
+        "acc": 0.0,
+        "turns": 51,
+        "n_calls": 48,
+        "multi": 1,
+        "repeat_pairs": 19,
+        "tool_errors": 26,
+        "cd_errors": 21,
+        "terminated": false
+      },
+      {
+        "index": 3,
+        "acc": 0.0,
+        "turns": 5,
+        "n_calls": 4,
+        "multi": 1,
+        "repeat_pairs": 0,
+        "tool_errors": 2,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 4,
+        "acc": 0.0,
+        "turns": 15,
+        "n_calls": 12,
+        "multi": 0,
+        "repeat_pairs": 1,
+        "tool_errors": 2,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 5,
+        "acc": 0.0,
+        "turns": 16,
+        "n_calls": 12,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 1,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 6,
+        "acc": 0.0,
+        "turns": 15,
+        "n_calls": 10,
+        "multi": 0,
+        "repeat_pairs": 1,
+        "tool_errors": 1,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 7,
+        "acc": 0.0,
+        "turns": 9,
+        "n_calls": 11,
+        "multi": 4,
+        "repeat_pairs": 0,
+        "tool_errors": 3,
+        "cd_errors": 1,
+        "terminated": true
+      },
+      {
+        "index": 8,
+        "acc": 0.0,
+        "turns": 9,
+        "n_calls": 5,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 0,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 9,
+        "acc": 0.0,
+        "turns": 63,
+        "n_calls": 63,
+        "multi": 0,
+        "repeat_pairs": 61,
+        "tool_errors": 1,
+        "cd_errors": 1,
+        "terminated": false
+      },
+      {
+        "index": 10,
+        "acc": 0.0,
+        "turns": 11,
+        "n_calls": 7,
+        "multi": 1,
+        "repeat_pairs": 0,
+        "tool_errors": 3,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 11,
+        "acc": 0.0,
+        "turns": 8,
+        "n_calls": 8,
+        "multi": 2,
+        "repeat_pairs": 0,
+        "tool_errors": 3,
+        "cd_errors": 1,
+        "terminated": true
+      },
+      {
+        "index": 12,
+        "acc": 1.0,
+        "turns": 10,
+        "n_calls": 8,
+        "multi": 1,
+        "repeat_pairs": 0,
+        "tool_errors": 4,
+        "cd_errors": 3,
+        "terminated": true
+      },
+      {
+        "index": 13,
+        "acc": 1.0,
+        "turns": 8,
+        "n_calls": 6,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 1,
+        "cd_errors": 1,
+        "terminated": true
+      },
+      {
+        "index": 14,
+        "acc": 0.0,
+        "turns": 66,
+        "n_calls": 68,
+        "multi": 2,
+        "repeat_pairs": 61,
+        "tool_errors": 64,
+        "cd_errors": 63,
+        "terminated": true
+      },
+      {
+        "index": 15,
+        "acc": 0.0,
+        "turns": 14,
+        "n_calls": 9,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 1,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 16,
+        "acc": 0.0,
+        "turns": 24,
+        "n_calls": 21,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 3,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 17,
+        "acc": 1.0,
+        "turns": 14,
+        "n_calls": 11,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 2,
+        "cd_errors": 1,
+        "terminated": true
+      },
+      {
+        "index": 18,
+        "acc": 0.0,
+        "turns": 21,
+        "n_calls": 22,
+        "multi": 2,
+        "repeat_pairs": 0,
+        "tool_errors": 7,
+        "cd_errors": 0,
+        "terminated": true
+      },
+      {
+        "index": 19,
+        "acc": 0.0,
+        "turns": 7,
+        "n_calls": 4,
+        "multi": 0,
+        "repeat_pairs": 0,
+        "tool_errors": 2,
+        "cd_errors": 0,
+        "terminated": true
+      }
+    ]
+  },
+  "modes": {
+    "single_call": {
+      "n": 20,
+      "source": "E:\\CUDA11.8\\train\\tcq_exp\\results\\a1g\\single_call\\reviews\\tcq_nl_global\\bfcl_v3_multi_turn_base.jsonl",
+      "acc": 0.55,
+      "turns_mean": 18.6,
+      "calls_mean": 15.4,
+      "multi_call_rate": 0.0,
+      "repeat_pairs_mean": 5.7,
+      "tool_errors_mean": 4.8,
+      "tool_errors_total": 96,
+      "cd_errors_mean": 1.4,
+      "cd_errors_total": 28,
+      "terminated_rate": 0.95,
+      "fail": {
+        "n": 9,
+        "turns_mean": 24.889,
+        "repeat_pairs_mean": 12.556,
+        "tool_errors_mean": 8.667,
+        "cd_errors_mean": 2.778
+      },
+      "rows": [
+        {
+          "index": 0,
+          "acc": 1.0,
+          "turns": 26,
+          "n_calls": 22,
+          "multi": 0,
+          "repeat_pairs": 1,
+          "tool_errors": 1,
+          "cd_errors": 1,
+          "terminated": true
+        },
+        {
+          "index": 1,
+          "acc": 1.0,
+          "turns": 15,
+          "n_calls": 11,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 5,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 2,
+          "acc": 0.0,
+          "turns": 105,
+          "n_calls": 105,
+          "multi": 0,
+          "repeat_pairs": 94,
+          "tool_errors": 44,
+          "cd_errors": 1,
+          "terminated": false
+        },
+        {
+          "index": 3,
+          "acc": 1.0,
+          "turns": 13,
+          "n_calls": 11,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 3,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 4,
+          "acc": 0.0,
+          "turns": 25,
+          "n_calls": 23,
+          "multi": 0,
+          "repeat_pairs": 19,
+          "tool_errors": 20,
+          "cd_errors": 20,
+          "terminated": true
+        },
+        {
+          "index": 5,
+          "acc": 1.0,
+          "turns": 14,
+          "n_calls": 10,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 2,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 6,
+          "acc": 0.0,
+          "turns": 12,
+          "n_calls": 7,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 7,
+          "acc": 1.0,
+          "turns": 10,
+          "n_calls": 7,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 2,
+          "cd_errors": 1,
+          "terminated": true
+        },
+        {
+          "index": 8,
+          "acc": 0.0,
+          "turns": 9,
+          "n_calls": 5,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 9,
+          "acc": 0.0,
+          "turns": 27,
+          "n_calls": 24,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 9,
+          "cd_errors": 3,
+          "terminated": true
+        },
+        {
+          "index": 10,
+          "acc": 0.0,
+          "turns": 12,
+          "n_calls": 7,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 11,
+          "acc": 0.0,
+          "turns": 5,
+          "n_calls": 3,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 12,
+          "acc": 1.0,
+          "turns": 8,
+          "n_calls": 5,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 13,
+          "acc": 1.0,
+          "turns": 10,
+          "n_calls": 8,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 14,
+          "acc": 1.0,
+          "turns": 12,
+          "n_calls": 8,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 15,
+          "acc": 0.0,
+          "turns": 12,
+          "n_calls": 7,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 16,
+          "acc": 1.0,
+          "turns": 17,
+          "n_calls": 14,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 3,
+          "cd_errors": 1,
+          "terminated": true
+        },
+        {
+          "index": 17,
+          "acc": 1.0,
+          "turns": 11,
+          "n_calls": 8,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 18,
+          "acc": 0.0,
+          "turns": 17,
+          "n_calls": 14,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 2,
+          "cd_errors": 1,
+          "terminated": true
+        },
+        {
+          "index": 19,
+          "acc": 1.0,
+          "turns": 12,
+          "n_calls": 9,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        }
+      ]
+    },
+    "cwd_hint": {
+      "n": 20,
+      "source": "E:\\CUDA11.8\\train\\tcq_exp\\results\\a1g\\cwd_hint\\reviews\\tcq_nl_global\\bfcl_v3_multi_turn_base.jsonl",
+      "acc": 0.55,
+      "turns_mean": 15.25,
+      "calls_mean": 13.45,
+      "multi_call_rate": 0.5,
+      "repeat_pairs_mean": 1.0,
+      "tool_errors_mean": 3.6,
+      "tool_errors_total": 72,
+      "cd_errors_mean": 1.6,
+      "cd_errors_total": 32,
+      "terminated_rate": 1.0,
+      "fail": {
+        "n": 9,
+        "turns_mean": 18.111,
+        "repeat_pairs_mean": 2.111,
+        "tool_errors_mean": 5.667,
+        "cd_errors_mean": 3.333
+      },
+      "rows": [
+        {
+          "index": 0,
+          "acc": 1.0,
+          "turns": 26,
+          "n_calls": 22,
+          "multi": 0,
+          "repeat_pairs": 1,
+          "tool_errors": 1,
+          "cd_errors": 1,
+          "terminated": true
+        },
+        {
+          "index": 1,
+          "acc": 1.0,
+          "turns": 15,
+          "n_calls": 15,
+          "multi": 4,
+          "repeat_pairs": 0,
+          "tool_errors": 6,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 2,
+          "acc": 0.0,
+          "turns": 50,
+          "n_calls": 63,
+          "multi": 13,
+          "repeat_pairs": 0,
+          "tool_errors": 16,
+          "cd_errors": 6,
+          "terminated": true
+        },
+        {
+          "index": 3,
+          "acc": 1.0,
+          "turns": 13,
+          "n_calls": 11,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 3,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 4,
+          "acc": 0.0,
+          "turns": 25,
+          "n_calls": 23,
+          "multi": 0,
+          "repeat_pairs": 19,
+          "tool_errors": 20,
+          "cd_errors": 20,
+          "terminated": true
+        },
+        {
+          "index": 5,
+          "acc": 1.0,
+          "turns": 14,
+          "n_calls": 10,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 2,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 6,
+          "acc": 0.0,
+          "turns": 12,
+          "n_calls": 7,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 7,
+          "acc": 1.0,
+          "turns": 8,
+          "n_calls": 6,
+          "multi": 1,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 8,
+          "acc": 0.0,
+          "turns": 9,
+          "n_calls": 5,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 9,
+          "acc": 0.0,
+          "turns": 27,
+          "n_calls": 24,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 9,
+          "cd_errors": 3,
+          "terminated": true
+        },
+        {
+          "index": 10,
+          "acc": 0.0,
+          "turns": 11,
+          "n_calls": 7,
+          "multi": 1,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 11,
+          "acc": 0.0,
+          "turns": 8,
+          "n_calls": 8,
+          "multi": 2,
+          "repeat_pairs": 0,
+          "tool_errors": 3,
+          "cd_errors": 1,
+          "terminated": true
+        },
+        {
+          "index": 12,
+          "acc": 1.0,
+          "turns": 6,
+          "n_calls": 4,
+          "multi": 1,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 13,
+          "acc": 1.0,
+          "turns": 9,
+          "n_calls": 8,
+          "multi": 1,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 14,
+          "acc": 1.0,
+          "turns": 9,
+          "n_calls": 8,
+          "multi": 2,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 15,
+          "acc": 0.0,
+          "turns": 12,
+          "n_calls": 7,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 16,
+          "acc": 1.0,
+          "turns": 17,
+          "n_calls": 14,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 3,
+          "cd_errors": 1,
+          "terminated": true
+        },
+        {
+          "index": 17,
+          "acc": 1.0,
+          "turns": 11,
+          "n_calls": 8,
+          "multi": 0,
+          "repeat_pairs": 0,
+          "tool_errors": 0,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 18,
+          "acc": 0.0,
+          "turns": 9,
+          "n_calls": 7,
+          "multi": 1,
+          "repeat_pairs": 0,
+          "tool_errors": 1,
+          "cd_errors": 0,
+          "terminated": true
+        },
+        {
+          "index": 19,
+          "acc": 1.0,
+          "turns": 14,
+          "n_calls": 12,
+          "multi": 1,
+          "repeat_pairs": 0,
+          "tool_errors": 5,
+          "cd_errors": 0,
+          "terminated": true
+        }
+      ]
+    }
+  },
+  "delta_vs_baseline": {
+    "single_call": {
+      "acc": 0.4,
+      "cd_errors_total": -66,
+      "repeat_pairs_mean": -1.45,
+      "turns_mean": -1.75,
+      "multi_call_rate": -0.45,
+      "flipped_to_ok": [
+        0,
+        1,
+        3,
+        5,
+        7,
+        14,
+        16,
+        19
+      ],
+      "flipped_to_fail": []
+    },
+    "cwd_hint": {
+      "acc": 0.4,
+      "cd_errors_total": -62,
+      "repeat_pairs_mean": -6.15,
+      "turns_mean": -5.1,
+      "multi_call_rate": 0.05,
+      "flipped_to_ok": [
+        0,
+        1,
+        3,
+        5,
+        7,
+        14,
+        16,
+        19
+      ],
+      "flipped_to_fail": []
+    }
+  },
+  "supports": [
+    "计划先行",
+    "状态信念"
+  ],
+  "judgement": "single_call acc 0.15->0.55(支持(acc +0.400), 多调用轮 0.45->0.00, cd 错误 94->28, 重复对 7.15->5.70); cwd_hint acc 0.15->0.55(支持(acc +0.400), cd 错误 94->32, 重复对 7.15->1.00, 轮数 20.4->15.2) → 支持计划先行/状态信念假说。"
+}

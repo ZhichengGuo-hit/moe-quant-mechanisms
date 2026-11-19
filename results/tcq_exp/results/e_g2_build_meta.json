@@ -1,0 +1,50 @@
+{
+  "ts": "2026-11-07T05:16:51",
+  "model": "MiniCPM-V-4.7-35B-A3B",
+  "builds": [
+    {
+      "tag": "c",
+      "file": "E:\\CUDA11.8\\model\\minicpm\\g2\\e_g2_c.gguf",
+      "gib": 18.409,
+      "est_gib": 18.398,
+      "dev_pct": 0.06,
+      "within_5pct": true
+    },
+    {
+      "tag": "clayer",
+      "file": "E:\\CUDA11.8\\model\\minicpm\\g2\\e_g2_clayer.gguf",
+      "gib": 15.42,
+      "est_gib": 15.41,
+      "dev_pct": 0.07,
+      "within_5pct": true
+    },
+    {
+      "tag": "d",
+      "file": "E:\\CUDA11.8\\model\\minicpm\\g2\\e_g2_d.gguf",
+      "gib": 18.409,
+      "est_gib": 18.398,
+      "dev_pct": 0.06,
+      "within_5pct": true
+    },
+    {
+      "tag": "r",
+      "file": "E:\\CUDA11.8\\model\\minicpm\\g2\\e_g2_r.gguf",
+      "gib": 14.424,
+      "est_gib": 14.414,
+      "dev_pct": 0.07,
+      "within_5pct": true
+    }
+  ],
+  "refs": {
+    "a": "官方 Q4_K_M (openbmb 官方 GGUF)",
+    "r_official": "官方 mix_q3gud_im (官方 imatrix 混档)"
+  },
+  "bin": "E:\\CUDA11.8\\train\\llama-upstream\\build-cuda\\bin",
+  "imatrix": {
+    "file": "E:\\CUDA11.8\\train\\tcq_exp\\results\\e_g2_imatrix.gguf",
+    "size_gib": 0.358,
+    "corpus": "E:\\CUDA11.8\\train\\tcq_exp\\data\\g1_calib.txt",
+    "corpus_bytes": 23441
+  },
+  "note": "角色对齐 llama-quantize; 专家为融合张量 → 只能整层/整张量分档"
+}

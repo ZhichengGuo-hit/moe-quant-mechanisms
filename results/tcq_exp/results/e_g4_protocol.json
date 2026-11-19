@@ -1,0 +1,56 @@
+{
+  "status": "degraded_0c",
+  "generated_at": "2026-11-08T08:08:03",
+  "models": {
+    "A": {
+      "file": "Clover-35B-A3B-Preview-Q4_K_M.gguf",
+      "size_bytes": 22998009248,
+      "done_marker": true,
+      "source": "official, hf-mirror"
+    },
+    "B": {
+      "file": "Clover-35B-A3B-Preview-AD-Q4_K-IQ4_XS.gguf",
+      "size_bytes": 20128892352,
+      "done_marker": true,
+      "source": "AtomicChat, ModelScope"
+    }
+  },
+  "quality_comparison": false,
+  "reason": "llama-diffusion-cli 对 clover_moe 不可用: llm_arch_is_diffusion() 白名单仅 DREAM/LLADA/LLADA_MOE/RND1; 强制加入后 diffusion_generate 不回溯 GDN 循环状态, 每步 position 连续性报错, 输出不可读; 官方模型卡给出的 draft-self 自推测解码在当前 master (fd27b20) 不存在",
+  "protocol_intended_diffusion": {
+    "runner": "llama-diffusion-cli.exe",
+    "block_length": 32,
+    "diffusion_steps": 128,
+    "diffusion_algorithm": 4,
+    "algorithm_name": "confidence",
+    "temp": 0,
+    "ubatch": 512,
+    "ngl_tried": [28, 22, 16],
+    "extraction": "E17.extract_number (last number)"
+  },
+  "protocol_ar_reference": {
+    "runner": "llama-server",
+    "block": 50,
+    "n_predict": 1024,
+    "cpus": "0-31",
+    "extraction": "same as G1/G2/G3"
+  },
+  "protocol_gaps_vs_ar": {
+    "canvas": "diffusion 按 32-token block 整块生成, AR 按 token 自回归",
+    "steps_vs_tokens": "扩散以固定 128 步/块计, 与 AR 的 1024 token 上限不可直接对齐",
+    "capped": "diffusion 的 block*steps 与 AR 的 max_tokens 口径不同, 无法做等价 capped 截断比较",
+    "answer_extraction": "两者共用 extract_number, 但 diffusion 块拼接可能产生重复片段"
+  },
+  "tasks_not_run": {
+    "gsm8k": 200,
+    "math500": 100,
+    "humaneval": 164,
+    "gpqa": "跳过"
+  },
+  "evidence": {
+    "smoke_result": "results/e_g4_smoke.json",
+    "smoke_log": "e_g4_smoke.log",
+    "eval_log": "e_g4_eval.log",
+    "binary_probe": "llama-diffusion-cli.exe -m <A> -> 'unsupported model for diffusion' rc=1"
+  }
+}

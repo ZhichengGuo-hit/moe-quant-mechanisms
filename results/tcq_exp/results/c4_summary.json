@@ -1,0 +1,230 @@
+{
+  "protocol": {
+    "bin": "E:\\CUDA11.8\\train\\llama-upstream\\build-cuda\\bin\\llama-server.exe",
+    "ngl": 20,
+    "ctx": 4096,
+    "threads": 16,
+    "n_predict": 1024,
+    "temperature": 0.0,
+    "top_k": 1,
+    "cache_prompt": false,
+    "endpoint": "/v1/chat/completions",
+    "task": "GSM8K first 100",
+    "chat_template": "Nemotron 自带模板, 默认保留思维链 (CoT 在 reasoning_content), 未传 enable_thinking",
+    "system": "You are a math problem solver. Think step by step, then output the final numeric answer on a new line as: #### <number>"
+  },
+  "quants": [
+    {
+      "tag": "Q2_K",
+      "bpw": 2.63,
+      "size_gib": 16.68,
+      "n": 100,
+      "acc": 0.97,
+      "avg_pn": 324,
+      "median_pn": 235.0,
+      "behavior": {
+        "reasoning": 0.93,
+        "direct": 0.0,
+        "truncated": 0.04,
+        "loop": 0.03
+      },
+      "behavior_n": {
+        "reasoning": 93,
+        "direct": 0,
+        "truncated": 4,
+        "loop": 3
+      },
+      "reasoning_frac": 1.0,
+      "avg_out_len": 1044.8,
+      "elapsed_s": 0,
+      "limit": null,
+      "skipped": false,
+      "calib_n": 7,
+      "calib_agreement": 1.0
+    },
+    {
+      "tag": "Q3_K_S",
+      "bpw": 3.5,
+      "size_gib": 16.7,
+      "n": 100,
+      "acc": 0.95,
+      "avg_pn": 317,
+      "median_pn": 248.5,
+      "behavior": {
+        "reasoning": 0.88,
+        "direct": 0.0,
+        "truncated": 0.06,
+        "loop": 0.06
+      },
+      "behavior_n": {
+        "reasoning": 88,
+        "direct": 0,
+        "truncated": 6,
+        "loop": 6
+      },
+      "reasoning_frac": 1.0,
+      "avg_out_len": 1027.67,
+      "elapsed_s": 2462.7,
+      "limit": 100,
+      "skipped": false,
+      "calib_n": 0,
+      "calib_agreement": null
+    },
+    {
+      "tag": "Q3_K_M",
+      "bpw": 3.91,
+      "size_gib": 18.49,
+      "n": 100,
+      "acc": 0.98,
+      "avg_pn": 323.33,
+      "median_pn": 259.0,
+      "behavior": {
+        "reasoning": 0.92,
+        "direct": 0.01,
+        "truncated": 0.01,
+        "loop": 0.06
+      },
+      "behavior_n": {
+        "reasoning": 92,
+        "direct": 1,
+        "truncated": 1,
+        "loop": 6
+      },
+      "reasoning_frac": 1.0,
+      "avg_out_len": 1017.79,
+      "elapsed_s": 0,
+      "limit": null,
+      "skipped": false,
+      "calib_n": 7,
+      "calib_agreement": 0.8571428571428571
+    },
+    {
+      "tag": "Q4_K_M",
+      "bpw": 4.83,
+      "size_gib": 22.83,
+      "n": 100,
+      "acc": 0.96,
+      "avg_pn": 312.46,
+      "median_pn": 283.0,
+      "behavior": {
+        "reasoning": 0.96,
+        "direct": 0.0,
+        "truncated": 0.02,
+        "loop": 0.02
+      },
+      "behavior_n": {
+        "reasoning": 96,
+        "direct": 0,
+        "truncated": 2,
+        "loop": 2
+      },
+      "reasoning_frac": 1.0,
+      "avg_out_len": 978.6,
+      "elapsed_s": 0,
+      "limit": null,
+      "skipped": false,
+      "calib_n": 6,
+      "calib_agreement": 1.0
+    },
+    {
+      "tag": "Q6_K",
+      "bpw": 6.56,
+      "size_gib": 31.21,
+      "n": 100,
+      "acc": 0.97,
+      "avg_pn": 320.37,
+      "median_pn": 270.0,
+      "behavior": {
+        "reasoning": 0.93,
+        "direct": 0.0,
+        "truncated": 0.03,
+        "loop": 0.04
+      },
+      "behavior_n": {
+        "reasoning": 93,
+        "direct": 0,
+        "truncated": 3,
+        "loop": 4
+      },
+      "reasoning_frac": 1.0,
+      "avg_out_len": 989.45,
+      "elapsed_s": 0,
+      "limit": null,
+      "skipped": false,
+      "calib_n": 0,
+      "calib_agreement": null
+    }
+  ],
+  "skipped": {},
+  "calibration": {
+    "n": 20,
+    "agreement": 0.95,
+    "by_rule_class": {
+      "reasoning": 13,
+      "direct": 1,
+      "truncated": 3,
+      "loop": 3
+    },
+    "disagreements": [
+      {
+        "tag": "Q3_K_M",
+        "task_id": "gsm8k-79",
+        "rule": "direct",
+        "manual": "reasoning"
+      }
+    ],
+    "by_tag": {
+      "Q2_K": {
+        "n": 7,
+        "agreement": 1.0
+      },
+      "Q3_K_M": {
+        "n": 7,
+        "agreement": 0.8571428571428571
+      },
+      "Q4_K_M": {
+        "n": 6,
+        "agreement": 1.0
+      }
+    }
+  },
+  "generated_at": "2026-11-16T07:38:51",
+  "note": "已就绪 5/5 档按 100 题协议完成 (Q2_K, Q3_K_S, Q3_K_M, Q4_K_M, Q6_K); 实测总耗时 0.7 h (预算 10 h); 未就绪档位跳过并在 skipped 中记录原因",
+  "verdict": "渐变而非断崖: bpw 2.63–6.56 (Q2_K→Q6_K) 全档 acc 极差 3.0pp, avg CoT 长度 312–324 tokens (相对极差 3.6%), 相邻档位无 acc≥15pp 且 CoT 缩短≥30% 的突变; 最高位宽档 Q6_K acc 0.970, 比其余档最高 0.980 低 1.0pp, CoT 长度与其余档持平 (avg 320 vs 均值 319 tokens)",
+  "verdict_basis": {
+    "n_quants": 5,
+    "acc_range": 0.03,
+    "rel_pn_range": 0.0356,
+    "adjacent_gaps": [
+      {
+        "from": "Q2_K",
+        "to": "Q3_K_S",
+        "acc_delta": -0.02,
+        "pn_ratio": 0.978
+      },
+      {
+        "from": "Q3_K_S",
+        "to": "Q3_K_M",
+        "acc_delta": 0.03,
+        "pn_ratio": 1.02
+      },
+      {
+        "from": "Q3_K_M",
+        "to": "Q4_K_M",
+        "acc_delta": -0.02,
+        "pn_ratio": 0.966
+      },
+      {
+        "from": "Q4_K_M",
+        "to": "Q6_K",
+        "acc_delta": 0.01,
+        "pn_ratio": 1.025
+      }
+    ],
+    "cliff_gap": null
+  },
+  "curve": {
+    "png": "E:\\CUDA11.8\\train\\tcq_exp\\results\\c4_cot_curve.png",
+    "csv": "E:\\CUDA11.8\\train\\tcq_exp\\results\\c4_cot_curve.csv"
+  }
+}

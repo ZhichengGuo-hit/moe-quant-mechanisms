@@ -1,0 +1,84 @@
+{
+ "tag": "g2_im",
+ "model": "E:\\CUDA11.8\\model\\e20\\h1\\e_h1_g2_imon.gguf",
+ "protocol": {
+  "tasks": [
+   "gsm8k",
+   "humaneval"
+  ],
+  "gsm8k_n": 200,
+  "humaneval_n": 164,
+  "ngl": 99,
+  "ctx": 4096,
+  "n_predict": 1024,
+  "threads": 16,
+  "cpus": "0-15",
+  "ports": [
+   18221,
+   18222
+  ],
+  "bin_dir": "E:\\CUDA11.8\\train\\llama-upstream\\build-cuda\\bin",
+  "gpu": "16 GB",
+  "backend": "CUDA (llama-server)"
+ },
+ "source_files": [
+  "results/c1_g2_im_gsm8k.jsonl",
+  "results/c1_g2_im_humaneval.jsonl"
+ ],
+ "rows_file": "results/c1_g2_tasks.jsonl",
+ "rows": 364,
+ "per_task": {
+  "gsm8k": {
+   "n": 200,
+   "passed": 188,
+   "acc": 0.94
+  },
+  "humaneval": {
+   "n": 164,
+   "passed": 148,
+   "acc": 0.9024390243902439
+  }
+ },
+ "combined": {
+  "n": 364,
+  "passed": 336,
+  "acc": 0.9230769230769231
+ },
+ "baseline": {
+  "tag": "g1_im",
+  "source": "e_h1_g1_im",
+  "gsm8k_acc": 0.945,
+  "humaneval_acc": 0.9329268292682927,
+  "combined_acc": 0.9395604395604396
+ },
+ "pairwise": {
+  "file": "results/c1_g2_pairwise.json",
+  "test": "McNemar exact (two-sided binomial), same-task pairing",
+  "gsm8k": {
+   "b": 4,
+   "c": 3,
+   "p": 1.0,
+   "acc_diff": -0.005
+  },
+  "humaneval": {
+   "b": 8,
+   "c": 3,
+   "p": 0.2265625,
+   "acc_diff": -0.030487804878048808
+  },
+  "combined": {
+   "b": 12,
+   "c": 6,
+   "p": 0.237884521484375,
+   "acc_diff": -0.016483516483516425
+  }
+ },
+ "run": {
+  "start": "2026-11-14 17:23:45",
+  "end": "2026-11-14 17:51:19",
+  "elapsed_min": 27.6,
+  "gsm8k_min": 18.5,
+  "humaneval_min": 9.0,
+  "log": "results/c1_g2.run.log"
+ }
+}

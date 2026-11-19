@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" font-family="sans-serif">
+<rect width="100%" height="100%" fill="white"/>
+<text x="280.0" y="20" font-size="13" text-anchor="middle">Acc (red=Nemotron, blue=Qwen3.6)</text>
+<line x1="60.0" y1="370.0" x2="500.0" y2="370.0" stroke="#333"/>
+<line x1="60.0" y1="30.0" x2="60.0" y2="370.0" stroke="#333"/>
+<line x1="60.0" y1="30.0" x2="500.0" y2="30.0" stroke="#ddd"/>
+<text x="56.0" y="33.0" font-size="10" text-anchor="end">1</text>
+<line x1="60.0" y1="115.0" x2="500.0" y2="115.0" stroke="#ddd"/>
+<text x="56.0" y="118.0" font-size="10" text-anchor="end">0.965</text>
+<line x1="60.0" y1="200.0" x2="500.0" y2="200.0" stroke="#ddd"/>
+<text x="56.0" y="203.0" font-size="10" text-anchor="end">0.93</text>
+<line x1="60.0" y1="285.0" x2="500.0" y2="285.0" stroke="#ddd"/>
+<text x="56.0" y="288.0" font-size="10" text-anchor="end">0.895</text>
+<line x1="60.0" y1="370.0" x2="500.0" y2="370.0" stroke="#ddd"/>
+<text x="56.0" y="373.0" font-size="10" text-anchor="end">0.86</text>
+<text x="217.0" y="384.0" font-size="10" text-anchor="middle">4.5</text>
+<text x="249.6" y="384.0" font-size="10" text-anchor="middle">5.0</text>
+<text x="328.2" y="384.0" font-size="10" text-anchor="middle">6.2</text>
+<text x="480.1" y="384.0" font-size="10" text-anchor="middle">8.5</text>
+<polyline fill="none" stroke="#c0392b" stroke-width="2" points="216.8,102.9 217.3,151.4 249.6,78.6 328.3,127.1 480.0,102.9"/>
+<circle cx="216.8" cy="102.9" r="3.5" fill="#c0392b"/>
+<circle cx="217.3" cy="151.4" r="3.5" fill="#c0392b"/>
+<circle cx="249.6" cy="78.6" r="3.5" fill="#c0392b"/>
+<circle cx="328.3" cy="127.1" r="3.5" fill="#c0392b"/>
+<circle cx="480.0" cy="102.9" r="3.5" fill="#c0392b"/>
+<text x="280.0" y="408.0" font-size="10" text-anchor="middle">bpw</text>
+<text x="280.0" y="20" font-size="13" text-anchor="middle"></text>
+<line x1="60.0" y1="370.0" x2="500.0" y2="370.0" stroke="#333"/>
+<line x1="60.0" y1="30.0" x2="60.0" y2="370.0" stroke="#333"/>
+<line x1="60.0" y1="30.0" x2="500.0" y2="30.0" stroke="#ddd"/>
+<text x="56.0" y="33.0" font-size="10" text-anchor="end">1</text>
+<line x1="60.0" y1="115.0" x2="500.0" y2="115.0" stroke="#ddd"/>
+<text x="56.0" y="118.0" font-size="10" text-anchor="end">0.965</text>
+<line x1="60.0" y1="200.0" x2="500.0" y2="200.0" stroke="#ddd"/>
+<text x="56.0" y="203.0" font-size="10" text-anchor="end">0.93</text>
+<line x1="60.0" y1="285.0" x2="500.0" y2="285.0" stroke="#ddd"/>
+<text x="56.0" y="288.0" font-size="10" text-anchor="end">0.895</text>
+<line x1="60.0" y1="370.0" x2="500.0" y2="370.0" stroke="#ddd"/>
+<text x="56.0" y="373.0" font-size="10" text-anchor="end">0.86</text>
+<text x="79.8" y="384.0" font-size="10" text-anchor="middle">2.5</text>
+<text x="103.8" y="384.0" font-size="10" text-anchor="middle">2.8</text>
+<text x="117.7" y="384.0" font-size="10" text-anchor="middle">3.0</text>
+<text x="173.7" y="384.0" font-size="10" text-anchor="middle">3.9</text>
+<text x="255.0" y="384.0" font-size="10" text-anchor="middle">5.1</text>
+<text x="258.3" y="384.0" font-size="10" text-anchor="middle">5.2</text>
+<polyline fill="none" stroke="#2c6fbb" stroke-width="2" points="80.0,272.9 103.6,78.6 117.7,321.4 173.6,102.9 254.9,297.1 258.4,127.1"/>
+<circle cx="80.0" cy="272.9" r="3.5" fill="#2c6fbb"/>
+<circle cx="103.6" cy="78.6" r="3.5" fill="#2c6fbb"/>
+<circle cx="117.7" cy="321.4" r="3.5" fill="#2c6fbb"/>
+<circle cx="173.6" cy="102.9" r="3.5" fill="#2c6fbb"/>
+<circle cx="254.9" cy="297.1" r="3.5" fill="#2c6fbb"/>
+<circle cx="258.4" cy="127.1" r="3.5" fill="#2c6fbb"/>
+<text x="280.0" y="408.0" font-size="10" text-anchor="middle">bpw</text>
+<text x="740.0" y="20" font-size="13" text-anchor="middle">Mean CoT (predicted_n)</text>
+<line x1="520.0" y1="370.0" x2="960.0" y2="370.0" stroke="#333"/>
+<line x1="520.0" y1="30.0" x2="520.0" y2="370.0" stroke="#333"/>
+<line x1="520.0" y1="30.0" x2="960.0" y2="30.0" stroke="#ddd"/>
+<text x="516.0" y="33.0" font-size="10" text-anchor="end">395</text>
+<line x1="520.0" y1="115.0" x2="960.0" y2="115.0" stroke="#ddd"/>
+<text x="516.0" y="118.0" font-size="10" text-anchor="end">366</text>
+<line x1="520.0" y1="200.0" x2="960.0" y2="200.0" stroke="#ddd"/>
+<text x="516.0" y="203.0" font-size="10" text-anchor="end">338</text>
+<line x1="520.0" y1="285.0" x2="960.0" y2="285.0" stroke="#ddd"/>
+<text x="516.0" y="288.0" font-size="10" text-anchor="end">310</text>
+<line x1="520.0" y1="370.0" x2="960.0" y2="370.0" stroke="#ddd"/>
+<text x="516.0" y="373.0" font-size="10" text-anchor="end">281</text>
+<text x="677.0" y="384.0" font-size="10" text-anchor="middle">4.5</text>
+<text x="709.6" y="384.0" font-size="10" text-anchor="middle">5.0</text>
+<text x="788.2" y="384.0" font-size="10" text-anchor="middle">6.2</text>
+<text x="940.1" y="384.0" font-size="10" text-anchor="middle">8.5</text>
+<polyline fill="none" stroke="#c0392b" stroke-width="2" points="676.8,241.8 677.3,262.8 709.6,243.9 788.3,276.4 940.0,252.7"/>
+<circle cx="676.8" cy="241.8" r="3.5" fill="#c0392b"/>
+<circle cx="677.3" cy="262.8" r="3.5" fill="#c0392b"/>
+<circle cx="709.6" cy="243.9" r="3.5" fill="#c0392b"/>
+<circle cx="788.3" cy="276.4" r="3.5" fill="#c0392b"/>
+<circle cx="940.0" cy="252.7" r="3.5" fill="#c0392b"/>
+<text x="740.0" y="408.0" font-size="10" text-anchor="middle">bpw</text>
+<text x="740.0" y="20" font-size="13" text-anchor="middle"></text>
+<line x1="520.0" y1="370.0" x2="960.0" y2="370.0" stroke="#333"/>
+<line x1="520.0" y1="30.0" x2="520.0" y2="370.0" stroke="#333"/>
+<line x1="520.0" y1="30.0" x2="960.0" y2="30.0" stroke="#ddd"/>
+<text x="516.0" y="33.0" font-size="10" text-anchor="end">395</text>
+<line x1="520.0" y1="115.0" x2="960.0" y2="115.0" stroke="#ddd"/>
+<text x="516.0" y="118.0" font-size="10" text-anchor="end">366</text>
+<line x1="520.0" y1="200.0" x2="960.0" y2="200.0" stroke="#ddd"/>
+<text x="516.0" y="203.0" font-size="10" text-anchor="end">338</text>
+<line x1="520.0" y1="285.0" x2="960.0" y2="285.0" stroke="#ddd"/>
+<text x="516.0" y="288.0" font-size="10" text-anchor="end">310</text>
+<line x1="520.0" y1="370.0" x2="960.0" y2="370.0" stroke="#ddd"/>
+<text x="516.0" y="373.0" font-size="10" text-anchor="end">281</text>
+<text x="539.8" y="384.0" font-size="10" text-anchor="middle">2.5</text>
+<text x="563.8" y="384.0" font-size="10" text-anchor="middle">2.8</text>
+<text x="577.7" y="384.0" font-size="10" text-anchor="middle">3.0</text>
+<text x="633.7" y="384.0" font-size="10" text-anchor="middle">3.9</text>
+<text x="715.0" y="384.0" font-size="10" text-anchor="middle">5.1</text>
+<text x="718.3" y="384.0" font-size="10" text-anchor="middle">5.2</text>
+<polyline fill="none" stroke="#2c6fbb" stroke-width="2" points="540.0,202.1 563.6,86.3 577.7,201.9 633.6,131.1 714.9,178.0 718.4,119.6"/>
+<circle cx="540.0" cy="202.1" r="3.5" fill="#2c6fbb"/>
+<circle cx="563.6" cy="86.3" r="3.5" fill="#2c6fbb"/>
+<circle cx="577.7" cy="201.9" r="3.5" fill="#2c6fbb"/>
+<circle cx="633.6" cy="131.1" r="3.5" fill="#2c6fbb"/>
+<circle cx="714.9" cy="178.0" r="3.5" fill="#2c6fbb"/>
+<circle cx="718.4" cy="119.6" r="3.5" fill="#2c6fbb"/>
+<text x="740.0" y="408.0" font-size="10" text-anchor="middle">bpw</text>
+</svg>
