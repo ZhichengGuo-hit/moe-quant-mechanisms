@@ -1,6 +1,6 @@
 # moe-quant-mechanisms
 
-> **Where Low-Bit Quantization Damages MoE Models: A Seven-Family Mechanism Study with an Operability Proof**
+> **Where Low-Bit Quantization Damages MoE Models: A Seven-Family Mechanism Study with an Operability Demonstration**
 > Manuscript under review at *Neurocomputing*, 2026.
 
 Low-bit quantization of Mixture-of-Experts models is supplied through two tracks — vendor "official" checkpoints and the community GGUF ecosystem — yet **where** and **when** quantization damages quality remains unmapped. This repository is the code, data ledger, and llama.cpp integration behind a seven-family mechanism study that answers those questions, plus **TCQ**, a pipeline derived mechanically from the resulting mechanism map.
@@ -30,7 +30,7 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 
 外加一个**四家族校准谱**：Qwen3.6 有效 / MiniCPM 弱（方向性）/ Gemma-4 无效 / Xing 必需。校准是否有效是一阶问题，用哪套语料是二阶。
 
-### (iii) 可操作性证明：TCQ
+### (iii) 可操作性演示：TCQ
 
 一条**每个设计决策都是机制图直读结果**的流水线，在 **10–30 CPU 分钟**内达到与社区前沿构建在任务级无法区分的质量。论文明确声明这是**存在性证明，不是最优性主张**——同体积下其分布保真度落后 near-volume 社区版约 5×，这一点论文直接报告。
 
@@ -125,7 +125,7 @@ git -C /path/to/llama.cpp apply llamacpp/llama.cpp-tcmoe.patch
 ```bibtex
 @article{moe_quant_mechanisms_2026,
   title  = {Where Low-Bit Quantization Damages MoE Models:
-            A Seven-Family Mechanism Study with an Operability Proof},
+            A Seven-Family Mechanism Study with an Operability Demonstration},
   note   = {Manuscript under review at Neurocomputing},
   year   = {2026}
 }
