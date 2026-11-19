@@ -39,19 +39,32 @@ CURVE_CSV = os.path.join(RES, "c4_cot_curve.csv")
 CALIB_CAND = os.path.join(RES, "c4_calib_candidates.jsonl")
 CALIB_MANUAL = os.path.join(RES, "c4_calib_manual.json")
 
-# 档位按 bpw 升序; size_gib 为任务书给出的目标大小, bpw 为 llama.cpp 标称值
+# 档位按 bpw 升序。size_gib 为制品大小, bpw 为实测码率(制品字节 x 8 / 参数量),
+# 不是档名标称值: 早期版本这里写的是 2.63/3.50/3.91/4.83/6.56 一组标称值,
+# 与 size_gib 相差近一倍, 导致 summary / 曲线 / 台账的位宽轴整体错位。
+N_PARAMS = 31577940288  # Nemotron-Cascade-2-30B-A3B, 同 results/nemotron_ext/results/n1_summary.json
+BPW_MEASURED = {"Q2_K": 4.537, "Q3_K_S": 4.544, "Q3_K_M": 5.029,
+                "Q4_K_M": 6.211, "Q6_K": 8.489}
 QUANTS = [
     {"tag": "Q2_K", "file": "Nemotron-Cascade-2-30B-A3B.i1-Q2_K.gguf",
-     "size_gib": 16.68, "bpw": 2.63, "port": 18301},
+     "size_gib": 16.68, "bpw": BPW_MEASURED["Q2_K"], "port": 18301},
     {"tag": "Q3_K_S", "file": "Nemotron-Cascade-2-30B-A3B.i1-Q3_K_S.gguf",
-     "size_gib": 16.70, "bpw": 3.50, "port": 18302},
+     "size_gib": 16.70, "bpw": BPW_MEASURED["Q3_K_S"], "port": 18302},
     {"tag": "Q3_K_M", "file": "Nemotron-Cascade-2-30B-A3B.i1-Q3_K_M.gguf",
-     "size_gib": 18.49, "bpw": 3.91, "port": 18303},
+     "size_gib": 18.49, "bpw": BPW_MEASURED["Q3_K_M"], "port": 18303},
     {"tag": "Q4_K_M", "file": "Nemotron-Cascade-2-30B-A3B.i1-Q4_K_M.gguf",
-     "size_gib": 22.83, "bpw": 4.83, "port": 18304},
+     "size_gib": 22.83, "bpw": BPW_MEASURED["Q4_K_M"], "port": 18304},
     {"tag": "Q6_K", "file": "Nemotron-Cascade-2-30B-A3B.i1-Q6_K.gguf",
-     "size_gib": 31.21, "bpw": 6.56, "port": 18305},
+     "size_gib": 31.21, "bpw": BPW_MEASURED["Q6_K"], "port": 18305},
 ]
+# 自检: 实测码率必须与制品大小自洽 (size_gib 只保留两位小数, 容差 0.002),
+# 任何一侧被改错都在开跑前报错, 不会再把错位的位宽轴写进结果文件。
+for _q in QUANTS:
+    _derived = _q["size_gib"] * 2 ** 30 * 8 / N_PARAMS
+    if abs(_derived - _q["bpw"]) >= 0.002:
+        raise ValueError("%s: size_gib=%.2f 推出 %.3f bpw, 与实测 %.3f 不符"
+                         % (_q["tag"], _q["size_gib"], _derived, _q["bpw"]))
+del _q, _derived
 HIGH_ANCHORS = {"Q4_K_M", "Q6_K"}
 N_PREDICT = 1024
 STOPS = ["\n\nQuestion:", "\n\nQ:"]
@@ -486,9 +499,15 @@ def draw_chart(points):
         return B - (B - T) * a
     def py_pn(p):
         return B - (B - T) * (p / pmax)
-    for b in bps:
+    # 实测码率下 Q2_K 与 Q3_K_S 只差 0.007 bpw (4.537 / 4.544), 刻度与档名会叠在一起,
+    # 相邻刻度改为上下错行; 点本身仍按真实 bpw 落位, 不人为拉开。
+    sb = sorted(bps)
+    stag = {}
+    for i, b in enumerate(sb):
+        stag[b] = 0 if (i == 0 or px(b) - px(sb[i - 1]) > 34) else 16
+    for b in sb:
         d.line([(px(b), B), (px(b), B + 6)], fill="black", width=1)
-        d.text((px(b) - 14, B + 12), f"{b:.2f}", fill="black", font=f_l)
+        d.text((px(b) - 14, B + 12 + stag[b]), f"{b:.2f}", fill="black", font=f_l)
     d.text((L - 20, B + 42), "bpw", fill="black", font=f_l)
     d.text((10, T - 34), "acc", fill=(30, 80, 180), font=f_l)
     rt = "avg predicted_n"
@@ -504,9 +523,10 @@ def draw_chart(points):
         x, y = px(p["bpw"]), py_pn(p["avg_pn"])
         d.rectangle([x - 5, y - 5, x + 5, y + 5], fill=(180, 60, 60))
         d.text((x + 8, y + 6), f"{p['avg_pn']:.0f}", fill=(180, 60, 60), font=f_l)
-        d.text((x - 10, B + 26), p["tag"], fill=(90, 90, 90), font=f_l)
+        d.text((x - 10, B + 26 + stag.get(p["bpw"], 0)), p["tag"],
+               fill=(90, 90, 90), font=f_l)
     img.save(CURVE_PNG)
-    with open(CURVE_CSV, "w", encoding="utf-8") as f:
+    with open(CURVE_CSV, "w", encoding="utf-8", newline="\n") as f:
         f.write("tag,bpw,acc,avg_predicted_n,median_predicted_n\n")
         for p in seq:
             f.write(f"{p['tag']},{p['bpw']},{p['acc']:.4f},{p['avg_pn']:.2f},"
@@ -642,7 +662,7 @@ def cmd_summarize(args):
             draw_chart(points)
             out["curve"] = {"png": CURVE_PNG, "csv": CURVE_CSV}
         except Exception as e:  # noqa: BLE001  matplotlib/PIL 缺失时退化为 CSV
-            with open(CURVE_CSV, "w", encoding="utf-8") as f:
+            with open(CURVE_CSV, "w", encoding="utf-8", newline="\n") as f:
                 f.write("tag,bpw,acc,avg_predicted_n,median_predicted_n\n")
                 for p in sorted(points, key=lambda x: x["bpw"]):
                     f.write(f"{p['tag']},{p['bpw']},{p['acc']:.4f},{p['avg_pn']:.2f},"

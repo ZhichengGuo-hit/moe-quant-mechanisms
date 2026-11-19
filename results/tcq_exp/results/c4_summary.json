@@ -16,7 +16,8 @@
   "quants": [
     {
       "tag": "Q2_K",
-      "bpw": 2.63,
+      "bpw": 4.537,
+      "bpw_source": "measured (bytes*8/params)",
       "size_gib": 16.68,
       "n": 100,
       "acc": 0.97,
@@ -44,7 +45,8 @@
     },
     {
       "tag": "Q3_K_S",
-      "bpw": 3.5,
+      "bpw": 4.544,
+      "bpw_source": "measured (bytes*8/params)",
       "size_gib": 16.7,
       "n": 100,
       "acc": 0.95,
@@ -72,7 +74,8 @@
     },
     {
       "tag": "Q3_K_M",
-      "bpw": 3.91,
+      "bpw": 5.029,
+      "bpw_source": "measured (bytes*8/params)",
       "size_gib": 18.49,
       "n": 100,
       "acc": 0.98,
@@ -100,7 +103,8 @@
     },
     {
       "tag": "Q4_K_M",
-      "bpw": 4.83,
+      "bpw": 6.211,
+      "bpw_source": "measured (bytes*8/params)",
       "size_gib": 22.83,
       "n": 100,
       "acc": 0.96,
@@ -128,7 +132,8 @@
     },
     {
       "tag": "Q6_K",
-      "bpw": 6.56,
+      "bpw": 8.489,
+      "bpw_source": "measured (bytes*8/params)",
       "size_gib": 31.21,
       "n": 100,
       "acc": 0.97,
@@ -189,8 +194,21 @@
     }
   },
   "generated_at": "2026-11-16T07:38:51",
+  "n_params": 31577940288,
+  "revision": {
+    "date": "2026-11-19",
+    "change": "bpw 按实测制品字节重算（见 n1_summary.json，bpw_source=measured (bytes*8/params)）；旧值为早期模板遗留的占位值",
+    "previous_bpw": {
+      "Q2_K": 2.63,
+      "Q3_K_S": 3.5,
+      "Q3_K_M": 3.91,
+      "Q4_K_M": 4.83,
+      "Q6_K": 6.56
+    },
+    "consistency_check": "size_gib*2^30*8/n_params 可复现新 bpw（最大偏差 0.0012，源于 size_gib 只保留两位小数）；acc、avg_pn、behavior 与 n1_summary.json 逐档一致，未改动"
+  },
   "note": "已就绪 5/5 档按 100 题协议完成 (Q2_K, Q3_K_S, Q3_K_M, Q4_K_M, Q6_K); 实测总耗时 0.7 h (预算 10 h); 未就绪档位跳过并在 skipped 中记录原因",
-  "verdict": "渐变而非断崖: bpw 2.63–6.56 (Q2_K→Q6_K) 全档 acc 极差 3.0pp, avg CoT 长度 312–324 tokens (相对极差 3.6%), 相邻档位无 acc≥15pp 且 CoT 缩短≥30% 的突变; 最高位宽档 Q6_K acc 0.970, 比其余档最高 0.980 低 1.0pp, CoT 长度与其余档持平 (avg 320 vs 均值 319 tokens)",
+  "verdict": "渐变而非断崖: bpw 4.54–8.49 (Q2_K→Q6_K) 全档 acc 极差 3.0pp, avg CoT 长度 312–324 tokens (相对极差 3.6%), 相邻档位无 acc≥15pp 且 CoT 缩短≥30% 的突变; 最高位宽档 Q6_K acc 0.970, 比其余档最高 0.980 低 1.0pp, CoT 长度与其余档持平 (avg 320 vs 均值 319 tokens)",
   "verdict_basis": {
     "n_quants": 5,
     "acc_range": 0.03,

@@ -1,6 +1,6 @@
 # 实验总台账
 
-生成时间：2026-11-11 19:00；最后更新：2026-11-18（Asia/Shanghai）
+生成时间：2026-11-11 19:00；最后更新：2026-11-19（Asia/Shanghai）
 范围：阶段 0/1/2 历史实验（E1–E21、B、D、A、C 路线）+ 当前主线（E-F、E-G、E-H）+ E-A1 轨迹级（A1a/A1a-ctrl/A1b/A1c/A1d/A1f/A1g/A1h/A1i）+ 2026-11-18 增补（E-R1/E-R2/E-R2b/E-N1/E-GPTQ）
 状态定义：已完成（含"否证"结果）/ 部分完成（计划内的子项缺失）/ 未执行（阻塞或计划未启动）
 说明：只记录实验内容、状态、结果，不做分析；数字取自 results/ 下对应结果文件。E-G5/G6/G7 的配对检验为 McNemar 精确 + 1000 次序列 bootstrap（seed 20261104，名义 p，未做多重校正），明细见 results/e_g567_pairwise.json。
@@ -157,7 +157,7 @@
 | E-R1 | reverse 名单对照：usage 升序前 10 层 IQ4_XS + 专家 IQ2_XXS + 其余 Q5_K，与 G1 / G2 / G_rand 单变量对照（GSM8K200 + HE164，协议同 C1.2） | 已完成 | 11.652 GiB（与 G_rand 同模板同体积，24.1 min）；GSM8K 0.960、HE 0.909（26.0 min）；vs G2 +2.0 / +0.6 pt（p=0.219 / 1.000）、vs G_rand +0.5 / +3.0 pt（p=1.000 / 0.359）、vs G1 +1.5 / −2.4 pt（p=0.508 / 0.388），CI 全部含 0；判定"双任务均无差异"，名单维度（层粒度）关闭 |
 | E-R2 | Qwen3.6-35B-A3B 路由一致性诊断：BF16 F16 / TCQ-nl_global / iq2xxs 三配置，eval64 全 192 条 11,202 token，逐 token × 40 层 × 256 专家概率；llama.cpp 新增 `LLAMA_MOE_DUMP` 导出（`ffn_moe_probs` 标记 output 防缓冲区复用） | 已完成 | 主臂 TCQ vs BF16：top-8 精确匹配 0.1868 [0.1801, 0.1940]、Jaccard 0.7130、JS 0.0108 bit [0.0100, 0.0117]；翻转（≥20/40 层）9653/9666 token；iq2xxs：0.2848 / 0.7774 / 0.0057；聚合 usage hard TV 0.0629、top-64 重叠 0.9117（最低 0.8438）；严重度高低 ΔNLL 差 +0.169 [0.107, 0.231]；判定 P3（路由不可忽略），附"分布移动小、聚合 usage 稳定"两条缓和事实 |
 | E-R2b | Nemotron-Cascade-2-30B-A3B 路由臂：Q3_K_M vs Q6_K（8 条/域 × 3 域 = 24 条，1621 token，23 层） | 已完成 | 精确匹配 0.2621 [0.2428, 0.2834]、Jaccard 0.7839、JS 0.0865 bit [0.0724, 0.1012]、ΔNLL −0.0368；翻转多数 1398/1621、稳定组 0；参照为 Q6_K（非 BF16），一致率按下界解读；判定 P3_routing_not_negligible |
-| E-N1 | Nemotron 四档 CoT/acc–位宽曲线：Q2_K 2.63 / Q3_K_S 3.50 / Q3_K_M 3.91 / Q4_K_M 4.83 bpw + Q6_K 6.56 锚，GSM8K 前 100；Qwen 六档（E17 前 100）并置（复用 C4/E17 数据，未重跑推理） | 已完成 | acc 0.970 / 0.950 / 0.980 / 0.960 / 0.970；相邻档最大 Δacc −2 pp、CoT 比 0.966–1.025，无相邻档满足断崖判据；McNemar Q2_K vs Q3_K_S b=4 / c=2 / p=0.625；四档极差 3.0 pp；判定 B_gradual（四档渐变），M6 降级为"该族低比特敏感度高于 GDN" |
+| E-N1 | Nemotron 四档 CoT/acc–位宽曲线：Q2_K 4.537 / Q3_K_S 4.544 / Q3_K_M 5.029 / Q4_K_M 6.211 bpw + Q6_K 8.489 锚，GSM8K 前 100；Qwen 六档（E17 前 100）并置（复用 C4/E17 数据，未重跑推理） | 已完成 | acc 0.970 / 0.950 / 0.980 / 0.960 / 0.970；相邻档最大 Δacc −2 pp、CoT 比 0.966–1.025，无相邻档满足断崖判据；McNemar Q2_K vs Q3_K_S b=3 / c=1 / p=0.625；四档极差 3.0 pp；判定 B_gradual（四档渐变），M6 降级为"该族低比特敏感度高于 GDN" |
 | E-GPTQ | 补偿式量化基线：GPTQ 3-bit / group 128 / damp 0.01，128 条 C4 校准，GSM8K200 + HE164（协议同 E17） | 未执行（工具链阻塞） | 无质量数据；PREREG 与脚本已就绪（`quantize_gptq.py` / `eval_gptq.py`）；阻塞证据：gptqmodel 7.11 依赖 pypcre（PCRE2 源码 clone 失败）且要求 torch≥2.13（本机 2.4.1+cu124），`--no-deps` 后缺 `pcre`，auto-gptq 架构表不含 Qwen3_5Moe，llm-compressor 镜像缺失；换 Linux 环境可直接执行 |
 
 ---
