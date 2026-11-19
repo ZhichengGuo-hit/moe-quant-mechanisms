@@ -73,7 +73,6 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 | `docs/` | 五组实验的**预注册 PREREG** 与**执行记录 PROGRESS** |
 | `llamacpp/` | 上游与 TCQ 两套补丁 + `llama-tcmoe.{h,cpp}`、`tcmoe-verify` |
 | `results/` | 各模块原始结果，按 `results/<module>/results/` 组织 |
-| `paper-v6-fixed.tex` | 论文 LaTeX 源 |
 
 ## 关键文档
 
