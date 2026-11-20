@@ -1,0 +1,25 @@
+# L1：结果核验 / 数据分析（基础解释器 Python 3.13.14 实测版本）
+numpy==2.5.2
+pandas==3.0.5
+pyarrow==25.0.1
+transformers==5.5.0
+tokenizers==0.22.2
+datasets==4.3.0
+sentencepiece==0.2.2
+safetensors==0.8.0
+pillow==12.3.0
+psutil==7.2.2
+requests==2.34.2
+tqdm==4.68.2
+
+# L3：离线 INT4 / 路由分析（本机基础解释器未安装；需与 CUDA 12.4 匹配）
+# 历史记录中出现过 2.4.1+cu124；现存 conda 环境为 2.6.0+cu124 与 2.13.0。
+# 安装示例：
+#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+# torch==2.6.0+cu124
+# scipy
+# matplotlib
+
+# 说明：
+# - gguf 不通过 pip 安装，使用 llama.cpp/gguf-py（随基线 commit 变化）。
+# - evalscope==1.14.1 与 bfcl-eval==2025.10.27.1 仅 E-A1a（BFCL）需要，需单独安装。

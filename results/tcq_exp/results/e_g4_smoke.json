@@ -1,0 +1,94 @@
+{
+  "experiment": "E-G4 Clover-35B-A3B-Preview (dLLM / block-diffusion MoE)",
+  "verdict": "degraded_to_c",
+  "verdict_cn": "链路验证失败 → 按方案 0(c) 降级：不做质量对比，只出生态观察 + 兼容性报告 + 打包产物",
+  "checked_at": "2026-11-08T09:05:00+08:00",
+  "hardware": {
+    "gpu": "Quadro RTX 5000, 16384 MiB",
+    "ram_gib": 127.7,
+    "note": "BF16 权重 69 GB 远超显存；4bit 也需 ~20 GB，扩散解码在 CPU 侧不可行"
+  },
+  "link_tests": [
+    {
+      "path": "a. llama.cpp 主线 + 社区 GGUF",
+      "result": "FAIL",
+      "evidence": [
+        "upstream commit 18ab62a 已注册 arch clover_moe（llama-arch.cpp:41），src/models/clover-moe.cpp 已实现前向",
+        "examples/diffusion 的 llama_model_is_diffusion() 白名单只有 DREAM / LLADA / LLADA_MOE / RND1（llama-arch.cpp:1381-1391），不含 CLOVER_MOE",
+        "llama-diffusion-cli 实测报错: 'error: unsupported model for diffusion'",
+        "clover-moe.cpp 全文 336 行，无 bd_/mask/非因果注意力分支，仅有 build_attn 因果注意力 + GDN（llm_build_delta_net_base），不具备块内双向去噪能力",
+        "llama-server AR 模式（-ngl 99, B 档 AD-Q4_K-IQ4_XS）实测: finish_reason=length, 512 token 全部重复 'G'（乱码）"
+      ]
+    },
+    {
+      "path": "b. transformers + 官方 modeling_clover_moe.py",
+      "result": "FAIL (resource)",
+      "evidence": [
+        "官方 repo 提供 configuration_clover_moe.py / modeling_clover_moe.py / sampling_clover_moe.py（trust_remote_code 可用）",
+        "但官方只发 BF16 safetensors 26 分片 ≈ 69 GB，无 AWQ/GPTQ/官方 INT4 容器",
+        "本机 GPU 16 GB：BF16 需 ~70 GB 显存，4bit 需 ~20 GB 仍超；device_map=auto 会把大部分层放 CPU，扩散解码每 token 多轮去噪，35B CPU 前向不可行"
+      ]
+    },
+    {
+      "path": "c. 双方对比 + 协议不可比声明",
+      "result": "ADOPTED"
+    }
+  ],
+  "ecosystem_observation": {
+    "official_bf16": {
+      "repo": "Diffuspace/Clover-35B-A3B-Preview",
+      "published": "2026-10-24 (created) / 2026-10-28 (updated)",
+      "format": "BF16 safetensors x26, ~69 GB, 34.66B params",
+      "int4_container": "none (no AWQ/GPTQ/官方 INT4)"
+    },
+    "official_gguf": {
+      "repo": "Diffuspace/Clover-35B-A3B-Preview-GGUF",
+      "published": "2026-10-29 (发布后 1 天)",
+      "downloads": 63698,
+      "files": {"Q4_0": "18.24 GiB", "Q4_K_M": "21.42 GiB", "Q8_0": "35.26 GiB"}
+    },
+    "community_gguf": [
+      {"author": "AtomicChat", "repo": "AtomicChat/Clover-35B-A3B-Preview-GGUF", "published": "2026-10-28 / updated 2026-11-04", "downloads": 14729,
+       "files": "7 档 AD (12.73-24.45 GB) + Q8_0 36.9 GB，自建 imatrix"},
+      {"author": "maternion", "published": "2026-10-29", "downloads": 18733, "files": "Q3-Q8 / IQ4_XS"},
+      {"author": "mudler", "downloads": 6763, "files": "APEX 6 档"},
+      {"author": "IsValorum", "downloads": 1978, "files": "BF16 + VAL-1.25M imatrix"}
+    ],
+    "lag_days": {
+      "official_gguf_vs_bf16": 1,
+      "community_vs_official_gguf": "0-6",
+      "note": "与 G1/G2/G3 的 1-3 天社区滞后不同：dLLM 首发即有官方 GGUF，社区供给在 24h 内铺开（4 个作者、>23k 下载）"
+    }
+  },
+  "gguf_header_comparison": {
+    "note": "两者都是 853 张量、120 个融合专家张量（无逐专家），均含 ssm_bd_history / ssm_bd_logit_scale 扩散附加参数；差异全在量化分档",
+    "A_official_Q4_K_M": {
+      "file_type": 15,
+      "tensor_types": {"F32": 421, "Q8_0": 254, "Q4_K": 98, "IQ1_M": 61, "Q6_K": 19},
+      "obs": "名为 Q4_K_M 实为混合档：61 个 IQ1_M 张量（约 7%）压到 1.56 bpw"
+    },
+    "B_atomicchat_AD_Q4_K_IQ4_XS": {
+      "file_type": 30,
+      "tensor_types": {"F32": 421, "Q8_0": 312, "Q4_K": 40, "IQ2_S": 80},
+      "obs": "'AD' 档 = 注意力/稠密部分 Q8_0 保高比特 + 80 个 IQ2_S 专家张量，策略与官方相反（专家压更低、稠密保更高）"
+    },
+    "f32_count": 421,
+    "insight": "F32 张量固定 421 个（ssm_* / norm / bias），不随量化档变化 → 与 G2/G3 的 F32 规则一致，TCQ 类型模板可直接复用"
+  },
+  "protocol_facts_for_report": {
+    "official_defaults": "block_size=32; low_confidence threshold 0.95 (按阈值终止，无固定步数); greedy temp=1.0; presence 0.9 / repeat 1.05; max_new_tokens 24576; thinking 默认开",
+    "gguf_metadata_gap": "GGUF 内无 diffusion.* 键（仅 arch/context/chat_template），块大小与步数无法从文件恢复 → 任何 llama.cpp 侧解码都必须外挂协议参数",
+    "official_entry": "HF repo 内 modeling_clover_moe.py + sampling_clover_moe.py；服务化走 SGLang PR #46927；官方 GitHub 推理脚本尚未开源",
+    "official_main_metrics": "Agentic (SWE-bench Verified 73.6 / Terminal-Bench 2.1 51.7 / τ³ 65.3)；MATH-500 仅用于 INT4 速度测 (101.8 tok/s)，非质量主指标"
+  },
+  "deliverables": [
+    "本文件（链路验证结论 + 生态观察 + 头对比）",
+    "A/B 两份 GGUF 已落盘 E:\\CUDA11.8\\model\\clover（21.42 GiB / 18.75 GiB）",
+    "llama-diffusion-cli.exe 已编译（若上游未来把 CLOVER_MOE 加入 diffusion 白名单可直接复测）"
+  ],
+  "next_actions": [
+    "不排入 G2/G3 式质量评测队列（无可用扩散解码器 + 协议不可比）",
+    "论文 §5.5 Clover 小节按『生态位观察』写：发布 10 天内的量化供给形态（官方 1 天出 GGUF、4 个社区作者、自建 imatrix、dLLM 量化空白）",
+    "若后续拿到 SGLang#46927 可用环境或有 ≥48 GB 显存机器，再按 A vs B 补质量对比（判据与协议见 protocol_facts_for_report）"
+  ]
+}

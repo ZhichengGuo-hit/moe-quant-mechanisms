@@ -17,7 +17,7 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 
 - 「哪些专家怕量化」是权重的属性（跨域 Pearson 0.92–0.96）；
 - 「哪些专家重要」是路由的属性。
-- 预算匹配消融把社区前沿拆解成组件阶梯：**只有 type-budget 重分配在任务级可检测**，per-layer / per-tensor 增量停留在似然分辨率，随机列表对照进一步关闭了补丁列表排序的问题。
+- 预算匹配消融把社区前沿拆解成组件阶梯：**只有 type-budget 重分配在任务级可检测**，per-layer / per-tensor 增量停留在似然分辨率。随机列表与反向列表对照在任务级均未检出信号，但论文 v7 明确这不构成「问题已关闭」的结论（**not closed**）——它是本协议统计功效下的分辨率陈述。
 
 ### (ii) 四层损伤图
 
@@ -26,13 +26,13 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 | **Token** | 码本失配承载跨域损伤 | 均匀码本下 math 补丁在 HumanEval 崩到 0.579；**Lloyd-Max 修复 +30~36 pt**（0.579→0.939、0.567→0.902） |
 | **Route** | 逐 token 专家集漂移大、聚合排序稳 | top-8 精确匹配仅 **18.7%**（Jaccard 0.71），但逐层 top-64 重叠 **91.2%** → 逐 token 路由脆弱，usage 矩阵稳定 |
 | **Task** | 饱和带 + 五个边界 | 校准缺失（Xing −12 pt）、多跳链（RULER-mh: base2 0.10）、竞赛难度（AIME 丢终止）、比特率敏感任务（GLM GPQA）、行为分级退化 |
-| **Behavior** | 分级退化 + 校准冲突异常 | Qwen3.6 五档 Q2→Q6 准确率跨度仅 3.0 pt；**Nemotron 上 imatrix 反而有害**（GSM8K 0.305 vs imatrix-off 0.715） |
+| **Behavior** | 分级退化 + 校准冲突异常 | **Nemotron** 四档 Q2_K→Q6_K 准确率极差 3.0 pp；**Qwen3.6** 六个社区制品间波动约 10 pp；**Nemotron 上 imatrix 反而有害**（GSM8K 0.305 vs imatrix-off 0.715） |
 
 外加一个**四家族校准谱**：Qwen3.6 有效 / MiniCPM 弱（方向性）/ Gemma-4 无效 / Xing 必需。校准是否有效是一阶问题，用哪套语料是二阶。
 
 ### (iii) 可操作性演示：TCQ
 
-一条**每个设计决策都是机制图直读结果**的流水线，在 **10–30 CPU 分钟**内达到与社区前沿构建在任务级无法区分的质量。论文明确声明这是**存在性证明，不是最优性主张**——同体积下其分布保真度落后 near-volume 社区版约 5×，这一点论文直接报告。
+一条**每个设计决策都是机制图直读结果**的流水线，在 **15–30 CPU 分钟**内达到与社区前沿构建在任务级无法区分的质量。论文明确声明这是**存在性演示，不是最优性主张**——同体积下其分布保真度落后 near-volume 社区版约 5×，这一点论文直接报告。
 
 ## 七个家族与判定
 
@@ -58,7 +58,7 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 | 单文件多补丁 + 指针切换 | 饱和带的部署价值 | E-H4b bound set |
 | 跨模型可移植 | 饱和带的普适性 | G5–G7 配对 |
 
-系统实现要点：base 与全部域补丁装在**一个文件**里（23.01 GiB 全载 / 14.57 GiB 单补丁 bound set）；请求级 `domain` 字段只改写逐层**索引表指针**（不动权重字节），微秒级，端到端切换秒级；`mul_mat_id` 混合类型节点（base+patch 同节点，100 轮交替 `max|dNLL| = 0`）+ 2-bit AVX2 LUT 内核（`vpermps`），补丁专家按原生 Q4_K 速度跑。冷启动 4.1 s（23 GiB 文件），decode 7.11 t/s（较 iq2xxs **+17%**），prefill 是最弱轴。
+系统实现要点：base 与全部域补丁装在**一个文件**里（23.01 GiB 全载 / 14.57 GiB 单补丁 bound set）；请求级 `domain` 字段只改写逐层**索引表指针**（不动权重字节），微秒级，端到端切换秒级；`mul_mat_id` 混合类型节点（base+patch 同节点，100 轮交替 `max|dNLL| = 0`）+ 2-bit AVX2 LUT 内核（`vpermps`），补丁专家按原生 Q4_K 速度跑。冷加载 **69.6 s**（23 GiB 全文件，附录 A 口径），decode 7.11 t/s（较 iq2xxs **+17%**），prefill 是最弱轴。
 
 ## 仓库结构
 
@@ -73,6 +73,9 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 | `docs/` | 五组实验的**预注册 PREREG** 与**执行记录 PROGRESS** |
 | `llamacpp/` | 上游与 TCQ 两套补丁 + `llama-tcmoe.{h,cpp}`、`tcmoe-verify` |
 | `results/` | 各模块原始结果，按 `results/<module>/results/` 组织 |
+| `REPRODUCIBILITY.md` | 复现信息：硬件、工具链、依赖版本、GGUF 制品清单、已知缺口 |
+| `requirements.txt` | L1（核验/分析）与 L3（INT4/路由）依赖及实测版本 |
+| `repro_check.ps1` | 环境自检：解释器、依赖、llama.cpp 补丁、结果表 |
 
 ## 关键文档
 
@@ -88,6 +91,12 @@ Low-bit quantization of Mixture-of-Experts models is supplied through two tracks
 ## 快速上手
 
 ```bash
+# 环境自检（解释器 / 依赖 / 补丁 / 结果表；只读）
+powershell -ExecutionPolicy Bypass -File .\repro_check.ps1
+
+# 数据表路径校验（逐条核对结果文件是否在库）
+python check_data_table.py
+
 # 容器逐位一致性校验
 cd llamacpp/new-files/llama.cpp/tools/tcmoe-verify && cmake -B build && cmake --build build
 
@@ -100,7 +109,7 @@ git -C /path/to/llama.cpp apply llamacpp/llama.cpp-tcmoe.patch
 ## 边界与已知局限
 
 - **Nemotron 的校准冲突**是机制图里最极端的校准单元，其路由漂移是 Qwen 的 8× 却不产生任务代价——递归状态架构上二者为何解耦仍是开放问题。
-- 无校准基线（HQQ/SINQ）与误差补偿量化器（GPTQ/AWQ 类）在 GGUF 生态内没有对应产物，相关比较停留在文献层面；**全部结论限于 RTN + imatrix**。
+- 无校准基线（HQQ/SINQ）与误差补偿量化器（GPTQ/AWQ 类）在 **llama.cpp/GGUF 量化器族内没有原生类型**（`llama-quantize` 仅支持 Q8_0/F16/BF16/F32/COPY），相关比较停留在文献层面；**全部结论限于 RTN + imatrix**。
 - 任务条件化配额分配在所研究的模型、码本、预算与任务下**失败**，向此外的迁移未验证。
 - 轨迹级单元格为 n=20；math 补丁的点估计偏移（−7.5 pt）方向一致但不显著，属探索性观察。
 - 硬件限于两台单机（双路 Xeon；RTX 5000/4070），不做跨硬件主张。
@@ -109,11 +118,11 @@ git -C /path/to/llama.cpp apply llamacpp/llama.cpp-tcmoe.patch
 
 仓库根的 `code/` 对应原工作目录。文档中出现的不带前缀的脚本路径（如 `tcq_exp/e_f2_gsm8k.py`）**均相对于 `code/`**（实际位置 `code/tcq_exp/e_f2_gsm8k.py`）。
 
-各模块的原始结果（JSON / JSONL / CSV / SVG）随仓库提供，共 **157 个文件**，位于仓库根的 `results/`：
+各模块的原始结果（JSON / JSONL / CSV / SVG）随仓库提供，共 **161 个文件**，位于仓库根的 `results/`：
 
 | 目录 | 文件数 | 内容 |
 |---|---|---|
-| `results/tcq_exp/results/` | 148 | 组件阶梯、KLD、配对检验、码本拟合、换装代价、逐题输出、跨模型汇总 |
+| `results/tcq_exp/results/` | 152 | 组件阶梯、KLD、配对检验、码本拟合、换装代价、逐题输出、跨模型汇总 |
 | `results/nemotron_ext/results/` · `route/results/` | 4 | Nemotron 位宽曲线与路由统计 |
 | `results/reverse/results/` | 3 | 容器反解元数据与配对评测 |
 | `results/route_consistency/results/` | 2 | 逐层路由一致性 |

@@ -1,0 +1,90 @@
+{
+ "protocol": {
+  "experiment": "E-A1d agent(tool schema) vs plain token-level KLD",
+  "ref": "E:\\CUDA11.8\\model\\e20\\qwen36_f16.gguf",
+  "k": 64,
+  "positions_per_seq": 2,
+  "agent_requests": [
+   "Move 'final_report.pdf' within document directory to 'temp' directory in document. Make sure to create the directory"
+  ],
+  "tools": [
+   "cd",
+   "ls",
+   "mv",
+   "mkdir",
+   "grep",
+   "find",
+   "cat",
+   "diff",
+   "sort",
+   "cp"
+  ],
+  "plain_source": "E:\\CUDA11.8\\train\\tcq_exp\\data\\math_eval64.jsonl (前 0 条 text)",
+  "alignment": "ref 贪心生成 npos 个 token 作轨迹; 逐位置 prompt=ids[:idx] + n_predict=1 取 top-k, 两侧同一前缀",
+  "metrics": "KLD/JSD/top1_agree, 与 E-F9 同一 position_metrics (top-k 并支撑 + __tail__ 桶)",
+  "cache_prompt": true,
+  "threads": 16,
+  "n_ctx": 16384,
+  "ref_port": 18181,
+  "target_port": 18182,
+  "configs": {
+   "iq2xxs": {
+    "file": "E:\\CUDA11.8\\model\\baselines\\Qwen3.6-35B-A3B-UD-IQ2_XXS.gguf",
+    "domain": null
+   }
+  },
+  "smoke": true,
+  "started": "2026-11-14T10:10:14",
+  "ref_load_s": 106.1,
+  "ref_server_meta": {
+   "n_vocab": 248320,
+   "n_ctx_train": 262144,
+   "ftype": "F16"
+  },
+  "n_vocab": 248320,
+  "agent_seq_tokens": [
+   {
+    "name": "agent_0",
+    "ctx": 1010,
+    "gen": [
+     760,
+     1156
+    ]
+   }
+  ],
+  "plain_seq_tokens": [],
+  "ref_dist_done_s": 664.7,
+  "target_load_s": {
+   "iq2xxs": 38.0
+  },
+  "tokenizer_match": {
+   "iq2xxs": true
+  },
+  "elapsed_s": 837.1
+ },
+ "agent": {
+  "iq2xxs": {
+   "mean_kld": 0.008994919303161132,
+   "mean_top1": 1.0,
+   "per_pos": [
+    {
+     "seq": "agent_0",
+     "pos": 0,
+     "target_token": 760,
+     "kld": 0.017974005201914712,
+     "jsd": 0.006113363112035646,
+     "top1_agree": 1.0
+    },
+    {
+     "seq": "agent_0",
+     "pos": 1,
+     "target_token": 1156,
+     "kld": 1.583340440755176e-05,
+     "jsd": 5.489158486834766e-06,
+     "top1_agree": 1.0
+    }
+   ]
+  }
+ },
+ "plain": {}
+}
